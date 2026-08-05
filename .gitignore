@@ -1,0 +1,26 @@
+# --- Dependencias y build ---
+clinicontrol/node_modules/
+clinicontrol/dist/
+clinicontrol/.next/
+clinicontrol/coverage/
+clinicontrol/data/
+
+# --- Configuracion / secretos ---
+clinicontrol/.env
+clinicontrol/.env.local
+clinicontrol/.env.production
+clinicontrol/backend/.env
+clinicontrol/frontend.env
+clinicontrol/infrastructure/.env
+
+# --- Logs y temporales ---
+*.log
+*.tmp
+tmp_*.docx
+nul
+Thumbs.db
+.DS_Store
+
+# --- Backups de documentos ---
+*_bak.docx
+*_bak_*.docx

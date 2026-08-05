@@ -1,0 +1,92 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  ParseIntPipe,
+  ValidationPipe,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
+import { TriageService } from '../../application/triage.service';
+import {
+  CreateTriageDto,
+  UpdateTriageDto,
+  TriageQueryDto,
+} from '../dto/create-triage.dto';
+import { Roles } from '../../../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
+
+@ApiTags('Triage')
+@ApiBearerAuth()
+@Controller('triage')
+@Roles('admin', 'medico', 'enfermeria')
+export class TriageController {
+  constructor(private readonly triageService: TriageService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Crear registro de triage con cálculo ESI' })
+  @ApiResponse({ status: 201, description: 'Triage creado' })
+  @ApiResponse({ status: 400, description: 'Datos inválidos' })
+  create(
+    @Body(ValidationPipe) dto: CreateTriageDto,
+    @CurrentUser() user: { id: number },
+  ) {
+    return this.triageService.create(dto, user.id);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Listar triages con filtros' })
+  @ApiQuery({ name: 'estado', required: false })
+  @ApiQuery({ name: 'pacienteId', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  findAll(@Query(ValidationPipe) query: TriageQueryDto) {
+    return this.triageService.findAll(query);
+  }
+
+  @Get('activos')
+  @ApiOperation({ summary: 'Pacientes de emergencia activos' })
+  findActivos() {
+    return this.triageService.findActivos();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener triage por ID' })
+  @ApiResponse({ status: 200, description: 'Triage encontrado' })
+  @ApiResponse({ status: 404, description: 'No encontrado' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.triageService.findOne(id);
+  }
+
+  @Get('paciente/:id')
+  @ApiOperation({ summary: 'Historial de triages del paciente' })
+  findByPaciente(@Param('id', ParseIntPipe) id: number) {
+    return this.triageService.findByPaciente(id);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Actualizar triage' })
+  @ApiResponse({ status: 200, description: 'Triage actualizado' })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body(ValidationPipe) dto: UpdateTriageDto,
+  ) {
+    return this.triageService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar triage (soft delete)' })
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.triageService.remove(id);
+  }
+}
