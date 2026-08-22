@@ -14,7 +14,6 @@ import AplicarVacunaModal from '../components/vacunas/AplicarVacunaModal';
 export default function VacunasPage() {
   const [vacunas, setVacunas] = useState<Vacuna[]>([]);
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
-  const [searchCatalog, setSearchCatalog] = useState('');
   const [searchPatient, setSearchPatient] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Paciente | null>(null);
   const [patientVacunas, setPatientVacunas] = useState<PacienteVacuna[]>([]);
@@ -49,8 +48,15 @@ export default function VacunasPage() {
   };
 
   useEffect(() => {
-    fetchVacunas();
-    fetchPacientes();
+    let cancelado = false;
+    const init = async () => {
+      if (cancelado) return;
+      await fetchVacunas();
+      if (!cancelado) await fetchPacientes();
+    };
+    init();
+    return () => { cancelado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleOpenCatalogModal = (vacuna?: Vacuna) => {
@@ -58,7 +64,7 @@ export default function VacunasPage() {
     setIsCatalogModal(true);
   };
 
-  const onSubmitCatalog = async (data: any) => {
+  const onSubmitCatalog = async (data: Record<string, string>) => {
     setFormLoading(true);
     try {
       if (editingVacuna?.id) {
@@ -115,7 +121,7 @@ export default function VacunasPage() {
     setIsApplyModal(true);
   };
 
-  const onSubmitApply = async (data: any) => {
+  const onSubmitApply = async (data: Record<string, string>) => {
     if (!selectedPatient?.id) return;
     setFormLoading(true);
     try {
@@ -155,9 +161,7 @@ export default function VacunasPage() {
       <div className="animate-in-up" style={{ animationDelay: '0.15s' }}>
         <CatalogoVacunas
           vacunas={vacunas}
-          searchCatalog={searchCatalog}
           loading={formLoading}
-          onSearchChange={setSearchCatalog}
           onEdit={handleOpenCatalogModal}
           onDelete={(id, name) => setConfirmDelete({ type: 'vacuna', id, name })}
           onNueva={() => handleOpenCatalogModal()}

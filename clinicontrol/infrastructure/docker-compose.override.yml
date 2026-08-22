@@ -5,7 +5,8 @@ services:
     container_name: hospital_api_dev
     environment:
       NODE_ENV: development
+      DB_SYNCHRONIZE: "true"
     volumes:
       - ../backend/src:/app/src
     ports:
-      - "3000:3000"
+      - "3001:3001"

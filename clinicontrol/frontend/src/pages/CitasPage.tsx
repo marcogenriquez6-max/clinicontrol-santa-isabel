@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Calendar, XCircle } from 'lucide-react';
-import { Button, Modal, Input, Select, FormSection, StatusBadge, citaEstadoToStatus, Card } from '../components/ui';
+import { Plus, Pencil, Calendar, XCircle, UserRound, Stethoscope, CalendarDays, Clock, Flag, ChevronDown, CheckCircle2, type LucideIcon } from 'lucide-react';
+import PageHeader from '../components/ui/PageHeader';
+import { Button, Modal, Input, StatusBadge, citaEstadoToStatus, Card } from '../components/ui';
 import DataTable from '../components/ui/DataTable';
 import type { Column } from '../components/ui/DataTable';
 import { toast } from '../components/ui/Toast';
@@ -8,6 +9,18 @@ import { useStore } from '../store';
 import { citaService } from '../api/cita.service';
 import { useForm } from 'react-hook-form';
 import type { Cita } from '../types';
+
+const campoBase = 'w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-[var(--primary-500)] focus:border-[var(--primary-600)] outline-none transition-all duration-200 text-slate-700 text-sm';
+
+function FieldLabel({ icon: Icon, text, required }: { icon: LucideIcon; text: string; required?: boolean }) {
+  return (
+    <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+      <Icon className="w-3.5 h-3.5" />
+      {text}
+      {required && <span className="text-red-400">*</span>}
+    </span>
+  );
+}
 
 export default function CitasPage() {
   const { citas, fetchCitas, fetchHelpers, fetchPacientes, fetchMedicos, pacientes, medicos, estadosCita, addCita, updateCita } = useStore();
@@ -38,14 +51,39 @@ const CITA_VALIDACIONES = {
     setIsModalOpen(true);
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: Record<string, string>) => {
     setFormLoading(true);
     try {
       const fechaCompleta = new Date(`${data.fecha}T${data.hora || '00:00'}`).toISOString();
-      if (editingCita?.id) { await updateCita(editingCita.id, { ...data, fecha: fechaCompleta }); toast('success', 'Cita actualizada'); }
-      else { await addCita({ ...data, fecha: fechaCompleta }); toast('success', 'Cita creada'); }
+      // Duración estándar de 30 minutos
+      const [h, m] = (data.hora || '08:00').split(':').map(Number);
+      const finMin = h * 60 + m + 30;
+      const horaFin = `${String(Math.floor(finMin / 60) % 24).padStart(2, '0')}:${String(finMin % 60).padStart(2, '0')}`;
+
+      if (editingCita?.id) {
+        await updateCita(editingCita.id, {
+          fecha: fechaCompleta,
+          horaInicio: data.hora,
+          horaFin,
+          ...(data.estadoId ? { estadoId: Number(data.estadoId) } : {}),
+        });
+        toast('success', 'Cita actualizada');
+      } else {
+        await addCita({
+          pacienteId: Number(data.pacienteId),
+          medicoId: Number(data.medicoId),
+          fecha: fechaCompleta,
+          horaInicio: data.hora,
+          horaFin,
+        });
+        toast('success', 'Cita creada correctamente');
+      }
       setIsModalOpen(false); fetchCitas();
-    } catch { toast('error', 'Error al guardar'); } finally { setFormLoading(false); }
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string | string[] } } };
+      const msg = err?.response?.data?.message;
+      toast('error', 'No se pudo guardar la cita', Array.isArray(msg) ? msg.join(' · ') : (msg || 'Revise los datos e intente nuevamente'));
+    } finally { setFormLoading(false); }
   };
 
   const openCancelModal = (cita: Cita) => {
@@ -96,63 +134,125 @@ const CITA_VALIDACIONES = {
   ];
 
   const hoy = citas.filter(c => new Date(c.fecha).toDateString() === new Date().toDateString());
-  const pendientes = citas.filter(c => c.estadoId === 1);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between pb-5 mb-6 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">
-            <Calendar className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">Citas</h1>
-            <p className="text-sm text-gray-500">Programación de citas médicas</p>
-          </div>
-        </div>
-        <Button onClick={() => handleOpenModal()}><Plus className="w-4 h-4" />Nueva Cita</Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Citas</p>
-          <p className="text-2xl font-semibold text-gray-900">{citas.length}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Citas Hoy</p>
-          <p className="text-2xl font-semibold text-gray-900">{hoy.length}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Pendientes</p>
-          <p className="text-2xl font-semibold text-gray-900">{pendientes.length}</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Calendar}
+        title="Citas"
+        subtitle="Agendamiento con validación de disponibilidad"
+        stats={[{ label: 'Total', value: citas.length }, { label: 'Hoy', value: hoy.length }]}
+        action={<Button onClick={() => handleOpenModal()}><Plus className="w-4 h-4" />Nueva Cita</Button>}
+      />
 
       <Card padding={false}>
         <DataTable columns={columns} data={citas} keyExtractor={(c) => c.id!}
           searchPlaceholder="Buscar por paciente o médico..."
-          searchKeys={['paciente.nombre', 'paciente.apellido', 'medico.nombre']}
-          className="table-premium" />
+          searchKeys={['paciente.nombre', 'paciente.apellido', 'medico.nombre', 'motivo']}
+          className="table-premium"
+          filters={[{
+            key: 'estado',
+            label: 'Estado',
+            options: [...new Set(citas.map(c => c.estado?.nombre).filter(Boolean))].map(n => ({ value: n as string, label: n as string })),
+            predicate: (c, v) => c.estado?.nombre === v,
+          }]} />
       </Card>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
-        title={editingCita ? 'Editar Cita' : 'Nueva Cita'} size="md">
+        title={editingCita ? 'Editar Cita' : 'Nueva Cita'} size="lg" accent="primary">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {editingCita ? <p className="text-sm text-gray-500">Editando cita #{editingCita.id} - {editingCita.paciente?.nombre || ''} {editingCita.paciente?.apellido || ''}</p> : null}
-          <FormSection title="Información de la Cita" color="violet">
-            <div className="space-y-4">
-              <Select label="Paciente" placeholder="Seleccionar paciente..." required options={(pacientes || []).map(p => ({ value: String(p.id), label: `${p.nombre} ${p.apellido} - ${p.ci}` }))} error={errors.pacienteId?.message as string} {...register('pacienteId', CITA_VALIDACIONES.pacienteId)} />
-              <Select label="Médico" placeholder="Seleccionar médico..." required options={(medicos || []).map(m => ({ value: String(m.id), label: `Dr. ${m.nombre} ${m.apellido} - ${m.especialidad?.nombre}` }))} error={errors.medicoId?.message as string} {...register('medicoId', CITA_VALIDACIONES.medicoId)} />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input label="Fecha" type="date" required error={errors.fecha?.message as string} {...register('fecha', CITA_VALIDACIONES.fecha)} />
-                <Input label="Hora" type="time" required error={errors.hora?.message as string} {...register('hora', CITA_VALIDACIONES.hora)} />
-              </div>
-              <Select label="Estado" options={(estadosCita || []).map(e => ({ value: e.id, label: e.nombre }))} {...register('estadoId')} />
+          {editingCita && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--primary-50)]/70 border border-[var(--primary-200)] text-xs text-[var(--primary-700)] font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+              Editando cita #{editingCita.id} — {editingCita.paciente?.nombre || ''} {editingCita.paciente?.apellido || ''}
             </div>
-          </FormSection>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button type="submit" loading={formLoading}>{editingCita ? 'Actualizar Cita' : 'Crear Cita'}</Button>
+          )}
+
+          {/* Paciente */}
+          <div>
+            <FieldLabel icon={UserRound} text="Paciente" required />
+            <div className="relative">
+              <UserRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <select className={`${campoBase} pl-10 pr-10 appearance-none cursor-pointer`} {...register('pacienteId', CITA_VALIDACIONES.pacienteId)}>
+                <option value="" disabled>Seleccionar paciente...</option>
+                {(pacientes || []).map(p => (
+                  <option key={p.id} value={String(p.id)}>{`${p.nombre} ${p.apellido}${p.ci ? ` · CI ${p.ci}` : ''}`}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
+            {errors.pacienteId && <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.pacienteId.message as string}</p>}
+          </div>
+
+          {/* Médico */}
+          <div>
+            <FieldLabel icon={Stethoscope} text="Médico" required />
+            <div className="relative">
+              <Stethoscope className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <select className={`${campoBase} pl-10 pr-10 appearance-none cursor-pointer`} {...register('medicoId', CITA_VALIDACIONES.medicoId)}>
+                <option value="" disabled>Seleccionar médico...</option>
+                {(medicos || []).map(m => (
+                  <option key={m.id} value={String(m.id)}>{`Dr. ${m.nombre} ${m.apellido}${m.especialidad?.nombre ? ` · ${m.especialidad.nombre}` : ''}`}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
+            {errors.medicoId && <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.medicoId.message as string}</p>}
+          </div>
+
+          {/* Fecha y Hora */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <FieldLabel icon={CalendarDays} text="Fecha" required />
+              <div className="relative">
+                <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <input type="date" className={`${campoBase} pl-10`} {...register('fecha', CITA_VALIDACIONES.fecha)} />
+              </div>
+              {errors.fecha && <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.fecha.message as string}</p>}
+            </div>
+            <div>
+              <FieldLabel icon={Clock} text="Hora" required />
+              <div className="relative">
+                <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <input type="time" className={`${campoBase} pl-10`} {...register('hora', CITA_VALIDACIONES.hora)} />
+              </div>
+              {errors.hora && <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.hora.message as string}</p>}
+            </div>
+          </div>
+
+          {/* Estado */}
+          <div>
+            <FieldLabel icon={Flag} text="Estado de la cita" />
+            <div className="relative">
+              <Flag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <select className={`${campoBase} pl-10 pr-10 appearance-none cursor-pointer`} {...register('estadoId')}>
+                {(estadosCita || []).map(e => (
+                  <option key={e.id} value={e.id}>{e.nombre}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Barra de acciones */}
+          <div className="flex justify-end gap-3 pt-5 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-300 active:scale-[0.98] transition-all duration-200"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={formLoading}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[var(--primary-600)] text-white text-sm font-semibold  hover:bg-[var(--primary-700)] hover:shadow-lg hover:shadow-blue-600/30 active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {formLoading
+                ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                : <CheckCircle2 className="w-4 h-4" />}
+              {editingCita ? 'Actualizar Cita' : 'Crear Cita'}
+            </button>
           </div>
         </form>
       </Modal>

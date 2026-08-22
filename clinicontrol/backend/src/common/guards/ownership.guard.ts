@@ -2,6 +2,7 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
+  BadRequestException,
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
@@ -104,9 +105,10 @@ class PatientOwnershipStrategy implements OwnershipStrategy {
   ): Promise<boolean> {
     const pacienteId = Number(params.pacienteId || params.id);
     if (!pacienteId || Number.isNaN(pacienteId)) {
-      throw new ForbiddenException('ID de paciente inválido');
+      throw new BadRequestException('ID de paciente inválido');
     }
     if (READ_ONLY_ROLES.includes(rol)) return true;
+    if (rol === 'admin') return true;
     if (rol === 'medico' || rol === 'enfermeria') {
       if (!(await checkMedicoBelongsToPaciente(userId, pacienteId, em))) {
         throw new ForbiddenException('No tiene permisos para acceder a este recurso');
@@ -126,9 +128,10 @@ class AppointmentOwnershipStrategy implements OwnershipStrategy {
   ): Promise<boolean> {
     const citaId = Number(params.id);
     if (!citaId || Number.isNaN(citaId)) {
-      throw new ForbiddenException('ID de cita inválido');
+      throw new BadRequestException('ID de cita inválido');
     }
     if (READ_ONLY_ROLES.includes(rol)) return true;
+    if (rol === 'admin') return true;
     if (rol === 'medico') {
       const medicoId = await getMedicoId(userId, em);
       if (!medicoId) throw new ForbiddenException('No tiene permisos');
@@ -152,9 +155,10 @@ class ConsultationOwnershipStrategy implements OwnershipStrategy {
   ): Promise<boolean> {
     const consultaId = Number(params.id);
     if (!consultaId || Number.isNaN(consultaId)) {
-      throw new ForbiddenException('ID de consulta inválido');
+      throw new BadRequestException('ID de consulta inválido');
     }
     if (READ_ONLY_ROLES.includes(rol)) return true;
+    if (rol === 'admin') return true;
     if (rol === 'medico' || rol === 'enfermeria') {
       const medicoId = await getMedicoId(userId, em);
       if (!medicoId) throw new ForbiddenException('No tiene permisos');
@@ -177,9 +181,10 @@ class PrescriptionOwnershipStrategy implements OwnershipStrategy {
   ): Promise<boolean> {
     const recetaId = Number(params.id);
     if (!recetaId || Number.isNaN(recetaId)) {
-      throw new ForbiddenException('ID de receta inválido');
+      throw new BadRequestException('ID de receta inválido');
     }
     if (READ_ONLY_ROLES.includes(rol)) return true;
+    if (rol === 'admin') return true;
     if (rol === 'medico') {
       const medicoId = await getMedicoId(userId, em);
       if (!medicoId) throw new ForbiddenException('No tiene permisos');
@@ -208,9 +213,10 @@ class RecordOwnershipStrategy implements OwnershipStrategy {
   ): Promise<boolean> {
     const pacienteId = Number(params.pacienteId || params.id);
     if (!pacienteId || Number.isNaN(pacienteId)) {
-      throw new ForbiddenException('ID de paciente inválido');
+      throw new BadRequestException('ID de paciente inválido');
     }
     if (READ_ONLY_ROLES.includes(rol)) return true;
+    if (rol === 'admin') return true;
     if (rol === 'medico' || rol === 'enfermeria') {
       if (!(await checkMedicoBelongsToPaciente(userId, pacienteId, em))) {
         throw new ForbiddenException('No tiene permisos para acceder a este historial');

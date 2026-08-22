@@ -9,6 +9,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { SanitizarTexto, FechaNoFutura } from '../../../../common/validators/sanitizar';
 
 export class CreatePacienteDto {
   @ApiProperty({ example: 'Juan' })
@@ -16,6 +17,7 @@ export class CreatePacienteDto {
   @IsNotEmpty()
   @MinLength(2)
   @MaxLength(100)
+  @SanitizarTexto()
   nombre: string;
 
   @ApiProperty({ example: 'Pérez' })
@@ -23,6 +25,7 @@ export class CreatePacienteDto {
   @IsNotEmpty()
   @MinLength(2)
   @MaxLength(100)
+  @SanitizarTexto()
   apellido: string;
 
   @ApiProperty({ example: '12345678' })
@@ -30,10 +33,12 @@ export class CreatePacienteDto {
   @IsNotEmpty()
   @MinLength(5)
   @MaxLength(20)
+  @SanitizarTexto()
   ci: string;
 
   @ApiProperty({ example: '1990-05-15' })
   @IsDateString()
+  @FechaNoFutura()
   fechaNacimiento: Date;
 
   @ApiProperty({ example: 1 })
@@ -77,6 +82,7 @@ export class UpdatePacienteDto {
   @IsOptional()
   @MinLength(2)
   @MaxLength(100)
+  @SanitizarTexto()
   nombre?: string;
 
   @ApiPropertyOptional({ example: 'Pérez García' })
@@ -84,6 +90,7 @@ export class UpdatePacienteDto {
   @IsOptional()
   @MinLength(2)
   @MaxLength(100)
+  @SanitizarTexto()
   apellido?: string;
 
   @ApiPropertyOptional({ example: '87654321' })
@@ -91,10 +98,12 @@ export class UpdatePacienteDto {
   @IsOptional()
   @MinLength(5)
   @MaxLength(20)
+  @SanitizarTexto()
   ci?: string;
 
   @ApiPropertyOptional({ example: '1990-05-15' })
   @IsDateString()
+  @FechaNoFutura()
   @IsOptional()
   fechaNacimiento?: Date;
 

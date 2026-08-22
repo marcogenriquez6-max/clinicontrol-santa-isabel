@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { Pill, Eye, Printer, FileText, AlertTriangle, Plus, X, Search, RotateCcw } from 'lucide-react';
+import { Pill, Eye, Printer, FileText, AlertTriangle, Plus, X, Search } from 'lucide-react';
 import DataTable from '../components/ui/DataTable';
 import type { Column } from '../components/ui/DataTable';
-import { Button, Badge, Modal, Select, Textarea, Card } from '../components/ui';
+import { Button, Badge, Modal, Select, Textarea, Card, PharmaAlertList, FilterBar } from '../components/ui';
+import type { PharmaSeverity, FilterChip } from '../components/ui';
 import PageHeader from '../components/ui/PageHeader';
 import { toast } from '../components/ui/Toast';
 import { recetaService, alergiaService } from '../api/services';
@@ -209,7 +210,14 @@ export default function RecetasPage() {
   const cleanFilters = () => {
     setDateFrom(''); setDateTo(''); setSearchPaciente(''); setFilterEstado('');
   };
-  const hasFilters = dateFrom || dateTo || searchPaciente || filterEstado;
+
+  const recetaChips: FilterChip[] = [
+    { value: '', label: 'Todas', count: recetas.length },
+    { value: 'activa', label: 'Activas', count: recetas.filter((r) => r.estado === 'activa').length },
+    { value: 'dispensada_parcial', label: 'Dispensada parcial', count: recetas.filter((r) => r.estado === 'dispensada_parcial').length },
+    { value: 'dispensada_total', label: 'Dispensadas', count: recetas.filter((r) => r.estado === 'dispensada_total').length },
+    { value: 'cancelada', label: 'Canceladas', count: recetas.filter((r) => r.estado === 'cancelada').length, activeBg: 'var(--danger-100)', activeText: 'var(--danger-700)', activeBorder: 'var(--danger-300)' },
+  ];
 
   useEffect(() => { loadRecetas(); fetchMedicos(); fetchPacientes(); }, [fetchMedicos, fetchPacientes]);
 
@@ -379,7 +387,7 @@ export default function RecetasPage() {
       const ini = nombre ? nombre.split(' ').slice(0, 2).map((s: string) => s.charAt(0)).join('') : '?';
       return (
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">{ini}</div>
+          <div className="w-7 h-7 rounded-full bg-[var(--danger-500)] flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">{ini}</div>
           <span className="font-medium text-[var(--text-primary)] truncate max-w-[180px]">{nombre || '—'}</span>
         </div>
       );
@@ -433,45 +441,47 @@ export default function RecetasPage() {
 
       {/* ── Barra de filtros ── */}
       <div className="animate-in-up" style={{ animationDelay: '75ms' }}>
-        <Card accent="accent">
-          <div className="flex flex-wrap items-end gap-4">
-            <div>
-              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Desde</label>
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                className="px-3 py-2 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary-500)]" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Hasta</label>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                className="px-3 py-2 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary-500)]" />
-            </div>
-            <div className="flex-1 min-w-[180px]">
-              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Paciente</label>
-              <input type="text" value={searchPaciente} onChange={e => setSearchPaciente(e.target.value)}
-                placeholder="Buscar por nombre..."
-                className="w-full px-3 py-2 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--primary-500)]" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Estado</label>
-              <select value={filterEstado} onChange={e => setFilterEstado(e.target.value)}
-                className="px-3 py-2 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary-500)]">
-                <option value="">Todos</option>
-                <option value="activa">Activa</option>
-                <option value="dispensada_parcial">Dispensada parcial</option>
-                <option value="dispensada_total">Dispensada</option>
-                <option value="cancelada">Cancelada</option>
-              </select>
-            </div>
-            {hasFilters && (
-              <Button variant="ghost" size="sm" onClick={cleanFilters}>
-                <RotateCcw className="w-3.5 h-3.5" />Limpiar
-              </Button>
-            )}
-            <div className="text-xs text-[var(--text-tertiary)] py-2">
-              {filteredRecetas.length} de {recetas.length} recetas
-            </div>
-          </div>
-        </Card>
+        <FilterBar
+          chips={recetaChips}
+          chipValue={filterEstado}
+          onChipChange={setFilterEstado}
+          extraFilters={
+            <>
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-tertiary)' }}>Desde</label>
+                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold outline-none transition-colors border"
+                  style={{
+                    backgroundColor: dateFrom ? 'var(--primary-100)' : 'var(--bg-secondary)',
+                    color: dateFrom ? 'var(--primary-700)' : 'var(--text-secondary)',
+                    borderColor: dateFrom ? 'var(--primary-200)' : 'transparent',
+                    colorScheme: 'dark',
+                  }} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-tertiary)' }}>Hasta</label>
+                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold outline-none transition-colors border"
+                  style={{
+                    backgroundColor: dateTo ? 'var(--primary-100)' : 'var(--bg-secondary)',
+                    color: dateTo ? 'var(--primary-700)' : 'var(--text-secondary)',
+                    borderColor: dateTo ? 'var(--primary-200)' : 'transparent',
+                    colorScheme: 'dark',
+                  }} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-tertiary)' }}>Paciente</label>
+                <input type="text" value={searchPaciente} onChange={(e) => setSearchPaciente(e.target.value)}
+                  placeholder="Buscar por nombre..."
+                  className="w-44 px-3 py-1.5 rounded-lg text-xs font-medium outline-none transition-colors bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border border-transparent focus:border-[var(--primary-300)]" />
+              </div>
+            </>
+          }
+          resultCount={filteredRecetas.length}
+          totalCount={recetas.length}
+          resultLabel="recetas"
+          onClear={cleanFilters}
+        />
       </div>
 
       {/* ── Tabla ── */}
@@ -693,27 +703,18 @@ export default function RecetasPage() {
       {/* ── Modal Alergias ── */}
       <Modal isOpen={showAlergiaModal} onClose={() => setShowAlergiaModal(false)} title="Alerta de Alergias" size="md" accent="warning">
         <div className="space-y-4">
-          <div className="p-4 bg-[var(--warning-50)] rounded-xl border border-[var(--warning-200)] flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-[var(--warning-100)] flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="w-5 h-5 text-[var(--warning-600)]" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-[var(--warning-700)]">Alergias detectadas</h4>
-              <p className="text-sm text-[var(--warning-600)]">El paciente tiene alergias registradas que podrían interactuar con los medicamentos prescritos:</p>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {alergiaWarnings.map((a, i) => (
-              <div key={i} className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)]">
-                <p className="text-sm font-medium text-[var(--text-primary)]">{a.nombre}</p>
-                {a.severidad && (
-                  <Badge variant={a.severidad === 'severa' || a.severidad === 'anafilactica' ? 'danger' : a.severidad === 'moderada' ? 'warning' : 'info'}>
-                    {a.severidad}
-                  </Badge>
-                )}
-              </div>
-            ))}
-          </div>
+          <PharmaAlertList
+            alerts={alergiaWarnings.map((a) => ({
+              severity: (a.severidad === 'severa' || a.severidad === 'anafilactica'
+                ? 'contraindicado'
+                : a.severidad === 'moderada'
+                  ? 'grave'
+                  : 'precaucion') as PharmaSeverity,
+              title: `Alergia: ${a.nombre}`,
+              detail: a.descripcion || 'El paciente tiene una alergia registrada que podría interactuar con los medicamentos prescritos.',
+              source: 'Motor de seguridad farmacológica — registro único de alergias',
+            }))}
+          />
           <div className="flex justify-end gap-3 pt-2 border-t border-[var(--border-primary)]">
             <Button variant="secondary" onClick={() => setShowAlergiaModal(false)}>Revisar medicamentos</Button>
             <Button variant="premium" onClick={handleEmitirConAlergia}>

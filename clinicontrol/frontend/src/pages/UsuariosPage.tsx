@@ -18,14 +18,12 @@ const ROLE_ICONS: Record<string, any> = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN: 'from-red-500 to-rose-600',
-  DOCTOR: 'from-blue-500 to-indigo-600',
-  RECEPCION: 'from-violet-500 to-purple-600',
-  admin: 'from-red-500 to-rose-600',
-  medico: 'from-blue-500 to-indigo-600',
-  enfermeria: 'from-emerald-500 to-teal-600',
-  recepcionista: 'from-violet-500 to-purple-600',
-  paciente: 'from-amber-500 to-orange-600',
+  admin: 'from-slate-700 to-slate-800',
+  gerente: 'from-slate-600 to-slate-700',
+  medico: 'from-cyan-700 to-cyan-800',
+  enfermeria: 'from-teal-600 to-teal-700',
+  recepcionista: 'from-sky-700 to-sky-800',
+  secretaria: 'from-sky-800 to-slate-800',
 };
 
 const ROLE_ACCENTS: Record<string, string> = {
@@ -228,7 +226,7 @@ export default function UsuariosPage() {
                         style={{ animationDelay: `${uIdx * 50}ms` }}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm">
+                          <div className="w-9 h-9 rounded-full bg-[var(--primary-600)] flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm">
                             {user.nombre.charAt(0)}{user.apellido?.charAt(0) || ''}
                           </div>
                           <div className="min-w-0">

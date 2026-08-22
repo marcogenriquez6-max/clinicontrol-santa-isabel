@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Calendar, Clock, Plus, Trash2, CalendarDays } from 'lucide-react';
+import { Calendar, Clock, Plus, Trash2, CalendarDays, Copy, X } from 'lucide-react';
+import PageHeader from '../components/ui/PageHeader';
 import { Button, Card, Modal, Input, Select } from '../components/ui';
 import { toast } from '../components/ui/Toast';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -50,7 +51,7 @@ export default function AgendaPage() {
 
   const getHorarioForDay = (dia: number) => editHorarios[String(dia)];
 
-  const updateHorarioField = (dia: number, field: string, value: any) => {
+  const updateHorarioField = (dia: number, field: string, value: string | number | boolean) => {
     setEditHorarios(prev => ({
       ...prev,
       [String(dia)]: { ...prev[String(dia)], [field]: value, medicoId: selectedMedicoId, diaSemana: dia },
@@ -79,6 +80,21 @@ export default function AgendaPage() {
         setEditHorarios(map);
       });
     } catch { toast('error', 'Error al guardar horarios'); }
+  };
+
+  const copiarDesdeLunes = () => {
+    const lunes = editHorarios['1'];
+    if (!lunes) {
+      toast('warning', 'Configure primero el horario del lunes');
+      return;
+    }
+    const nuevo: Record<string, HorarioMedico> = { ...editHorarios };
+    DIAS.forEach((_, idx) => {
+      if (idx === 1) return;
+      nuevo[String(idx)] = { ...lunes, id: undefined, diaSemana: idx };
+    });
+    setEditHorarios(nuevo);
+    toast('info', 'Horario del lunes aplicado a toda la semana', 'Revise y guarde los cambios');
   };
 
   const handleBlockDate = async () => {
@@ -121,73 +137,89 @@ export default function AgendaPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">
-            <CalendarDays className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">Agenda Médica</h1>
-            <p className="text-sm text-gray-500">Gestión de horarios y bloques</p>
-          </div>
+      <PageHeader
+        icon={CalendarDays}
+        title="Agenda Médica"
+        subtitle="Horarios de atención, disponibilidad y bloqueos"
+      />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="w-full md:w-80">
+          <Select label="" options={[{ value: '', label: 'Seleccionar médico...' }, ...(medicos || []).map(m => ({ value: String(m.id!), label: `Dr. ${m.nombre} ${m.apellido}${m.especialidad ? ` - ${m.especialidad.nombre}` : ''}` }))]} value={String(selectedMedicoId)} onChange={(e) => setSelectedMedicoId(Number(e.target.value))} />
         </div>
-        <Button variant="primary" size="sm" onClick={() => setIsBlockModalOpen(true)}><Plus className="w-4 h-4" />Nuevo Bloqueo</Button>
-      </div>
-      <div className="w-72">
-        <Select label="Seleccionar Médico" options={[{ value: '', label: 'Seleccionar médico...' }, ...(medicos || []).map(m => ({ value: String(m.id!), label: `Dr. ${m.nombre} ${m.apellido}${m.especialidad ? ` - ${m.especialidad.nombre}` : ''}` }))]} value={String(selectedMedicoId)} onChange={(e) => setSelectedMedicoId(Number(e.target.value))} />
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-[var(--bg-tertiary)] rounded-xl animate-in-up" style={{ animationDelay: '100ms' }}>
-        {tabs.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-[var(--bg-card)] text-[var(--primary-600)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
-            {tab.label}
-          </button>
-        ))}
+        <div className="inline-flex gap-1 p-1 bg-[var(--bg-tertiary)] rounded-lg self-start">
+          {tabs.map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-white text-[var(--primary-700)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {activeTab === 'horarios' && (
-        <Card title="Horario Semanal" subtitle="Configure los horarios de atención del médico" action={
-          <Button variant="primary" size="sm" onClick={handleSaveHorarios}><Calendar className="w-4 h-4" />Guardar Horarios</Button>
-        }>
-          <div className="overflow-x-auto">
-            <table className="table-premium">
-              <thead>
-                <tr>
-                  <th>Día</th>
-                  <th>Activo</th>
-                  <th>Mañana Inicio</th>
-                  <th>Mañana Fin</th>
-                  <th>Tarde Inicio</th>
-                  <th>Tarde Fin</th>
-                  <th>Duración</th>
-                </tr>
-              </thead>
-              <tbody>
-                {DIAS.map((dia, idx) => {
-                  const h = getHorarioForDay(idx);
-                  return (
-                    <tr key={idx}>
-                      <td className="font-medium text-[var(--text-primary)]">{dia}</td>
-                      <td><input type="checkbox" checked={h?.activo ?? false} onChange={(e) => updateHorarioField(idx, 'activo', e.target.checked)} className="rounded border-[var(--border-primary)] text-[var(--primary-500)] focus:ring-[var(--primary-500)]" /></td>
-                      <td><input type="time" value={h?.horaInicio || ''} onChange={(e) => updateHorarioField(idx, 'horaInicio', e.target.value)} className="px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] outline-none transition-all duration-200 w-28" /></td>
-                      <td><input type="time" value={h?.horaFin || ''} onChange={(e) => updateHorarioField(idx, 'horaFin', e.target.value)} className="px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] outline-none transition-all duration-200 w-28" /></td>
-                      <td><input type="time" value={h?.horaInicioTarde || ''} onChange={(e) => updateHorarioField(idx, 'horaInicioTarde', e.target.value)} className="px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] outline-none transition-all duration-200 w-28" /></td>
-                      <td><input type="time" value={h?.horaFinTarde || ''} onChange={(e) => updateHorarioField(idx, 'horaFinTarde', e.target.value)} className="px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] outline-none transition-all duration-200 w-28" /></td>
-                      <td>
-                        <select value={h?.duracionSlotMinutos || 30} onChange={(e) => updateHorarioField(idx, 'duracionSlotMinutos', Number(e.target.value))} className="w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] appearance-none cursor-pointer transition-all duration-200 outline-none border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] w-24">
-                          <option value={15}>15 min</option>
-                          <option value={20}>20 min</option>
-                          <option value={30}>30 min</option>
-                          <option value={45}>45 min</option>
-                          <option value={60}>60 min</option>
-                        </select>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <Card
+          title="Horario Semanal"
+          subtitle="Defina los rangos de mañana y tarde por día"
+          action={
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={copiarDesdeLunes}><Copy className="w-4 h-4" />Aplicar lunes a toda la semana</Button>
+              <Button size="sm" onClick={handleSaveHorarios}><Calendar className="w-4 h-4" />Guardar</Button>
+            </div>
+          }
+        >
+          <div className="divide-y divide-[var(--border-secondary)]">
+            {DIAS.map((dia, idx) => {
+              const h = getHorarioForDay(idx);
+              const activo = h?.activo ?? false;
+              const conTarde = !!(h?.horaInicioTarde || h?.horaFinTarde);
+              const inputCls = "px-2.5 py-1.5 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-md text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all w-[104px]";
+              return (
+                <div key={idx} className={`flex flex-col xl:flex-row xl:items-center gap-3 py-3 ${activo ? '' : 'opacity-45'}`}>
+                  <label className="flex items-center gap-2.5 w-full xl:w-40 shrink-0 cursor-pointer select-none">
+                    <input type="checkbox" checked={activo} onChange={(e) => updateHorarioField(idx, 'activo', e.target.checked)} className="rounded border-[var(--border-primary)] text-[var(--primary-600)] focus:ring-[var(--primary-300)]" />
+                    <span className="font-medium text-[var(--text-primary)]">{dia}</span>
+                  </label>
+
+                  {activo ? (
+                    <>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-xs font-medium uppercase tracking-wide w-14 shrink-0" style={{ color: 'var(--text-tertiary)' }}>Mañana</span>
+                        <input type="time" value={h?.horaInicio || ''} onChange={(e) => updateHorarioField(idx, 'horaInicio', e.target.value)} className={inputCls} />
+                        <span style={{ color: 'var(--text-quaternary)' }}>–</span>
+                        <input type="time" value={h?.horaFin || ''} onChange={(e) => updateHorarioField(idx, 'horaFin', e.target.value)} className={inputCls} />
+                      </div>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-xs font-medium uppercase tracking-wide w-14 shrink-0" style={{ color: 'var(--text-tertiary)' }}>Tarde</span>
+                        {conTarde ? (
+                          <>
+                            <input type="time" value={h?.horaInicioTarde || ''} onChange={(e) => updateHorarioField(idx, 'horaInicioTarde', e.target.value)} className={inputCls} />
+                            <span style={{ color: 'var(--text-quaternary)' }}>–</span>
+                            <input type="time" value={h?.horaFinTarde || ''} onChange={(e) => updateHorarioField(idx, 'horaFinTarde', e.target.value)} className={inputCls} />
+                            <button type="button" title="Quitar turno tarde" onClick={() => { updateHorarioField(idx, 'horaInicioTarde', ''); updateHorarioField(idx, 'horaFinTarde', ''); }} className="p-1 rounded hover:bg-[var(--bg-secondary)]" style={{ color: 'var(--text-quaternary)' }}>
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <button type="button" onClick={() => { updateHorarioField(idx, 'horaInicioTarde', '15:00'); updateHorarioField(idx, 'horaFinTarde', '18:00'); }}
+                            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-dashed border-[var(--border-primary)] hover:border-[var(--primary-400)] transition-colors" style={{ color: 'var(--text-quaternary)' }}>
+                            <Plus className="w-3 h-3" />Añadir turno tarde
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <span className="text-sm italic" style={{ color: 'var(--text-quaternary)' }}>Sin atención este día</span>
+                  )}
+
+                  {activo && (
+                    <select value={h?.duracionSlotMinutos || 30} onChange={(e) => updateHorarioField(idx, 'duracionSlotMinutos', Number(e.target.value))}
+                      className="xl:ml-auto px-2.5 py-1.5 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-md text-sm outline-none focus:border-[var(--primary-500)] w-[110px] shrink-0"
+                      aria-label={`Duración de cita ${dia}`}>
+                      {[15, 20, 30, 45, 60].map(d => <option key={d} value={d}>{d} min</option>)}
+                    </select>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </Card>
       )}

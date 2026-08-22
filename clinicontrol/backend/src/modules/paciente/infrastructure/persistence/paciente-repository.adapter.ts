@@ -121,6 +121,7 @@ export class PacienteRepositoryAdapter implements PacienteRepositoryPort {
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.genero', 'genero')
       .leftJoinAndSelect('p.grupoSanguineo', 'grupoSanguineo')
+      .where('p.activo = :activo', { activo: true })
       .skip(skip)
       .take(limit)
       .orderBy('p.apellido', 'ASC')
@@ -130,7 +131,7 @@ export class PacienteRepositoryAdapter implements PacienteRepositoryPort {
       const conditions = searchFields.map(
         (field) => `p.${field} ILike :search`,
       );
-      qb.where(`(${conditions.join(' OR ')})`, { search: `%${search}%` });
+      qb.andWhere(`(${conditions.join(' OR ')})`, { search: `%${search}%` });
     }
 
     const [data, total] = await qb.getManyAndCount();

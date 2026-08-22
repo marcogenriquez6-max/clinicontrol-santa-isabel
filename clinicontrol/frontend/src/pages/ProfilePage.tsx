@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { User, Key, Shield, Mail, Fingerprint, Calendar, Smartphone, Activity } from 'lucide-react';
-import { PageHeader, Card, Button } from '../components/ui';
+import { User, Mail, Fingerprint, Calendar, Activity } from 'lucide-react';
+import { PageHeader, Card } from '../components/ui';
 import api from '../api/axios';
-import { useNavigate } from 'react-router-dom';
 
 interface ProfileData {
   id: number;
@@ -18,8 +17,7 @@ interface ProfileData {
 }
 
 export default function ProfilePage() {
-  const navigate = useNavigate();
-  const [profile, setProfile] = useState<ProfileData | null>(null);
+    const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,7 +40,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6 animate-in-up max-w-3xl mx-auto">
+    <div className="space-y-6 animate-in-up max-w-4xl mx-auto">
       <PageHeader
         icon={User}
         gradient="from-indigo-500 to-purple-600"
@@ -53,7 +51,7 @@ export default function ProfilePage() {
       <Card>
         <div className="space-y-6">
           <div className="flex items-center gap-4 p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)]">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-[var(--primary-600)] flex items-center justify-center text-2xl font-bold text-white shadow-sm">
               {profile?.nombre?.charAt(0)}{profile?.apellido?.charAt(0) || ''}
             </div>
             <div>
@@ -81,15 +79,6 @@ export default function ProfilePage() {
             </div>
             <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)]">
               <div className="flex items-center gap-2 mb-2">
-                <Smartphone className="w-4 h-4 text-[var(--text-tertiary)]" />
-                <span className="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wider">MFA</span>
-              </div>
-              <p className={`text-sm font-medium ${profile?.mfaEnabled ? 'text-[var(--success-600)]' : 'text-[var(--text-tertiary)]'}`}>
-                {profile?.mfaEnabled ? 'Activado' : 'Desactivado'}
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)]">
-              <div className="flex items-center gap-2 mb-2">
                 <Activity className="w-4 h-4 text-[var(--text-tertiary)]" />
                 <span className="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wider">Sesiones activas</span>
               </div>
@@ -106,18 +95,6 @@ export default function ProfilePage() {
                 </p>
               </div>
             )}
-          </div>
-
-          <div className="pt-4 border-t border-[var(--border-primary)] space-y-3">
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Configuración de la cuenta</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button variant="secondary" onClick={() => navigate('/perfil/cambiar-password')}>
-                <Key className="w-4 h-4" /> Cambiar Contraseña
-              </Button>
-              <Button variant="secondary" onClick={() => navigate('/perfil/mfa')}>
-                <Shield className="w-4 h-4" /> {profile?.mfaEnabled ? 'Gestionar MFA' : 'Configurar MFA'}
-              </Button>
-            </div>
           </div>
         </div>
       </Card>

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, UserPlus, Circle, AlertTriangle, Ban, Skull, Archive } from 'lucide-react';
-import { Button, Modal, Input, Select, FormSection, Card } from '../components/ui';
+import { useEffect, useState, useRef } from 'react';
+import { Plus, Pencil, Power, X, Circle, AlertTriangle, Ban, Skull, Archive, ChevronDown, Check, type LucideIcon } from 'lucide-react';
+import { Button, Modal, Input, Select, FormSection } from '../components/ui';
 import DataTable from '../components/ui/DataTable';
 import type { Column } from '../components/ui/DataTable';
 import { toast } from '../components/ui/Toast';
@@ -8,41 +8,13 @@ import { useStore } from '../store';
 import { useForm } from 'react-hook-form';
 import type { Paciente, EstadoPaciente } from '../types';
 
-const ESTADOS: { value: EstadoPaciente; label: string; icon: any; color: string }[] = [
-  { value: 'activo', label: 'Activo', icon: Circle, color: 'text-green-600 bg-green-50' },
-  { value: 'inactivo', label: 'Inactivo', icon: AlertTriangle, color: 'text-amber-600 bg-amber-50' },
-  { value: 'suspendido', label: 'Suspendido', icon: Ban, color: 'text-red-600 bg-red-50' },
-  { value: 'fallecido', label: 'Fallecido', icon: Skull, color: 'text-gray-500 bg-gray-100' },
-  { value: 'archivado', label: 'Archivado', icon: Archive, color: 'text-blue-600 bg-blue-50' },
+const ESTADOS: { value: EstadoPaciente; label: string; icon: LucideIcon; badge: string; dot: string }[] = [
+  { value: 'activo', label: 'Activo', icon: Circle, badge: 'bg-emerald-50 text-emerald-700 border-emerald-200/60', dot: 'bg-emerald-500' },
+  { value: 'inactivo', label: 'Inactivo', icon: AlertTriangle, badge: 'bg-amber-50 text-amber-700 border-amber-200/60', dot: 'bg-amber-500' },
+  { value: 'suspendido', label: 'Suspendido', icon: Ban, badge: 'bg-red-50 text-red-700 border-red-200/60', dot: 'bg-red-500' },
+  { value: 'fallecido', label: 'Fallecido', icon: Skull, badge: 'bg-slate-100 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
+  { value: 'archivado', label: 'Archivado', icon: Archive, badge: 'bg-[var(--primary-50)] text-[var(--primary-700)] border-[var(--primary-200)]', dot: 'bg-[var(--primary-500)]' },
 ];
-
-const VALIDACIONES = {
-  nombre: {
-    required: 'Los nombres son requeridos',
-    pattern: { value: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,50}$/, message: 'Solo letras, mínimo 2 caracteres' },
-  },
-  apellido: {
-    required: 'Los apellidos son requeridos',
-    pattern: { value: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,50}$/, message: 'Solo letras, mínimo 2 caracteres' },
-  },
-  ci: {
-    required: 'La cédula es requerida',
-    pattern: { value: /^\d{5,15}$/, message: 'Solo números, entre 5 y 15 dígitos' },
-  },
-  telefono: {
-    pattern: { value: /^(\d{7,8})?$/, message: 'Teléfono inválido (7-8 dígitos)' },
-  },
-  email: {
-    pattern: { value: /^$|^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Formato de email inválido' },
-  },
-  fechaNacimiento: {
-    required: 'La fecha de nacimiento es requerida',
-    validate: (value: string) => new Date(value) < new Date() || 'La fecha no puede ser futura',
-  },
-  direccion: {
-    minLength: { value: 5, message: 'Mínimo 5 caracteres' },
-  },
-};
 
 export default function PacientesPage() {
   const { pacientes, fetchPacientes, fetchHelpers, generos, gruposSanguineos, addPaciente, updatePaciente } = useStore();
@@ -55,9 +27,68 @@ export default function PacientesPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [filterEstado, setFilterEstado] = useState<string>('');
   const [filterGenero, setFilterGenero] = useState<string>('');
+  const [showEstadoMenu, setShowEstadoMenu] = useState(false);
+  const [showGeneroMenu, setShowGeneroMenu] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   useEffect(() => { fetchPacientes(); fetchHelpers(); }, []);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setShowEstadoMenu(false);
+        setShowGeneroMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const VALIDACIONES = {
+    nombre: {
+      required: 'Los nombres son requeridos',
+      pattern: { value: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,50}$/, message: 'Solo letras y espacios, entre 2 y 50 caracteres' },
+      validate: (value: string) => value.trim().length >= 2 || 'Ingrese al menos 2 caracteres',
+    },
+    apellido: {
+      required: 'Los apellidos son requeridos',
+      pattern: { value: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,50}$/, message: 'Solo letras y espacios, entre 2 y 50 caracteres' },
+      validate: (value: string) => value.trim().length >= 2 || 'Ingrese al menos 2 caracteres',
+    },
+    ci: {
+      required: 'La cédula de identidad es requerida',
+      pattern: { value: /^\d{5,15}$/, message: 'La C.I. debe contener solo números, entre 5 y 15 dígitos' },
+    },
+    telefono: {
+      pattern: { value: /^(\d{7,8})?$/, message: 'El teléfono debe tener entre 7 y 8 dígitos' },
+    },
+    email: {
+      pattern: { value: /^$|^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Formato de correo inválido (ejemplo: correo@dominio.com)' },
+    },
+    fechaNacimiento: (() => {
+      const ahora = new Date();
+      return {
+        required: 'La fecha de nacimiento es requerida',
+        validate: (value: string) => {
+          const d = new Date(value);
+          if (d >= ahora) return 'La fecha no puede ser futura';
+          const edad = (ahora.getTime() - d.getTime()) / 3.15576e10;
+          if (edad > 120) return 'La fecha de nacimiento no es válida (máximo 120 años)';
+          return true;
+        },
+      };
+    })(),
+    direccion: {
+      minLength: { value: 5, message: 'La dirección debe tener al menos 5 caracteres' },
+    },
+  };
+
+  // Validación de CI duplicado contra el listado cargado
+  const ciDuplicada = (value: string) => {
+    const dup = pacientes.find(p => p.ci === String(value).trim() && p.id !== editingPaciente?.id);
+    return !dup || `Ya existe un paciente registrado con la C.I. ${value}`;
+  };
 
   const handleOpenModal = (paciente?: Paciente) => {
     setEditingPaciente(paciente || null);
@@ -89,7 +120,7 @@ export default function PacientesPage() {
     } catch { toast('error', 'Error al cambiar estado'); } finally { setFormLoading(false); }
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: Record<string, string>) => {
     setFormLoading(true);
     try {
       const payload = {
@@ -112,8 +143,9 @@ export default function PacientesPage() {
       }
       setIsModalOpen(false);
       fetchPacientes();
-    } catch (e: any) {
-      const msg = e?.response?.data?.message;
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string | string[] } } };
+      const msg = err?.response?.data?.message;
       toast('error', 'No se pudo guardar', Array.isArray(msg) ? msg.join(' · ') : (msg || 'Revise los datos e intente nuevamente'));
     } finally { setFormLoading(false); }
   };
@@ -121,94 +153,161 @@ export default function PacientesPage() {
   const estadoBadge = (estado?: EstadoPaciente) => {
     const e = ESTADOS.find(x => x.value === (estado || 'activo'));
     if (!e) return null;
-    const Icon = e.icon;
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md ${e.color}`}>
-        <Icon className="w-3 h-3" />
+      <span className={`inline-flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-full border whitespace-nowrap ${e.badge}`}>
+        <span className="relative flex h-1.5 w-1.5">
+          <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${e.dot}`} />
+        </span>
         {e.label}
       </span>
     );
   };
 
   const columns: Column<Paciente>[] = [
-    { key: 'nombreCompleto', header: 'Nombre', sortable: true, render: (p) => (
+    { key: 'nombreCompleto', header: 'Paciente', sortable: true, render: (p) => (
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold shrink-0">
+        <div className="w-9 h-9 rounded-full bg-[var(--primary-50)] text-[var(--primary-600)] border border-[var(--primary-200)] flex items-center justify-center text-xs font-bold shrink-0">
           {p.nombre?.charAt(0)}{p.apellido?.charAt(0)}
         </div>
-        <span className="font-medium text-gray-900">{p.nombre} {p.apellido}</span>
+        <div className="min-w-0">
+          <p className="font-semibold text-slate-800 truncate">{p.nombre} {p.apellido}</p>
+          <p className="text-xs text-slate-400">{p.genero?.nombre || (generos || []).find(g => g.id === p.generoId)?.nombre || '—'}</p>
+        </div>
       </div>
     )},
-    { key: 'ci', header: 'C.I.', sortable: true },
+    { key: 'ci', header: 'C.I.', sortable: true, render: (p) => (<span className="font-medium text-slate-600 tabular-nums">{p.ci}</span>) },
     { key: 'estado', header: 'Estado', render: (p) => estadoBadge(p.estado) },
-    { key: 'genero', header: 'Género', sortable: true, render: (p) => (<span className="text-gray-500">{p.genero?.nombre || (generos || []).find(g => g.id === p.generoId)?.nombre || '-'}</span>) },
-    { key: 'telefono', header: 'Teléfono' },
+    { key: 'telefono', header: 'Teléfono', render: (p) => (<span className="text-slate-500">{p.telefono || '—'}</span>) },
     { key: 'acciones', header: 'Acciones', align: 'right', render: (p) => (
       <div className="flex justify-end gap-1">
-        <button onClick={() => handleOpenModal(p)} className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"><Pencil className="w-3.5 h-3.5" /></button>
-        <button onClick={() => openEstadoModal(p)} className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100">
-          <Circle className="w-3.5 h-3.5" />
-        </button>
+        <button title="Editar paciente" onClick={() => handleOpenModal(p)} className="p-2 rounded-lg text-slate-400 hover:text-[var(--primary-600)] hover:bg-[var(--primary-50)] active:scale-95 transition-all"><Pencil className="w-4 h-4" /></button>
+        <button title="Cambiar estado" onClick={() => openEstadoModal(p)} className="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 active:scale-95 transition-all"><Power className="w-4 h-4" /></button>
       </div>
     )},
   ];
 
+  const pacientesFiltrados = pacientes.filter((p) => {
+    if (filterEstado && p.estado !== filterEstado) return false;
+    if (filterGenero && String(p.generoId) !== filterGenero) return false;
+    return true;
+  });
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between pb-5 mb-6 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">
-            <UserPlus className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">Pacientes</h1>
-            <p className="text-sm text-gray-500">{pacientes.length} registrados</p>
-          </div>
+    <div className="space-y-5">
+      {/* Header compacto */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-lg font-bold text-slate-800 tracking-tight">Padrón de Pacientes</h1>
+          <p className="text-sm text-slate-500 mt-0.5">{pacientes.length} pacientes registrados en el sistema</p>
         </div>
-        <Button onClick={() => handleOpenModal()}><Plus className="w-4 h-4" />Nuevo Paciente</Button>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider mr-1">Filtros:</span>
-        <button onClick={() => setFilterEstado('')} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${!filterEstado ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-          Todos
-        </button>
-        {ESTADOS.map(e => {
-          const Icon = e.icon;
-          const active = filterEstado === e.value;
-          return (
-            <button key={e.value} onClick={() => setFilterEstado(active ? '' : e.value)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${active ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              <Icon className="w-3 h-3" />
-              {e.label}
-            </button>
-          );
-        })}
-        <span className="w-px h-5 bg-gray-200 mx-1" />
-        <select value={filterGenero} onChange={e => setFilterGenero(e.target.value)}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 border-0 outline-none cursor-pointer hover:bg-gray-200 transition-colors"
+        <button
+          onClick={() => handleOpenModal()}
+          className="inline-flex items-center gap-2 pl-4 pr-5 py-2.5 rounded-xl bg-[var(--primary-600)] text-white text-sm font-semibold  hover:bg-[var(--primary-700)] hover:shadow-lg hover:shadow-blue-600/30 active:scale-[0.98] transition-all duration-200"
         >
-          <option value="">Todos los géneros</option>
-          {(generos || []).map(g => (
-            <option key={g.id} value={g.id}>{g.nombre}</option>
-          ))}
-        </select>
+          <Plus className="w-4 h-4" />
+          Nuevo Paciente
+        </button>
       </div>
 
-      <Card padding={false}>
-        <DataTable className="table-premium" columns={columns}
-          data={pacientes.filter(p => {
-            if (filterEstado && p.estado !== filterEstado) return false;
-            if (filterGenero && String(p.generoId) !== filterGenero) return false;
-            return true;
-          })}
-          keyExtractor={(p) => p.id!}
-          searchPlaceholder="Buscar por nombre, apellido, CI..."
-          searchKeys={['nombre', 'apellido', 'ci']}
-        />
-      </Card>
+      {/* Toolbar de filtros */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2.5" ref={filterRef}>
+          {/* Estado */}
+          <div className="relative">
+            <button
+              onClick={() => { setShowEstadoMenu(!showEstadoMenu); setShowGeneroMenu(false); }}
+              className={`inline-flex items-center gap-2 pl-3.5 pr-3 py-2.5 rounded-xl border text-sm font-medium transition-all duration-150 ${filterEstado ? 'border-[var(--primary-300)] bg-[var(--primary-50)] text-[var(--primary-700)] shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
+            >
+              <span className={`w-2 h-2 rounded-full ${filterEstado ? ESTADOS.find(e => e.value === filterEstado)?.dot : 'bg-slate-300'}`} />
+              {ESTADOS.find(e => e.value === filterEstado)?.label || 'Estado'}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showEstadoMenu ? 'rotate-180' : ''}`} />
+            </button>
+            {showEstadoMenu && (
+              <div className="absolute z-40 mt-2 w-60 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 origin-top-left animate-scale">
+                <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Filtrar por estado</p>
+                <button onClick={() => { setFilterEstado(''); setShowEstadoMenu(false); }} className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-slate-50 transition-colors">
+                  <span className="text-slate-700">Todos los estados</span>
+                  <span className="text-xs text-slate-400 tabular-nums">{pacientes.length}</span>
+                </button>
+                {ESTADOS.map(e => {
+                  const Icon = e.icon;
+                  const count = pacientes.filter(p => p.estado === e.value).length;
+                  const active = filterEstado === e.value;
+                  return (
+                    <button key={e.value} onClick={() => { setFilterEstado(active ? '' : e.value); setShowEstadoMenu(false); }}
+                      className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors ${active ? 'bg-[var(--primary-50)]' : 'hover:bg-slate-50'}`}>
+                      <Icon className={`w-3.5 h-3.5 ${active ? 'text-[var(--primary-600)]' : 'text-slate-400'}`} />
+                      <span className={`flex-1 text-left ${active ? 'font-semibold text-[var(--primary-700)]' : 'text-slate-600'}`}>{e.label}</span>
+                      <span className="text-xs text-slate-400 tabular-nums">{count}</span>
+                      {active && <Check className="w-3.5 h-3.5 text-[var(--primary-600)]" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Género */}
+          <div className="relative">
+            <button
+              onClick={() => { setShowGeneroMenu(!showGeneroMenu); setShowEstadoMenu(false); }}
+              className={`inline-flex items-center gap-2 pl-3.5 pr-3 py-2.5 rounded-xl border text-sm font-medium transition-all duration-150 ${filterGenero ? 'border-[var(--primary-300)] bg-[var(--primary-50)] text-[var(--primary-700)] shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
+            >
+              {(generos || []).find(g => String(g.id) === filterGenero)?.nombre || 'Género'}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showGeneroMenu ? 'rotate-180' : ''}`} />
+            </button>
+            {showGeneroMenu && (
+              <div className="absolute z-40 mt-2 w-52 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 origin-top-left animate-scale">
+                <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Filtrar por género</p>
+                <button onClick={() => { setFilterGenero(''); setShowGeneroMenu(false); }} className="w-full px-4 py-2 text-sm text-left text-slate-700 hover:bg-slate-50 transition-colors">Todos</button>
+                {(generos || []).map(g => {
+                  const active = filterGenero === String(g.id);
+                  return (
+                    <button key={g.id} onClick={() => { setFilterGenero(active ? '' : String(g.id)); setShowGeneroMenu(false); }}
+                      className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors ${active ? 'bg-[var(--primary-50)]' : 'hover:bg-slate-50'}`}>
+                      <span className={`flex-1 text-left ${active ? 'font-semibold text-[var(--primary-700)]' : 'text-slate-600'}`}>{g.nombre}</span>
+                      {active && <Check className="w-3.5 h-3.5 text-[var(--primary-600)]" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Chips de filtros activos */}
+          {(filterEstado || filterGenero) && (
+            <div className="flex flex-wrap items-center gap-2 ml-1">
+              {filterEstado && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium bg-white border border-slate-200 rounded-full text-slate-600 shadow-sm">
+                  Estado: {ESTADOS.find(x => x.value === filterEstado)?.label}
+                  <button onClick={() => setFilterEstado('')} className="text-slate-400 hover:text-red-500 transition-colors"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+              {filterGenero && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium bg-white border border-slate-200 rounded-full text-slate-600 shadow-sm">
+                  Género: {(generos || []).find(g => String(g.id) === filterGenero)?.nombre}
+                  <button onClick={() => setFilterGenero('')} className="text-slate-400 hover:text-red-500 transition-colors"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+              <button onClick={() => { setFilterEstado(''); setFilterGenero(''); }} className="text-xs font-semibold text-[var(--primary-600)] hover:text-[var(--primary-700)] hover:underline transition-colors">
+                Limpiar filtros
+              </button>
+            </div>
+          )}
+        </div>
+
+        <span className="text-sm text-slate-500 whitespace-nowrap">
+          <b className="text-slate-800 tabular-nums">{pacientesFiltrados.length}</b> de {pacientes.length} pacientes
+        </span>
+      </div>
+
+      <DataTable className="padron-table" columns={columns}
+        data={pacientesFiltrados}
+        keyExtractor={(p) => p.id!}
+        searchPlaceholder="Buscar paciente por nombre, apellido o C.I...."
+        searchKeys={['nombre', 'apellido', 'ci']}
+        emptyMessage="No encontramos pacientes con esos criterios. Intenta ajustar la búsqueda o los filtros."
+      />
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
         title={editingPaciente ? 'Editar Paciente' : 'Nuevo Paciente'} size="lg">
@@ -220,7 +319,7 @@ export default function PacientesPage() {
               <Input label="Apellidos *" placeholder="Apellido paterno y materno" error={errors.apellido?.message as string} {...register('apellido', VALIDACIONES.apellido)} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <Input label="C.I. *" placeholder="1234567 (solo números)" error={errors.ci?.message as string} {...register('ci', VALIDACIONES.ci)} />
+              <Input label="C.I. *" placeholder="1234567 (solo números)" error={errors.ci?.message as string} {...register('ci', { ...VALIDACIONES.ci, validate: ciDuplicada })} />
               <Input label="Fecha de Nacimiento *" type="date" error={errors.fechaNacimiento?.message as string} {...register('fechaNacimiento', VALIDACIONES.fechaNacimiento)} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -250,12 +349,10 @@ export default function PacientesPage() {
         title="Cambiar Estado del Paciente" size="sm">
         {estadoTarget && (
           <div className="space-y-5">
-            <Card padding={false}>
-              <div className="p-4">
-                <p className="text-sm font-medium text-gray-900">{estadoTarget.nombre} {estadoTarget.apellido}</p>
-                <p className="text-xs text-gray-500">CI: {estadoTarget.ci} · Estado actual: {estadoTarget.estado || 'activo'}</p>
-              </div>
-            </Card>
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80">
+              <p className="text-sm font-semibold text-slate-800">{estadoTarget.nombre} {estadoTarget.apellido}</p>
+              <p className="text-xs text-slate-500 mt-0.5">CI: {estadoTarget.ci} · Estado actual: {estadoTarget.estado || 'activo'}</p>
+            </div>
             <div className="space-y-3">
               <p className="text-sm font-medium text-gray-700">Nuevo estado:</p>
               <div className="grid grid-cols-1 gap-2">

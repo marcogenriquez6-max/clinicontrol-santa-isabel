@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, BedDouble, LogOut, FileText } from 'lucide-react';
 import { Button, Modal, Input, Select, Textarea, FormSection, Card } from '../components/ui';
+import PageHeader from '../components/ui/PageHeader';
 import { toast } from '../components/ui/Toast';
 import { useStore } from '../store';
 import { useForm } from 'react-hook-form';
@@ -113,18 +114,15 @@ export default function HospitalizacionPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between pb-5 mb-6 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center"><BedDouble className="w-5 h-5" /></div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">Hospitalización</h1>
-            <p className="text-sm text-gray-500">{activos.length} pacientes internados</p>
-          </div>
-        </div>
-        <Button onClick={() => { ingresoForm.reset({ pacienteId: '', medicoTratanteId: '', camaId: '', motivoIngreso: '', diagnosticoIngreso: '' }); setIngresoOpen(true); }} disabled={camasLibres.length === 0}>
+      <PageHeader
+        icon={BedDouble}
+        title="Hospitalización"
+        subtitle="Ingresos, altas y control de ocupación de camas"
+        stats={[{ label: 'Internados', value: activos.length }, { label: 'Camas libres', value: camasLibres.length }]}
+        action={<Button onClick={() => { ingresoForm.reset({ pacienteId: '', medicoTratanteId: '', camaId: '', motivoIngreso: '', diagnosticoIngreso: '' }); setIngresoOpen(true); }} disabled={camasLibres.length === 0}>
           <Plus className="w-4 h-4" />Nuevo Ingreso
-        </Button>
-      </div>
+        </Button>}
+      />
 
       {/* KPIs de ocupación */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

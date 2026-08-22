@@ -1,16 +1,62 @@
-import { useEffect, useState } from 'react';
-import { Shield, Plus, Pencil } from 'lucide-react';
-import { PageHeader, Card, Button, Modal, Input } from '../components/ui';
+import { useState, useEffect } from 'react';
+import { Shield, Plus, Pencil, Check } from 'lucide-react';
+import { PageHeader, Card, Button, Modal, Input, Badge } from '../components/ui';
 import { rolService } from '../api/services';
 import api from '../api/axios';
+import { ROLES_MATRIZ, type RolInfo } from '../data/rbac';
 import type { Rol } from '../types';
 import Swal from 'sweetalert2';
 
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN: 'from-red-500 to-rose-600',
-  DOCTOR: 'from-blue-500 to-indigo-600',
-  RECEPCION: 'from-violet-500 to-purple-600',
+  admin: 'from-slate-700 to-slate-800',
+  gerente: 'from-slate-600 to-slate-700',
+  medico: 'from-cyan-700 to-cyan-800',
+  enfermeria: 'from-teal-600 to-teal-700',
+  recepcionista: 'from-sky-700 to-sky-800',
+  secretaria: 'from-indigo-500 to-indigo-600',
 };
+
+function RolCard({ info }: { info: RolInfo }) {
+  return (
+    <Card className="flex flex-col h-full">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: info.color }}>
+            <Shield className="w-5 h-5 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-[var(--text-primary)] truncate">{info.nombre}</h3>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {info.hu.map(h => (
+                <span key={h} className="px-1.5 py-0.5 text-[10px] font-medium rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--text-tertiary)]">{h}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-sm text-[var(--text-secondary)] mt-3 leading-relaxed">{info.descripcion}</p>
+
+      <ul className="mt-4 space-y-2 flex-1">
+        {info.capacidades.map(cap => (
+          <li key={cap} className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+            <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: info.color }} />
+            <span>{cap}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-4 pt-3 border-t border-[var(--border-primary)]">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">Módulos visibles</p>
+        <div className="flex flex-wrap gap-1.5">
+          {info.modulos.map(m => (
+            <span key={m} className="px-2 py-0.5 text-xs rounded-full bg-[var(--primary-50)] text-[var(--primary-700)]">{m}</span>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 export default function RolesPage() {
   const [roles, setRoles] = useState<Rol[]>([]);
@@ -26,7 +72,7 @@ export default function RolesPage() {
     try {
       const res = await rolService.getAll();
       setRoles(res.data || []);
-    } catch {} finally { setLoading(false); }
+    } catch { /* catálogo no disponible: se muestra la matriz estática */ } finally { setLoading(false); }
   };
 
   useEffect(() => { loadRoles(); }, []);
@@ -60,8 +106,9 @@ export default function RolesPage() {
       Swal.fire({ icon: 'success', title: editingRol ? 'Actualizado' : 'Creado', timer: 1500, showConfirmButton: false });
       setModalOpen(false);
       loadRoles();
-    } catch (err: any) {
-      Swal.fire({ icon: 'error', title: 'Error', text: err?.response?.data?.message || 'Error al guardar' });
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Error al guardar';
+      Swal.fire({ icon: 'error', title: 'Error', text: message });
     } finally { setSaving(false); }
   };
 
@@ -69,50 +116,61 @@ export default function RolesPage() {
     <div className="space-y-6 animate-in-up">
       <PageHeader
         icon={Shield}
-        gradient="from-purple-500 to-pink-600"
         title="Roles y Permisos"
-        subtitle="Administración de roles del sistema"
-        stats={[{ label: 'roles', value: roles.length }]}
+        subtitle="Control de acceso basado en roles — seis perfiles operativos"
+        stats={[{ label: 'perfiles', value: Object.keys(ROLES_MATRIZ).length }]}
         action={
-          <Button variant="primary" size="sm" onClick={openCreate}>
+          <Button variant="secondary" size="sm" onClick={openCreate}>
             <Plus className="w-4 h-4" /> Nuevo Rol
           </Button>
         }
       />
 
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map(i => (
-            <Card key={i}><div className="animate-pulse h-32 bg-[var(--bg-tertiary)] rounded-xl" /></Card>
-          ))}
+      {/* Matriz RBAC: qué hace cada rol */}
+      <section aria-label="Matriz de roles">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {Object.values(ROLES_MATRIZ).map(info => <RolCard key={info.key} info={info} />)}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {roles.map(rol => {
-            const gradient = ROLE_COLORS[rol.nombre] || 'from-gray-500 to-gray-600';
-            return (
-              <Card key={rol.id}>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className={`p-3 rounded-xl bg-gradient-to-br ${gradient} shadow-sm`}>
-                      <Shield className="w-6 h-6 text-white" />
+      </section>
+
+      {/* Catálogo persistido en base de datos */}
+      <section aria-label="Catálogo de roles" className="pt-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-tertiary)] mb-3">Catálogo en base de datos</h2>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+              <Card key={i}><div className="animate-pulse h-24 bg-[var(--bg-tertiary)] rounded-lg" /></Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {roles.map(rol => {
+              const gradient = ROLE_COLORS[rol.nombre] || 'from-gray-500 to-gray-600';
+              return (
+                <Card key={rol.id}>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className={`p-3 rounded-lg bg-gradient-to-br ${gradient}`}>
+                        <Shield className="w-5 h-5 text-white" />
+                      </div>
+                      <Badge variant="neutral">#{rol.id}</Badge>
                     </div>
-                    <button onClick={() => openEdit(rol)} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--primary-600)] hover:bg-[var(--primary-50)] transition-all">
-                      <Pencil className="w-4 h-4" />
+                    <div>
+                      <h3 className="font-semibold text-[var(--text-primary)] capitalize">{rol.nombre}</h3>
+                      {rol.descripcion && (
+                        <p className="text-sm text-[var(--text-tertiary)] mt-1">{rol.descripcion}</p>
+                      )}
+                    </div>
+                    <button onClick={() => openEdit(rol)} className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--primary-700)] hover:bg-[var(--primary-50)] px-2 py-1 rounded-md transition-colors">
+                      <Pencil className="w-3.5 h-3.5" /> Editar descripción
                     </button>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-[var(--text-primary)]">{rol.nombre}</h3>
-                    {rol.descripcion && (
-                      <p className="text-sm text-[var(--text-tertiary)] mt-1">{rol.descripcion}</p>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editingRol ? 'Editar Rol' : 'Nuevo Rol'}>
         {editingRol && <p className="text-sm text-[var(--text-secondary)] mb-4">Editando: {editingRol.nombre}</p>}

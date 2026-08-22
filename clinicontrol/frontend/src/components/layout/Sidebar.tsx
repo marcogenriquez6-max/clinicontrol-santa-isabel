@@ -6,14 +6,15 @@ import { navGroups, type NavGroup } from '../../data/navigation';
 import Logo from '../ui/Logo';
 
 interface SidebarProps {
-  open: boolean;
-  onToggle: () => void;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
 }
 
-export default function Sidebar({ open, onToggle }: SidebarProps) {
+export default function Sidebar({ collapsed, onToggleCollapsed }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuthStore();
+  const open = !collapsed;
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     navGroups.forEach(g => {
@@ -42,16 +43,12 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
 
   return (
     <>
-      {open && (
-        <div className="fixed inset-0 bg-black/20 z-30 lg:hidden" onClick={onToggle} />
-      )}
       <aside
-        className="fixed left-0 top-0 bottom-0 z-40 flex flex-col transition-all duration-300 border-r"
+        className="fixed left-0 top-0 bottom-0 z-40 hidden lg:flex flex-col border-r transition-[width] duration-300"
         style={{
           backgroundColor: 'var(--bg-primary)',
           borderColor: 'var(--border-primary)',
-          width: open ? '16rem' : undefined,
-          transform: open ? 'translateX(0)' : undefined,
+          width: open ? '16rem' : '4.5rem',
         }}
       >
         {/* Logo + toggle */}
@@ -70,10 +67,11 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
             </div>
           )}
           <button
-            onClick={onToggle}
+            onClick={onToggleCollapsed}
             className="p-1 rounded-md hidden lg:flex transition-colors"
             style={{ color: 'var(--text-tertiary)' }}
-            title={open ? 'Colapsar menú' : 'Expandir menú'}
+            title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+            aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
           >
             <ChevronLeft className={`w-4 h-4 transition-transform ${open ? '' : 'rotate-180'}`} />
           </button>

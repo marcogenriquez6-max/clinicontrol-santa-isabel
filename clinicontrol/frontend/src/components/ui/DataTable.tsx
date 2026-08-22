@@ -2,6 +2,26 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, FileSpreadsheet, FileText, SlidersHorizontal } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+function getPath(obj: unknown, path: string): unknown {
+  return path.split('.').reduce<unknown>((acc, part) =>
+    acc != null && typeof acc === 'object' ? (acc as Record<string, unknown>)[part] : undefined, obj);
+}
+
+export interface TableFilter<T> {
+  key: string;
+  label: string;
+  options: { value: string; label: string }[];
+  predicate?: (item: T, value: string) => boolean;
+}
+
+export interface ServerConfig {
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  limit: number;
+  onPageChange: (p: number) => void;
+}
+
 export interface Column<T> {
   key: string;
   header: string;
@@ -28,9 +48,12 @@ interface DataTableProps<T> {
   className?: string;
   title?: string;
   subtitle?: string;
+  toolbar?: ReactNode;
+  filters?: TableFilter<T>[];
+  server?: ServerConfig;
 }
 
-export default function DataTable<T extends Record<string, any>>({
+export default function DataTable<T extends object>({
   columns,
   data = [],
   keyExtractor,
@@ -45,8 +68,12 @@ export default function DataTable<T extends Record<string, any>>({
   className = '',
   title,
   subtitle,
+  toolbar,
+  filters,
+  server,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(1);
@@ -69,24 +96,29 @@ export default function DataTable<T extends Record<string, any>>({
   const visibleCols = useMemo(() => columns.filter(c => !hiddenCols.has(c.key)), [columns, hiddenCols]);
 
   const filtered = useMemo(() => {
-    const items = Array.isArray(data) ? data : [];
+    let items = Array.isArray(data) ? data : [];
+    Object.entries(filterValues).forEach(([fk, fv]) => {
+      if (!fv) return;
+      const def = filters?.find(f => f.key === fk);
+      items = items.filter(item => def?.predicate ? def.predicate(item, fv) : String((item as Record<string, unknown>)[fk]) === fv);
+    });
     if (!search.trim()) return items;
     const q = search.toLowerCase();
     const keys = searchKeys || columns.map(c => c.key);
     return items.filter(item =>
       keys.some(key => {
-        const val = item[key];
+        const val = getPath(item, key);
         return val != null && String(val).toLowerCase().includes(q);
       })
     );
-  }, [data, search, searchKeys, columns]);
+  }, [data, search, searchKeys, columns, filterValues, filters]);
 
   const sorted = useMemo(() => {
     const items = Array.isArray(filtered) ? filtered : [];
     if (!sortKey) return items;
     return [...items].sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
+      const aVal = getPath(a, sortKey);
+      const bVal = getPath(b, sortKey);
       if (aVal == null) return 1;
       if (bVal == null) return -1;
       const cmp = String(aVal).localeCompare(String(bVal), 'es', { numeric: true });
@@ -95,8 +127,9 @@ export default function DataTable<T extends Record<string, any>>({
   }, [filtered, sortKey, sortDir]);
 
   const sortedArr = Array.isArray(sorted) ? sorted : [];
-  const totalPages = Math.max(1, Math.ceil(sortedArr.length / pageSize));
-  const paginated = sortedArr.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = server ? Math.max(1, server.totalPages) : Math.max(1, Math.ceil(sortedArr.length / pageSize));
+  const currentPage = server ? server.page : page;
+  const paginated = server ? sortedArr : sortedArr.slice((page - 1) * pageSize, page * pageSize);
 
   const handleSort = useCallback((key: string) => {
     setSortKey(prev => {
@@ -150,13 +183,26 @@ export default function DataTable<T extends Record<string, any>>({
   return (
     <div className={`bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-2xl shadow-[var(--shadow-card)] overflow-hidden ${className}`}>
       {/* Header */}
-      {(title || subtitle || searchable || onExportPdf || onExportExcel) && (
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-[var(--border-primary)]">
-          <div className="min-w-0 flex-1">
+      {(title || subtitle || searchable || toolbar || onExportPdf || onExportExcel || (filters && filters.length > 0)) && (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-[var(--border-primary)]">
+          <div className="min-w-0 flex-1 basis-full sm:basis-auto">
             {title && <h3 className="text-base font-semibold text-[var(--text-primary)]">{title}</h3>}
             {subtitle && <p className="text-sm text-[var(--text-tertiary)] mt-0.5">{subtitle}</p>}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            {filters && filters.length > 0 && filters.map(fdef => (
+              <select
+                key={fdef.key}
+                value={filterValues[fdef.key] ?? ''}
+                onChange={e => { setFilterValues(prev => ({ ...prev, [fdef.key]: e.target.value })); setPage(1); }}
+                className="h-10 px-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary-400)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all cursor-pointer"
+                aria-label={fdef.label}
+              >
+                <option value="">{fdef.label}: Todos</option>
+                {fdef.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            ))}
+            {toolbar}
             {searchable && (
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
@@ -244,17 +290,17 @@ export default function DataTable<T extends Record<string, any>>({
                 </td>
               </tr>
             ) : (
-              paginated.map((item, _idx) => (
+              paginated.map((item) => (
                 <tr key={keyExtractor(item)} className="hover:bg-[var(--primary-50)] dark:hover:bg-[rgba(99,102,241,0.04)] transition-colors duration-150">
                   {visibleCols.map(col => (
                     <td
                       key={col.key}
                       className={`px-4 py-3.5 text-sm text-[var(--text-secondary)] ${col.truncate ? 'max-w-[200px] truncate' : ''}`}
                       style={{ textAlign: col.align || 'left' }}
-                      title={col.truncate ? (col.render ? undefined : String(item[col.key] ?? '')) : undefined}
+                      title={col.truncate ? (col.render ? undefined : String(getPath(item, col.key) ?? '')) : undefined}
                     >
                       {col.render ? col.render(item) : (
-                        <span className="text-[var(--text-primary)]">{item[col.key] ?? '-'}</span>
+                        <span className="text-[var(--text-primary)]">{getPath(item, col.key) != null ? String(getPath(item, col.key)) : '-'}</span>
                       )}
                     </td>
                   ))}
@@ -269,17 +315,17 @@ export default function DataTable<T extends Record<string, any>>({
       {totalPages > 1 && (
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-t border-[var(--border-primary)] bg-[var(--bg-secondary)]">
           <p className="text-sm text-[var(--text-secondary)]">
-            <span className="font-medium text-[var(--text-primary)]">{(page - 1) * pageSize + 1}</span>
+            <span className="font-medium text-[var(--text-primary)]">{(currentPage - 1) * (server ? server.limit : pageSize) + 1}</span>
             {' — '}
-            <span className="font-medium text-[var(--text-primary)]">{Math.min(page * pageSize, sortedArr.length)}</span>
+            <span className="font-medium text-[var(--text-primary)]">{Math.min(currentPage * (server ? server.limit : pageSize), server ? server.totalItems : sortedArr.length)}</span>
             {' de '}
-            <span className="font-medium text-[var(--text-primary)]">{sortedArr.length}</span> registros
+            <span className="font-medium text-[var(--text-primary)]">{server ? server.totalItems : sortedArr.length}</span> registros
           </p>
           <div className="flex items-center gap-1">
             <button
               className="w-9 h-9 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] border border-[var(--border-primary)] transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-90"
-              disabled={page <= 1}
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              onClick={() => (server ? server.onPageChange(server.page - 1) : setPage(p => Math.max(1, p - 1)))}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -290,11 +336,11 @@ export default function DataTable<T extends Record<string, any>>({
                 <button
                   key={p}
                   className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-medium transition-all active:scale-90 ${
-                    p === page
-                      ? 'bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] text-white shadow-sm shadow-[var(--primary-200)]'
+                    p === currentPage
+                      ? 'bg-[var(--primary-700)] text-white shadow-sm shadow-[var(--primary-200)]'
                       : 'text-[var(--text-secondary)] hover:bg-[var(--bg-card)] hover:border-[var(--border-primary)] border border-transparent'
                   }`}
-                  onClick={() => setPage(p)}
+                  onClick={() => (server ? server.onPageChange(p) : setPage(p))}
                 >
                   {p}
                 </button>
@@ -302,8 +348,8 @@ export default function DataTable<T extends Record<string, any>>({
             )}
             <button
               className="w-9 h-9 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] border border-[var(--border-primary)] transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-90"
-              disabled={page >= totalPages}
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              onClick={() => (server ? server.onPageChange(server.page + 1) : setPage(p => Math.min(totalPages, p + 1)))}
             >
               <ChevronRight className="w-4 h-4" />
             </button>

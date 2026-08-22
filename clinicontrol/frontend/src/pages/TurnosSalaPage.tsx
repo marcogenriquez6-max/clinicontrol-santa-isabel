@@ -126,7 +126,7 @@ export default function TurnosSalaPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 shadow-sm p-5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg text-white flex items-center justify-center" style={{ backgroundColor: 'var(--primary-700)' }}>
             <Users className="w-5 h-5" />
           </div>
           <div>
@@ -199,7 +199,7 @@ export default function TurnosSalaPage() {
                     t.estado === 'atencion'
                       ? 'bg-emerald-500 ring-2 ring-emerald-200'
                       : t.estado === 'llamado'
-                      ? 'bg-blue-500 ring-2 ring-blue-200'
+                      ? 'bg-[var(--primary-600)] ring-2 ring-[var(--primary-200)]'
                       : t.estado === 'completado'
                       ? 'bg-gray-400'
                       : t.estado === 'cancelado'

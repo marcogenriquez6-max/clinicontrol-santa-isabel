@@ -1,14 +1,26 @@
 import { useEffect, useState, useRef } from 'react';
-import { Search, User, Activity, Pill, Calendar, Heart, Thermometer, Weight, FileText, Clock, Stethoscope, ChevronRight, Pencil, Trash2, Printer, X } from 'lucide-react';
+import { Search, User, Activity, Pill, Calendar, Heart, Thermometer, Weight, FileText, Clock, Stethoscope, ChevronRight, Pencil, Trash2, Printer, X, AlertTriangle, SearchX, UserPlus } from 'lucide-react';
 import { Button, Card, Modal, Input, StatusBadge, severityToStatus } from '../components/ui';
 import { toast } from '../components/ui/Toast';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
-import { pacienteExtraService, consultaCompletaService, cirugiaService } from '../api/services';
+import { pacienteExtraService, consultaCompletaService, cirugiaService, pacienteService } from '../api/services';
 import type { Paciente, PerfilPaciente, CirugiaPrevia } from '../types';
 import { useNavigate } from 'react-router-dom';
 
-const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 const formatDateShort = (dateStr: string) => new Date(dateStr).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' });
+
+const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+const calcEdad = (fn?: string) => {
+  if (!fn) return null;
+  const d = new Date(fn);
+  if (isNaN(d.getTime())) return null;
+  const hoy = new Date();
+  let e = hoy.getFullYear() - d.getFullYear();
+  const m = hoy.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && hoy.getDate() < d.getDate())) e--;
+  return e;
+};
 
 const DIAGNOSTICOS_FILTER = ['Todos', 'CARDIOVASCULAR', 'RESPIRATORIO', 'INFECCIOSO', 'TRAUMATOLOGICO', 'NEUROLOGICO', 'ONCOLOGICO', 'OTRO'];
 
@@ -18,6 +30,7 @@ export default function HistoriaClinicaPage() {
   const [searchResults, setSearchResults] = useState<Paciente[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [todosPacientes, setTodosPacientes] = useState<Paciente[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Paciente | null>(null);
   const [perfil, setPerfil] = useState<PerfilPaciente | null>(null);
   const [alergias, setAlergias] = useState<any[]>([]);
@@ -31,11 +44,16 @@ export default function HistoriaClinicaPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [filtroFecha, setFiltroFecha] = useState('');
   const [filtroDiagnostico, setFiltroDiagnostico] = useState('Todos');
+  const [consultaDetalle, setConsultaDetalle] = useState<any>(null);
   const [cirugiaForm, setCirugiaForm] = useState({
     nombreProcedimiento: '', fechaCirugia: '', hospital: '', medicoCirujano: '',
     tipoAnestesia: '', complicaciones: '', observaciones: '',
   });
   const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    pacienteService.getAll().then(res => setTodosPacientes(Array.isArray(res.data) ? res.data : [])).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (search.length < 2) {
@@ -120,56 +138,178 @@ export default function HistoriaClinicaPage() {
     return null;
   };
 
-  if (!selectedPatient) {
+  const renderDetalle = (entry: any) => {
+    const sintomas = getValue(entry, 'sintomas');
+    const temperatura = getValue(entry, 'temperatura');
+    const frecuenciaCardiaca = getValue(entry, 'frecuenciaCardiaca');
+    const presionArterial = getValue(entry, 'presionArterial');
+    const peso = getValue(entry, 'peso');
+    const saturacionOxigeno = getValue(entry, 'saturacionOxigeno');
+    const planTratamiento = getValue(entry, 'planTratamiento');
+    const observaciones = getValue(entry, 'observaciones', 'indicaciones');
+    const diagnosticos = entry.diagnosticos || [];
+    const recetas = entry.recetas || [];
     return (
-      <div className="max-w-2xl mx-auto pt-12">
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-xl bg-blue-600 text-white flex items-center justify-center mx-auto mb-4">
+      <div className="space-y-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5"><span className="w-2 h-0.5 rounded-full" style={{ backgroundColor: 'var(--primary-500)' }} />Motivo</p>
+          <p className="text-sm text-[var(--text-primary)]">{getValue(entry, 'motivoConsulta', 'motivo') || '-'}</p>
+          {sintomas && <p className="text-sm text-[var(--text-secondary)] mt-1">{sintomas}</p>}
+        </div>
+        {(temperatura ?? frecuenciaCardiaca ?? presionArterial ?? peso ?? saturacionOxigeno) && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><span className="w-2 h-0.5 rounded-full" style={{ backgroundColor: 'var(--danger-500)' }} />Signos Vitales</p>
+            <div className="flex flex-wrap gap-2">
+              {temperatura !== null && <span className="text-xs font-semibold rounded-md px-2 py-1" style={{ backgroundColor: 'var(--danger-50)', color: 'var(--danger-700)' }}><Thermometer className="w-3 h-3 inline mr-1" />{temperatura}°C</span>}
+              {frecuenciaCardiaca !== null && <span className="text-xs font-semibold rounded-md px-2 py-1" style={{ backgroundColor: 'var(--warning-50)', color: 'var(--warning-700)' }}><Heart className="w-3 h-3 inline mr-1" />{frecuenciaCardiaca} lpm</span>}
+              {presionArterial !== null && <span className="text-xs font-semibold rounded-md px-2 py-1" style={{ backgroundColor: 'var(--accent-50)', color: 'var(--accent-700)' }}><Activity className="w-3 h-3 inline mr-1" />{presionArterial} mmHg</span>}
+              {saturacionOxigeno !== null && <span className="text-xs font-semibold rounded-md px-2 py-1" style={{ backgroundColor: 'var(--info-50)', color: 'var(--info-700)' }}><Activity className="w-3 h-3 inline mr-1" />SpO₂ {saturacionOxigeno}%</span>}
+              {peso !== null && <span className="text-xs font-semibold rounded-md px-2 py-1" style={{ backgroundColor: 'var(--success-50)', color: 'var(--success-700)' }}><Weight className="w-3 h-3 inline mr-1" />{peso} kg</span>}
+            </div>
+          </div>
+        )}
+        {diagnosticos.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5"><span className="w-2 h-0.5 rounded-full" style={{ backgroundColor: 'var(--warning-500)' }} />Diagnósticos</p>
+            <ul className="space-y-1">
+              {diagnosticos.map((dx: any, i: number) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: 'var(--warning-500)' }} />
+                  <div>
+                    <span className="text-[var(--text-primary)]">{dx.descripcion || dx.diagnostico}</span>
+                    {dx.cie10?.codigo && <span className="text-xs px-1.5 py-0.5 rounded ml-1 font-semibold" style={{ backgroundColor: 'var(--primary-50)', color: 'var(--primary-700)' }}>{dx.cie10.codigo}</span>}
+                    {dx.tipo && <span className="text-xs text-[var(--text-tertiary)] ml-1">({dx.tipo})</span>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {recetas.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5"><span className="w-2 h-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-500)' }} />Recetas</p>
+            {recetas.map((receta: any, i: number) => {
+              const meds = receta.items || receta.medicamentos || [];
+              return meds.map((med: any, j: number) => (
+                <div key={`${i}-${j}`} className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
+                  <Pill className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--accent-600)' }} />
+                  <span className="font-medium">{med.medicamento?.nombre || med.nombre}</span>
+                  {med.dosis && <span className="text-[var(--text-tertiary)]">{med.dosis}</span>}
+                  {med.frecuencia && <span className="text-[var(--text-tertiary)]">c/{med.frecuencia}</span>}
+                  {med.duracion && <span className="text-[var(--text-tertiary)]">x {med.duracion}</span>}
+                </div>
+              ));
+            })}
+          </div>
+        )}
+        {planTratamiento && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5"><span className="w-2 h-0.5 rounded-full" style={{ backgroundColor: 'var(--success-500)' }} />Plan de Tratamiento</p>
+            <p className="text-sm text-[var(--text-primary)] whitespace-pre-wrap">{planTratamiento}</p>
+          </div>
+        )}
+        {observaciones && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5"><span className="w-2 h-0.5 rounded-full" style={{ backgroundColor: 'var(--info-500)' }} />Evolución / Notas</p>
+            <p className="text-sm text-[var(--text-primary)] whitespace-pre-wrap">{observaciones}</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (!selectedPatient) {
+    const q = norm(search.trim());
+    const base = q ? todosPacientes.filter(p => norm(`${p.nombre} ${p.apellido} ${p.ci} ${p.telefono || ''}`).includes(q)) : todosPacientes;
+    const extra = q.length >= 2 ? searchResults.filter(sr => sr.id != null && !base.some(b => b.id === sr.id)) : [];
+    const listaMostrar = [...base, ...extra];
+    return (
+      <div className="max-w-2xl mx-auto pt-10">
+        <div className="text-center mb-6">
+          <div className="w-14 h-14 rounded-xl text-white flex items-center justify-center mx-auto mb-4 shadow-lg" style={{ backgroundColor: 'var(--primary-600)', boxShadow: '0 8px 24px -6px var(--primary-300)' }}>
             <FileText className="w-7 h-7" />
           </div>
-          <h1 className="text-xl font-semibold text-gray-900">Historia Clínica</h1>
-          <p className="text-sm text-gray-500 mt-1">Busque un paciente para ver su historia clínica</p>
+          <h1 className="text-xl font-semibold text-[var(--text-primary)]">Historia Clínica</h1>
+          <p className="text-sm text-[var(--text-tertiary)] mt-1">Busque o seleccione un paciente para ver su historia clínica</p>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5" ref={searchRef}>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar paciente por nombre, C.I. o teléfono..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-gray-200 transition-all"
-            />
-            {searchLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />}
-          </div>
+        {/* Combobox de búsqueda con lista desplegable */}
+        <div className="relative" ref={searchRef}>
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-quaternary)]" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre, apellido o C.I...."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onFocus={() => setShowResults(true)}
+            className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl shadow-sm text-sm text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] outline-none focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all"
+          />
+          {searchLoading && <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[var(--primary-600)] border-t-transparent rounded-full animate-spin" />}
+
           {showResults && (
-            <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
-              {searchResults.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => handleSelectPatient(p)}
-                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 text-left"
-                >
-                  <div className="w-9 h-9 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4" />
+            <div className="absolute z-50 mt-2 w-full bg-white dark:bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl shadow-xl max-h-[340px] overflow-y-auto">
+              {loading && listaMostrar.length === 0 ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-[var(--primary-600)] border-t-transparent rounded-full animate-spin" />
+                  <span className="ml-3 text-sm text-[var(--text-tertiary)]">Cargando pacientes...</span>
+                </div>
+              ) : listaMostrar.length === 0 ? (
+                <div className="px-6 py-8 text-center">
+                  <SearchX className="w-10 h-10 mx-auto mb-3 text-[var(--neutral-300)]" />
+                  <p className="text-sm font-medium text-[var(--text-primary)] mb-1">No se encontraron pacientes con ese criterio</p>
+                  <p className="text-xs text-[var(--text-tertiary)] mb-4">Verifique la búsqueda o registre un nuevo paciente</p>
+                  <Button size="sm" onClick={() => navigate('/pacientes')}>
+                    <UserPlus className="w-4 h-4" /> Registrar Nuevo Paciente
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="sticky top-0 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider bg-white dark:bg-[var(--bg-card)] border-b border-[var(--border-secondary)]" style={{ color: 'var(--text-quaternary)' }}>
+                    Pacientes ({listaMostrar.length})
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{p.nombre} {p.apellido}</p>
-                    <p className="text-xs text-gray-500">{p.ci}{p.telefono ? ` | ${p.telefono}` : ''}</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-300" />
-                </button>
-              ))}
-            </div>
-          )}
-          {!searchLoading && search.length >= 2 && searchResults.length === 0 && (
-            <div className="text-center py-8">
-              <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">No se encontraron pacientes</p>
+                  {listaMostrar.map((p, i) => {
+                    const edad = calcEdad(p.fechaNacimiento);
+                    const consultas = (p as any).consultas;
+                    const ultima = Array.isArray(consultas) && consultas.length > 0 ? consultas[consultas.length - 1]?.fecha : null;
+                    return (
+                      <button
+                        key={p.id ?? i}
+                        onClick={() => handleSelectPatient(p)}
+                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left border-b border-[var(--border-secondary)] last:border-b-0 group"
+                      >
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm bg-[var(--primary-50)] text-[var(--primary-600)] border border-[var(--primary-200)]">
+                          {p.nombre.charAt(0)}{p.apellido?.charAt(0) || ''}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-slate-800 truncate">{p.nombre} {p.apellido}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500 flex-wrap">
+                            <span className="font-medium">CI: {p.ci}</span>
+                            {p.telefono && <><span className="text-slate-300">·</span><span>{p.telefono}</span></>}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                          {edad != null && (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--primary-50)] text-[var(--primary-600)] border border-[var(--primary-200)]">{edad} años</span>
+                          )}
+                          {(typeof ultima === 'string') && (
+                            <span className="text-[10px] text-slate-400">Últ.: {formatDateShort(ultima)}</span>
+                          )}
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[var(--primary-500)] transition-all group-hover:translate-x-0.5 flex-shrink-0" />
+                      </button>
+                    );
+                  })}
+                </>
+              )}
             </div>
           )}
         </div>
+
+        {!showResults && listaMostrar.length > 0 && (
+          <p className="text-center text-xs mt-4" style={{ color: 'var(--text-quaternary)' }}>
+            {listaMostrar.length} paciente(s) disponible(s) — haga clic en el buscador para ver la lista
+          </p>
+        )}
       </div>
     );
   }
@@ -177,42 +317,42 @@ export default function HistoriaClinicaPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Patient header */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-blue-600 text-white flex items-center justify-center">
-                <User className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">{selectedPatient.nombre} {selectedPatient.apellido}</h2>
-                <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                  <span>{selectedPatient.ci}</span>
-                  {perfil?.edad && <span>{perfil.edad} años</span>}
-                  {perfil?.grupoSanguineo && <span>{perfil.grupoSanguineo}</span>}
-                </div>
+      <div className="bg-white dark:bg-[var(--bg-card)] rounded-xl border border-[var(--border-primary)] shadow-sm overflow-hidden">
+        <div className="h-1" style={{ background: 'var(--primary-700)' }} />
+        <div className="px-6 py-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full text-white flex items-center justify-center font-bold text-lg shadow-md" style={{ backgroundColor: 'var(--primary-600)', boxShadow: '0 6px 16px -4px var(--primary-300)' }}>
+              {selectedPatient.nombre.charAt(0)}{selectedPatient.apellido?.charAt(0) || ''}
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">{selectedPatient.nombre} {selectedPatient.apellido}</h2>
+              <div className="flex items-center gap-2 mt-1.5 text-xs flex-wrap">
+                <span className="px-2 py-0.5 rounded-full bg-[var(--bg-secondary)] text-[var(--text-secondary)]">C.I. {selectedPatient.ci}</span>
+                {perfil?.edad && <span className="px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: 'var(--primary-50)', color: 'var(--primary-700)' }}>{perfil.edad} años</span>}
+                {perfil?.grupoSanguineo && <span className="px-2 py-0.5 rounded-full font-semibold border" style={{ backgroundColor: 'var(--danger-50)', color: 'var(--danger-700)', borderColor: 'var(--danger-200)' }}>{perfil.grupoSanguineo}</span>}
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-medium border" style={{ backgroundColor: 'var(--success-50)', color: 'var(--success-700)', borderColor: 'var(--success-200)' }}><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--success-500)' }} />Historia activa</span>
               </div>
             </div>
           </div>
-        </div>
-        <div className="px-6 py-3">
-          <div className="relative max-w-xs" ref={searchRef}>
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+          <div className="relative w-full sm:w-64" ref={searchRef}>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-quaternary)]" />
             <input
               type="text"
               placeholder="Cambiar paciente..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); if (e.target.value.length < 2) setShowResults(false); }}
-              className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-gray-200"
+              className="w-full pl-9 pr-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md text-sm text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] outline-none focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all"
             />
             {showResults && (
-              <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              <div className="absolute z-50 mt-1 w-full bg-white dark:bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-md shadow-lg max-h-60 overflow-y-auto divide-y divide-[var(--border-secondary)]">
                 {searchResults.map((p) => (
-                  <button key={p.id} onClick={() => handleSelectPatient(p)} className="w-full px-3 py-2 flex items-center gap-2 hover:bg-gray-50 text-left border-b border-gray-100 last:border-b-0">
-                    <User className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                  <button key={p.id} onClick={() => handleSelectPatient(p)} className="w-full px-3 py-2 flex items-center gap-2 hover:bg-[var(--primary-50)] text-left">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold" style={{ backgroundColor: 'var(--primary-100)', color: 'var(--primary-700)' }}>
+                      {p.nombre.charAt(0)}{p.apellido?.charAt(0) || ''}
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900">{p.nombre} {p.apellido}</p>
-                      <p className="text-xs text-gray-500">{p.ci}</p>
+                      <p className="text-sm text-[var(--text-primary)]">{p.nombre} {p.apellido}</p>
+                      <p className="text-xs text-[var(--text-tertiary)]">{p.ci}</p>
                     </div>
                   </button>
                 ))}
@@ -224,37 +364,41 @@ export default function HistoriaClinicaPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-8 h-8 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
-          <span className="ml-3 text-sm text-gray-500">Cargando historia clínica...</span>
+          <div className="w-8 h-8 border-2 border-[var(--primary-600)] border-t-transparent rounded-full animate-spin" />
+          <span className="ml-3 text-sm text-[var(--text-tertiary)]">Cargando historia clínica...</span>
         </div>
       ) : (
         <>
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Consultas', value: perfil?.totalConsultas ?? historial.length, icon: Activity },
-              { label: 'Recetas', value: perfil?.totalRecetas ?? historial.reduce((n, c) => n + ((c.recetas?.length) || 0), 0), icon: Pill },
-              { label: 'Citas Pendientes', value: perfil?.citasPendientes ?? 0, icon: Calendar },
-              { label: 'Última Visita', value: perfil?.ultimaConsulta ? formatDateShort(perfil.ultimaConsulta) : (sortedHistorial[0]?.fecha ? formatDateShort(sortedHistorial[0].fecha) : '-'), icon: Clock },
+              { label: 'Consultas', value: perfil?.totalConsultas ?? historial.length, icon: Activity, color: 'var(--primary-600)', bg: 'var(--primary-50)' },
+              { label: 'Recetas', value: perfil?.totalRecetas ?? historial.reduce((n, c) => n + ((c.recetas?.length) || 0), 0), icon: Pill, color: 'var(--accent-600)', bg: 'var(--accent-50)' },
+              { label: 'Citas Pendientes', value: perfil?.citasPendientes ?? 0, icon: Calendar, color: 'var(--warning-600)', bg: 'var(--warning-50)' },
+              { label: 'Última Visita', value: perfil?.ultimaConsulta ? formatDateShort(perfil.ultimaConsulta) : (sortedHistorial[0]?.fecha ? formatDateShort(sortedHistorial[0].fecha) : '-'), icon: Clock, color: 'var(--info-700)', bg: 'var(--info-50)' },
             ].map((stat) => (
-              <div key={stat.label} className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+              <div key={stat.label} className="bg-white dark:bg-[var(--bg-card)] rounded-xl border border-[var(--border-primary)] shadow-sm p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-md bg-gray-50 text-gray-400">
+                  <div className="p-2.5 rounded-lg" style={{ backgroundColor: stat.bg, color: stat.color }}>
                     <stat.icon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs text-gray-500">{stat.label}</p>
-                    <p className="text-base font-semibold text-gray-900">{stat.value}</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">{stat.label}</p>
+                    <p className="text-base font-semibold text-[var(--text-primary)] truncate">{stat.value}</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Allergies */}
-          <Card title="Alergias" subtitle="Alergias registradas">
+          {/* Allergies — borde rojo si hay alergia severa */}
+          <Card
+            title={<span><AlertTriangle className="w-4 h-4 inline mr-2 -mt-0.5" style={{ color: alergias.some((a) => { const s = (a.severidad || a.alergia?.severidad || '').toLowerCase(); return s === 'severa' || s === 'anafilactica'; }) ? 'var(--danger-600)' : 'var(--warning-600)' }} />Alergias</span>}
+            subtitle="Alergias registradas"
+            className={alergias.some((a) => { const s = (a.severidad || a.alergia?.severidad || '').toLowerCase(); return s === 'severa' || s === 'anafilactica'; }) ? 'border-l-4 border-l-[var(--danger-600)]' : alergias.length > 0 ? 'border-l-4 border-l-[var(--warning-500)]' : ''}
+          >
             {alergias.length === 0 ? (
-              <p className="text-sm text-gray-500">No se registraron alergias</p>
+              <p className="text-sm text-[var(--text-tertiary)]">No se registraron alergias</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {alergias.map((alergia, idx) => {
@@ -277,25 +421,25 @@ export default function HistoriaClinicaPage() {
             </Button>
           }>
             {cirugias.length === 0 ? (
-              <p className="text-sm text-gray-500">No se registraron cirugías previas</p>
+              <p className="text-sm text-[var(--text-tertiary)]">No se registraron cirugías previas</p>
             ) : (
               <div className="space-y-2">
                 {cirugias.map((c) => (
-                  <div key={c.id} className="flex items-start justify-between p-3 rounded-md bg-gray-50">
+                  <div key={c.id} className="flex items-start justify-between p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-secondary)] hover:border-[var(--primary-200)] transition-colors">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{c.nombreProcedimiento}</p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-gray-500">
+                      <p className="text-sm font-medium text-[var(--text-primary)]">{c.nombreProcedimiento}</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-[var(--text-tertiary)]">
                         {c.fechaCirugia && <span>{c.fechaCirugia}</span>}
                         {c.hospital && <span>{c.hospital}</span>}
                         {c.medicoCirujano && <span>{c.medicoCirujano}</span>}
                       </div>
-                      {c.complicaciones && <p className="text-xs text-red-500 mt-1">{c.complicaciones}</p>}
+                      {c.complicaciones && <p className="text-xs mt-1" style={{ color: 'var(--danger-600)' }}>{c.complicaciones}</p>}
                     </div>
                     <div className="flex gap-1 ml-3">
-                      <button onClick={() => { setEditingCirugia(c); setCirugiaForm({ nombreProcedimiento: c.nombreProcedimiento, fechaCirugia: c.fechaCirugia || '', hospital: c.hospital || '', medicoCirujano: c.medicoCirujano || '', tipoAnestesia: c.tipoAnestesia || '', complicaciones: c.complicaciones || '', observaciones: c.observaciones || '' }); setShowCirugiaModal(true); }} className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-200">
+                      <button onClick={() => { setEditingCirugia(c); setCirugiaForm({ nombreProcedimiento: c.nombreProcedimiento, fechaCirugia: c.fechaCirugia || '', hospital: c.hospital || '', medicoCirujano: c.medicoCirujano || '', tipoAnestesia: c.tipoAnestesia || '', complicaciones: c.complicaciones || '', observaciones: c.observaciones || '' }); setShowCirugiaModal(true); }} className="p-1.5 rounded-md text-[var(--text-quaternary)] hover:text-[var(--primary-600)] hover:bg-[var(--primary-50)] transition-colors">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => setDeleteTarget(c)} className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50">
+                      <button onClick={() => setDeleteTarget(c)} className="p-1.5 rounded-md text-[var(--text-quaternary)] hover:text-[var(--danger-600)] hover:bg-[var(--danger-50)] transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -306,33 +450,31 @@ export default function HistoriaClinicaPage() {
           </Card>
 
           {/* Timeline filters */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="bg-white dark:bg-[var(--bg-card)] rounded-xl border border-[var(--border-primary)] shadow-sm">
+            <div className="px-5 py-4 border-b border-[var(--border-secondary)] flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">Historial de Consultas</h3>
-                <p className="text-sm text-gray-500 mt-0.5">{sortedHistorial.length} registro(s)</p>
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">Historial de Consultas</h3>
+                <p className="text-sm text-[var(--text-tertiary)] mt-0.5">{sortedHistorial.length} registro(s)</p>
               </div>
               <div className="flex items-center gap-3">
                 {(filtroFecha || filtroDiagnostico !== 'Todos') && (
                   <button
                     onClick={() => { setFiltroFecha(''); setFiltroDiagnostico('Todos'); }}
-                    className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                    className="text-xs text-[var(--text-tertiary)] hover:text-[var(--primary-600)] flex items-center gap-1 transition-colors"
                   >
                     <X className="w-3 h-3" /> Limpiar
                   </button>
                 )}
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={filtroFecha}
-                    onChange={(e) => setFiltroFecha(e.target.value)}
-                    className="text-xs bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 text-gray-700 outline-none"
-                  />
-                </div>
+                <input
+                  type="date"
+                  value={filtroFecha}
+                  onChange={(e) => setFiltroFecha(e.target.value)}
+                  className="text-xs bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-2 py-1.5 text-[var(--text-secondary)] outline-none focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all"
+                />
                 <select
                   value={filtroDiagnostico}
                   onChange={(e) => setFiltroDiagnostico(e.target.value)}
-                  className="text-xs bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 text-gray-700 outline-none"
+                  className="text-xs bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-2 py-1.5 text-[var(--text-secondary)] outline-none focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all"
                 >
                   {DIAGNOSTICOS_FILTER.map(d => (
                     <option key={d} value={d}>{d}</option>
@@ -343,105 +485,59 @@ export default function HistoriaClinicaPage() {
             <div className="p-5">
               {sortedHistorial.length === 0 ? (
                 <div className="text-center py-8">
-                  <FileText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">No hay consultas registradas</p>
+                  <FileText className="w-8 h-8 text-[var(--neutral-300)] mx-auto mb-2" />
+                  <p className="text-sm text-[var(--text-tertiary)]">No hay consultas registradas</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-2.5">
                   {sortedHistorial.map((entry, idx) => {
                     const fecha = getValue(entry, 'fecha', 'consultaFecha', 'createdAt');
                     const medicoNombre = getValue(entry, 'medicoNombre', 'medico?.nombre') || [entry.medico?.nombre, entry.medico?.apellido].filter(Boolean).join(' ') || '-';
                     const especialidad = getValue(entry, 'especialidad', 'medico?.especialidad?.nombre') || '-';
                     const motivo = getValue(entry, 'motivoConsulta', 'motivo') || '-';
-                    const sintomas = getValue(entry, 'sintomas');
-                    const temperatura = getValue(entry, 'temperatura');
-                    const frecuenciaCardiaca = getValue(entry, 'frecuenciaCardiaca');
-                    const presionArterial = getValue(entry, 'presionArterial');
-                    const peso = getValue(entry, 'peso');
-                    const saturacionOxigeno = getValue(entry, 'saturacionOxigeno');
-                    const planTratamiento = getValue(entry, 'planTratamiento');
-                    const observaciones = getValue(entry, 'observaciones', 'indicaciones');
                     const diagnosticos = entry.diagnosticos || [];
                     const recetas = entry.recetas || [];
+                    const dObj = fecha ? new Date(fecha) : null;
 
                     return (
-                      <div key={entry.consultaId || entry.id || idx} className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <p className="text-xs text-gray-500 mb-1"><Clock className="w-3 h-3 inline mr-1" />{fecha ? formatDate(fecha) : 'Fecha no disponible'}</p>
-                            <div className="flex items-center gap-2">
-                              <Stethoscope className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm font-medium text-gray-900">{medicoNombre}</span>
-                              <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-md">{especialidad}</span>
-                            </div>
+                      <button
+                        key={entry.consultaId || entry.id || idx}
+                        onClick={() => setConsultaDetalle(entry)}
+                        className="w-full flex items-center gap-4 p-3 pl-4 bg-white dark:bg-[var(--bg-card)] rounded-xl border border-[var(--border-secondary)] shadow-sm hover:border-[var(--primary-300)] hover:shadow-md transition-all duration-200 text-left group relative overflow-hidden"
+                      >
+                        {/* Acento lateral que se ilumina al pasar el mouse */}
+                        <span className="absolute left-0 top-0 bottom-0 w-1 rounded-full transition-all duration-200 group-hover:w-1.5" style={{ backgroundColor: 'var(--primary-400)' }} />
+
+                        {/* Tile de fecha */}
+                        <div className="flex-shrink-0 w-14 text-center rounded-lg overflow-hidden border" style={{ borderColor: 'var(--primary-200)' }}>
+                          <div className="text-[9px] font-bold uppercase tracking-widest text-white py-0.5" style={{ backgroundColor: 'var(--primary-600)' }}>
+                            {dObj ? dObj.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '') : '—'}
+                          </div>
+                          <div className="py-1" style={{ backgroundColor: 'var(--primary-50)' }}>
+                            <span className="text-lg font-extrabold leading-none block" style={{ color: 'var(--primary-700)' }}>{dObj ? dObj.getDate() : '·'}</span>
+                            <span className="text-[9px] inline-flex items-center gap-0.5" style={{ color: 'var(--info-700)' }}><Clock className="w-2 h-2" />{dObj ? `${String(dObj.getHours()).padStart(2, '0')}:${String(dObj.getMinutes()).padStart(2, '0')}` : ''}</span>
                           </div>
                         </div>
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Motivo</p>
-                            <p className="text-sm text-gray-900">{motivo}</p>
-                            {sintomas && <p className="text-sm text-gray-600 mt-1">{sintomas}</p>}
+
+                        {/* Médico + motivo */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--info-50)', color: 'var(--info-700)' }}>
+                              <Stethoscope className="w-3 h-3" />
+                            </span>
+                            <span className="text-sm font-semibold text-[var(--text-primary)] truncate">{medicoNombre}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-md font-medium whitespace-nowrap" style={{ backgroundColor: 'var(--info-50)', color: 'var(--info-700)' }}>{especialidad}</span>
                           </div>
-                          {(temperatura ?? frecuenciaCardiaca ?? presionArterial ?? peso ?? saturacionOxigeno) && (
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Signos Vitales</p>
-                              <div className="flex flex-wrap gap-2">
-                                {temperatura !== null && <span className="text-xs font-medium rounded-md px-2 py-1 bg-red-50 text-red-700"><Thermometer className="w-3 h-3 inline mr-1" />{temperatura}°C</span>}
-                                {frecuenciaCardiaca !== null && <span className="text-xs font-medium rounded-md px-2 py-1 bg-pink-50 text-pink-700"><Heart className="w-3 h-3 inline mr-1" />{frecuenciaCardiaca} lpm</span>}
-                                {presionArterial !== null && <span className="text-xs font-medium rounded-md px-2 py-1 bg-purple-50 text-purple-700"><Activity className="w-3 h-3 inline mr-1" />{presionArterial} mmHg</span>}
-                                {saturacionOxigeno !== null && <span className="text-xs font-medium rounded-md px-2 py-1 bg-blue-50 text-blue-700"><Activity className="w-3 h-3 inline mr-1" />SpO₂ {saturacionOxigeno}%</span>}
-                                {peso !== null && <span className="text-xs font-medium rounded-md px-2 py-1 bg-green-50 text-green-700"><Weight className="w-3 h-3 inline mr-1" />{peso} kg</span>}
-                              </div>
-                            </div>
-                          )}
-                          {diagnosticos.length > 0 && (
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Diagnósticos</p>
-                              <ul className="space-y-1">
-                                {diagnosticos.map((dx: any, i: number) => (
-                                  <li key={i} className="flex items-start gap-2 text-sm">
-                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gray-400 flex-shrink-0" />
-                                    <div>
-                                      <span className="text-gray-900">{dx.descripcion || dx.diagnostico}</span>
-                                      {dx.cie10?.codigo && <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded ml-1">{dx.cie10.codigo}</span>}
-                                      {dx.tipo && <span className="text-xs text-gray-500 ml-1">({dx.tipo})</span>}
-                                    </div>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {recetas.length > 0 && (
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Recetas</p>
-                              {recetas.map((receta: any, i: number) => {
-                                const meds = receta.items || receta.medicamentos || [];
-                                return meds.map((med: any, j: number) => (
-                                  <div key={`${i}-${j}`} className="flex items-center gap-2 text-sm text-gray-900">
-                                    <Pill className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                                    <span className="font-medium">{med.medicamento?.nombre || med.nombre}</span>
-                                    {med.dosis && <span className="text-gray-500">{med.dosis}</span>}
-                                    {med.frecuencia && <span className="text-gray-500">c/{med.frecuencia}</span>}
-                                    {med.duracion && <span className="text-gray-500">x {med.duracion}</span>}
-                                  </div>
-                                ));
-                              })}
-                            </div>
-                          )}
-                          {planTratamiento && (
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Plan de Tratamiento</p>
-                              <p className="text-sm text-gray-900 whitespace-pre-wrap">{planTratamiento}</p>
-                            </div>
-                          )}
-                          {observaciones && (
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Evolución / Notas</p>
-                              <p className="text-sm text-gray-900 whitespace-pre-wrap">{observaciones}</p>
-                            </div>
-                          )}
+                          <p className="text-xs text-[var(--text-tertiary)] truncate mt-1 max-w-xl">{motivo}</p>
                         </div>
-                      </div>
+
+                        {/* Contadores + flecha */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {diagnosticos.length > 0 && <span className="text-xs font-semibold rounded-md px-2 py-0.5" style={{ backgroundColor: 'var(--warning-50)', color: 'var(--warning-700)' }}>{diagnosticos.length} Dx</span>}
+                          {recetas.length > 0 && <span className="text-xs font-semibold rounded-md px-2 py-0.5" style={{ backgroundColor: 'var(--accent-50)', color: 'var(--accent-700)' }}>{recetas.length} Rx</span>}
+                          <ChevronRight className="w-4 h-4 transition-all group-hover:translate-x-1 group-hover:text-[var(--primary-600)]" style={{ color: 'var(--neutral-300)' }} />
+                        </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -553,6 +649,29 @@ export default function HistoriaClinicaPage() {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Detalle de consulta */}
+      <Modal
+        isOpen={!!consultaDetalle}
+        onClose={() => setConsultaDetalle(null)}
+        title={consultaDetalle ? `Consulta — ${(() => { const f = getValue(consultaDetalle, 'fecha', 'consultaFecha', 'createdAt'); return f ? new Date(f).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Sin fecha'; })()}` : 'Consulta'}
+        size="lg"
+      >
+        {consultaDetalle && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 flex-wrap p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+              <Stethoscope className="w-4 h-4" style={{ color: 'var(--info-500)' }} />
+              <span className="text-sm font-semibold text-[var(--text-primary)]">
+                {getValue(consultaDetalle, 'medicoNombre', 'medico?.nombre') || [consultaDetalle.medico?.nombre, consultaDetalle.medico?.apellido].filter(Boolean).join(' ') || '-'}
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded-md font-medium" style={{ backgroundColor: 'var(--info-50)', color: 'var(--info-700)' }}>
+                {getValue(consultaDetalle, 'especialidad', 'medico?.especialidad?.nombre') || '-'}
+              </span>
+            </div>
+            {renderDetalle(consultaDetalle)}
           </div>
         )}
       </Modal>

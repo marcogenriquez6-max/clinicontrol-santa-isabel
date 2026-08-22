@@ -31,6 +31,7 @@ import {
   ResetPasswordDto,
 } from '../auth-dto/auth.dto';
 import { Public } from '../../../../common/decorators/public.decorator';
+import { Roles } from '../../../../common/decorators/roles.decorator';
 import {
   CurrentUser,
   ReqIp,
@@ -40,11 +41,11 @@ import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Autenticación')
 @Controller('auth')
-@Public()
 @SkipTransform()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('login')
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @HttpCode(HttpStatus.OK)
@@ -76,6 +77,7 @@ export class AuthController {
     return result;
   }
 
+  @Public()
   @Post('login/mfa')
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @HttpCode(HttpStatus.OK)
@@ -96,6 +98,7 @@ export class AuthController {
     );
   }
 
+  @Roles('admin')
   @Post('register')
   @Throttle({ default: { ttl: 60000, limit: 3 } })
   @HttpCode(HttpStatus.CREATED)
@@ -113,6 +116,7 @@ export class AuthController {
     });
   }
 
+  @Public()
   @Post('refresh')
   @Throttle({ default: { ttl: 60000, limit: 10 } })
   @HttpCode(HttpStatus.OK)
@@ -158,6 +162,7 @@ export class AuthController {
     );
   }
 
+  @Public()
   @Post('forgot-password')
   @Throttle({ default: { ttl: 60000, limit: 3 } })
   @HttpCode(HttpStatus.OK)
@@ -168,6 +173,7 @@ export class AuthController {
     return this.authService.forgotPassword(dto.email);
   }
 
+  @Public()
   @Post('reset-password')
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @HttpCode(HttpStatus.OK)

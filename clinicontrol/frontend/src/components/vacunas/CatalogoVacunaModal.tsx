@@ -8,7 +8,7 @@ interface CatalogoVacunaModalProps {
   onClose: () => void;
   editingVacuna: Vacuna | null;
   loading: boolean;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: Record<string, string>) => void;
 }
 
 const CATALOGO_VALIDACIONES = {

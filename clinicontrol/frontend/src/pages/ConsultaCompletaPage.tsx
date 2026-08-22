@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FileText, Calendar, Shield, ArrowLeft, Printer } from 'lucide-react';
-import { Button, Card, Input, Select, Textarea, Modal } from '../components/ui';
+import { FileText, Shield, ArrowLeft, Printer, MessageSquareText, HeartPulse, ClipboardList, Pill } from 'lucide-react';
+import { Button, Card, Input, Select, Textarea, Modal, Tabs } from '../components/ui';
 import { toast } from '../components/ui/Toast';
 import { useStore } from '../store';
 import {
@@ -19,7 +19,7 @@ const PRINT_STYLES = `
   @page { margin: 15mm; size: A4; }
   body * { visibility: hidden; }
   #reporte-consulta, #reporte-consulta * { visibility: visible; }
-  #reporte-consulta { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: white; font-family: 'Inter', sans-serif; z-index: 9999; overflow-y: auto; }
+  #reporte-consulta { display: block !important; position: absolute; left: 0; top: 0; width: 100%; height: auto; background: white; font-family: 'Inter', sans-serif; }
   #reporte-consulta .no-print { display: none !important; }
 }`;
 
@@ -132,13 +132,14 @@ export default function ConsultaCompletaPage() {
   const [medicamentos, setMedicamentos] = useState<MedicamentoEntry[]>([]);
   const [citasPaciente, setCitasPaciente] = useState<Cita[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [medSearchResults, setMedSearchResults] = useState<Record<number, any[]>>({});
-  const [cieSearchResults, setCieSearchResults] = useState<Record<number, any[]>>({});
+  interface CatalogoItem { id?: number; codigo?: string; nombre?: string; descripcion?: string; presentacion?: string; formaFarmaceutica?: string; concentracion?: string }
+  const [medSearchResults, setMedSearchResults] = useState<Record<number, CatalogoItem[]>>({});
+  const [cieSearchResults, setCieSearchResults] = useState<Record<number, CatalogoItem[]>>({});
   const [nextDiagKey, setNextDiagKey] = useState(1);
   const [nextMedKey, setNextMedKey] = useState(1);
   const [safetyModalOpen, setSafetyModalOpen] = useState(false);
   const [interaccionModalOpen, setInteraccionModalOpen] = useState(false);
-  const [interaccionData, setInteraccionData] = useState<any[]>([]);
+  const [interaccionData, setInteraccionData] = useState<{ farmacoA?: string; farmacoB?: string; severidad?: string; descripcion?: string; efecto?: string; recomendacion?: string }[]>([]);
   const [safetyPacienteId, setSafetyPacienteId] = useState(0);
   const [safetyMedIds, setSafetyMedIds] = useState<number[]>([]);
 
@@ -178,7 +179,7 @@ export default function ConsultaCompletaPage() {
     setDiagnosticos(diagnosticos.filter((d) => d.key !== key));
   };
 
-  const updateDiagnostico = (key: number, field: keyof DiagnosticoEntry, value: any) => {
+  const updateDiagnostico = (key: number, field: keyof DiagnosticoEntry, value: string | number | boolean) => {
     setDiagnosticos((prev) => prev.map((d) => d.key === key ? { ...d, [field]: value } : d));
   };
 
@@ -200,7 +201,7 @@ export default function ConsultaCompletaPage() {
     setMedicamentos(medicamentos.filter((m) => m.key !== key));
   };
 
-  const updateMedicamento = (key: number, field: keyof MedicamentoEntry, value: any) => {
+  const updateMedicamento = (key: number, field: keyof MedicamentoEntry, value: string | number) => {
     // Updater funcional: selectMedicamento hace varias actualizaciones seguidas;
     // con el closure directo se pisaban entre sí y se perdía medicamentoId.
     setMedicamentos((prev) => prev.map((m) => m.key === key ? { ...m, [field]: value } : m));
@@ -217,9 +218,9 @@ export default function ConsultaCompletaPage() {
     }
   };
 
-  const selectCie = (key: number, item: any) => {
+  const selectCie = (key: number, item: CatalogoItem) => {
     updateDiagnostico(key, 'cie10Search', `${item.codigo} - ${item.descripcion}`);
-    updateDiagnostico(key, 'cie10Id', item.id);
+    if (item.id !== undefined) updateDiagnostico(key, 'cie10Id', item.id);
     updateDiagnostico(key, 'descripcion', item.descripcion || '');
     setCieSearchResults({ ...cieSearchResults, [key]: [] });
   };
@@ -235,10 +236,11 @@ export default function ConsultaCompletaPage() {
     }
   };
 
-  const selectMedicamento = (key: number, item: any) => {
-    updateMedicamento(key, 'search', item.nombre);
+  const selectMedicamento = (key: number, item: CatalogoItem) => {
+    if (item.id === undefined) return;
+    updateMedicamento(key, 'search', item.nombre ?? '');
     updateMedicamento(key, 'medicamentoId', item.id);
-    updateMedicamento(key, 'medicamentoNombre', item.nombre);
+    updateMedicamento(key, 'medicamentoNombre', item.nombre ?? '');
     setMedSearchResults({ ...medSearchResults, [key]: [] });
   };
 
@@ -289,7 +291,7 @@ export default function ConsultaCompletaPage() {
       const res = await interaccionService.verificar(ids);
       setInteraccionData(res.data || []);
       setInteraccionModalOpen(true);
-    } catch (error) {
+    } catch {
       toast('error', 'Error', 'No se pudieron verificar las interacciones.');
     }
   };
@@ -349,7 +351,7 @@ export default function ConsultaCompletaPage() {
         navigate('/consultas');
         return;
       }
-    } catch (error) {
+    } catch {
       toast('error', 'Error', 'No se pudo guardar la consulta.');
     } finally {
       setSubmitting(false);
@@ -383,9 +385,9 @@ export default function ConsultaCompletaPage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Patient & Doctor Selection */}
+        {/* Patient & Doctor Selection — compacto */}
         <Card title="Paciente y Médico" subtitle="Seleccione los participantes de la consulta" className="bg-white dark:bg-[var(--bg-card)]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <Select
               label="Paciente"
               required
@@ -412,8 +414,6 @@ export default function ConsultaCompletaPage() {
               error={errors.medicoId?.message as string}
               {...register('medicoId', { required: 'El médico es requerido' })}
             />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <Select
               label="Cita (opcional)"
               options={[
@@ -425,7 +425,6 @@ export default function ConsultaCompletaPage() {
               ]}
               {...register('citaId')}
             />
-            <div />
           </div>
           <div className="flex flex-wrap items-center gap-6">
             <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
@@ -448,83 +447,99 @@ export default function ConsultaCompletaPage() {
           </div>
         </Card>
 
-        {/* S - Subjetivo */}
-        <Card title={<><FileText className="w-5 h-5 inline mr-2 text-black dark:text-[var(--info-500)]" />S - Subjetivo</>} subtitle="Información subjetiva del paciente" className="bg-white dark:bg-[var(--bg-card)] border-l-4 border-l-[var(--info-500)]">
-          <div className="space-y-4">
-            <Textarea label="Motivo de consulta" required placeholder="¿Por qué consulta el paciente?" rows={3} error={errors.motivoConsulta?.message as string} {...register('motivoConsulta', VALIDACION.MIN5)} />
-            <Textarea label="Síntomas" placeholder="Describa los síntomas del paciente..." rows={4} error={errors.sintomas?.message as string} {...register('sintomas')} />
-            <Textarea label="Enfermedad actual" placeholder="Historia de la enfermedad actual..." rows={4} error={errors.enfermedadActual?.message as string} {...register('enfermedadActual')} />
-          </div>
-        </Card>
+        {/* SOAP en pestañas — reduce la fatiga visual y la longitud vertical */}
+        <Tabs
+          variant="pills"
+          defaultTab="subjetivo"
+          tabs={[
+            {
+              id: 'subjetivo',
+              label: 'S · Subjetivo',
+              icon: <MessageSquareText className="w-4 h-4" style={{ color: 'var(--info-500)' }} />,
+              content: (
+                <div className="space-y-3 rounded-2xl p-5 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)', borderLeft: '4px solid var(--info-500)' }}>
+                  <Textarea label="Motivo de consulta" required placeholder="¿Por qué consulta el paciente?" rows={2} error={errors.motivoConsulta?.message as string} {...register('motivoConsulta', VALIDACION.MIN5)} />
+                  <Textarea label="Síntomas" placeholder="Describa los síntomas del paciente..." rows={3} error={errors.sintomas?.message as string} {...register('sintomas')} />
+                  <Textarea label="Enfermedad actual" placeholder="Historia de la enfermedad actual..." rows={3} error={errors.enfermedadActual?.message as string} {...register('enfermedadActual')} />
+                </div>
+              ),
+            },
+            {
+              id: 'objetivo',
+              label: 'O · Objetivo',
+              icon: <HeartPulse className="w-4 h-4" style={{ color: 'var(--success-600)' }} />,
+              content: (
+                <div className="space-y-3 rounded-2xl p-5 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)', borderLeft: '4px solid var(--success-500)' }}>
+                  <VitalSignsGrid register={register} errors={errors} peso={peso} talla={talla} />
+                  <Textarea label="Examen físico" required placeholder="Hallazgos del examen físico..." rows={3} error={errors.examenFisico?.message as string} {...register('examenFisico', VALIDACION.REQUIRED)} />
+                </div>
+              ),
+            },
+            {
+              id: 'evaluacion',
+              label: 'A · Evaluación',
+              icon: <ClipboardList className="w-4 h-4" style={{ color: 'var(--warning-600)' }} />,
+              content: (
+                <div className="space-y-3 rounded-2xl p-5 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)', borderLeft: '4px solid var(--warning-500)' }}>
+                  <Textarea label="Evaluación" required placeholder="Evaluación del médico..." rows={3} error={errors.evaluacion?.message as string} {...register('evaluacion', VALIDACION.REQUIRED)} />
+                  <DiagnosticoList
+                    diagnosticos={diagnosticos}
+                    onAdd={addDiagnostico}
+                    onRemove={removeDiagnostico}
+                    onUpdate={updateDiagnostico}
+                    onCieSearch={handleCieSearch}
+                    onSelectCie={selectCie}
+                    cieSearchResults={cieSearchResults}
+                  />
+                </div>
+              ),
+            },
+            {
+              id: 'plan',
+              label: 'P · Plan',
+              icon: <Pill className="w-4 h-4" style={{ color: 'var(--accent-600)' }} />,
+              content: (
+                <div className="space-y-3 rounded-2xl p-5 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)', borderLeft: '4px solid var(--accent-500)' }}>
+                  <Textarea label="Plan de tratamiento" required placeholder="Describa el plan de tratamiento..." rows={2} error={errors.planTratamiento?.message as string} {...register('planTratamiento', VALIDACION.MIN5)} />
+                  <Textarea label="Indicaciones" placeholder="Indicaciones para el paciente..." rows={2} {...register('indicaciones')} />
+                  <MedicamentoList
+                    medicamentos={medicamentos}
+                    onAdd={addMedicamento}
+                    onRemove={removeMedicamento}
+                    onUpdate={updateMedicamento}
+                    onMedSearch={handleMedSearch}
+                    onSelectMed={selectMedicamento}
+                    medSearchResults={medSearchResults}
+                    onVerificarSeguridad={() => {
+                      const id = Number(pacienteId);
+                      if (!id) { toast('warning', 'Seleccione un paciente'); return; }
+                      const ids = medicamentos.map(m => m.medicamentoId).filter((id): id is number => id != null);
+                      if (ids.length === 0) { toast('info', 'Agregue al menos 1 medicamento'); return; }
+                      setSafetyPacienteId(id);
+                      setSafetyMedIds(ids);
+                      setSafetyModalOpen(true);
+                    }}
+                    onVerificarInteracciones={verificarInteracciones}
+                  />
 
-        {/* O - Objetivo */}
-        <Card title={<><FileText className="w-5 h-5 inline mr-2 text-black dark:text-[var(--success-600)]" />O - Objetivo</>} subtitle="Signos vitales y hallazgos objetivos" className="bg-white dark:bg-[var(--bg-card)] border-l-4 border-l-[var(--success-500)]">
-          <VitalSignsGrid register={register} errors={errors} peso={peso} talla={talla} />
-          <Textarea label="Examen físico" required placeholder="Hallazgos del examen físico..." rows={4} error={errors.examenFisico?.message as string} {...register('examenFisico', VALIDACION.REQUIRED)} />
-        </Card>
-
-        {/* A - Assessment */}
-        <Card title={<><FileText className="w-5 h-5 inline mr-2 text-black dark:text-[var(--warning-600)]" />A - Evaluación</>} subtitle="Evaluación y diagnósticos" className="bg-white dark:bg-[var(--bg-card)] border-l-4 border-l-[var(--warning-500)]">
-          <Textarea label="Evaluación" required placeholder="Evaluación del médico..." rows={4} error={errors.evaluacion?.message as string} {...register('evaluacion', VALIDACION.REQUIRED)} />
-          <DiagnosticoList
-            diagnosticos={diagnosticos}
-            onAdd={addDiagnostico}
-            onRemove={removeDiagnostico}
-            onUpdate={updateDiagnostico}
-            onCieSearch={handleCieSearch}
-            onSelectCie={selectCie}
-            cieSearchResults={cieSearchResults}
-          />
-        </Card>
-
-        {/* P - Plan */}
-        <Card title={<><FileText className="w-5 h-5 inline mr-2 text-black dark:text-[var(--accent-600)]" />P - Plan</>} subtitle="Plan de tratamiento y recetas" className="bg-white dark:bg-[var(--bg-card)] border-l-4 border-l-[var(--accent-500)]">
-          <Textarea label="Plan de tratamiento" required placeholder="Describa el plan de tratamiento..." rows={3} error={errors.planTratamiento?.message as string} {...register('planTratamiento', VALIDACION.MIN5)} />
-          <div className="mt-4">
-            <Textarea label="Indicaciones" placeholder="Indicaciones para el paciente..." rows={3} {...register('indicaciones')} />
-          </div>
-          <MedicamentoList
-            medicamentos={medicamentos}
-            onAdd={addMedicamento}
-            onRemove={removeMedicamento}
-            onUpdate={updateMedicamento}
-            onMedSearch={handleMedSearch}
-            onSelectMed={selectMedicamento}
-            medSearchResults={medSearchResults}
-            onVerificarSeguridad={() => {
-              const id = Number(pacienteId);
-              if (!id) { toast('warning', 'Seleccione un paciente'); return; }
-              const ids = medicamentos.map(m => m.medicamentoId).filter((id): id is number => id != null);
-              if (ids.length === 0) { toast('info', 'Agregue al menos 1 medicamento'); return; }
-              setSafetyPacienteId(id);
-              setSafetyMedIds(ids);
-              setSafetyModalOpen(true);
-            }}
-            onVerificarInteracciones={verificarInteracciones}
-          />
-
-          {/* Próximo control */}
-          <div className="mt-6">
-            <div className="relative">
-              <Calendar className="absolute left-3 top-9 w-4 h-4 text-[var(--text-tertiary)]" />
-              <Input label="Próximo control" type="date" className="pl-10" {...register('proximoControl')} />
-            </div>
-          </div>
-
-          {/* Incapacidad */}
-          <div className="mt-6 p-4 border border-[var(--border-primary)] rounded-lg">
-            <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">Incapacidad médica</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input label="Días de incapacidad" type="number" placeholder="Ej: 3" error={errors.incapacidadDias?.message as string} {...register('incapacidadDias', { ...VALIDACION.INCAPACIDAD })} />
-              <Input label="Fecha inicio" type="date" error={errors.incapacidadFechaInicio?.message as string} {...register('incapacidadFechaInicio')} />
-              <Input label="Fecha fin" type="date" error={errors.incapacidadFechaFin?.message as string} {...register('incapacidadFechaFin')} />
-            </div>
-          </div>
-        </Card>
+                  {/* Próximo control e incapacidad — una sola fila compacta */}
+                  <div className="pt-3 mt-1 border-t" style={{ borderColor: 'var(--border-secondary)' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                      <Input label="Próximo control" type="date" {...register('proximoControl')} />
+                      <Input label="Días de incapacidad" type="number" placeholder="Ej: 3" error={errors.incapacidadDias?.message as string} {...register('incapacidadDias', { ...VALIDACION.INCAPACIDAD })} />
+                      <Input label="Inicio incapacidad" type="date" error={errors.incapacidadFechaInicio?.message as string} {...register('incapacidadFechaInicio')} />
+                      <Input label="Fin incapacidad" type="date" error={errors.incapacidadFechaFin?.message as string} {...register('incapacidadFechaFin')} />
+                    </div>
+                  </div>
+                </div>
+              ),
+            },
+          ]}
+        />
 
         {/* Submit */}
-        <div className="flex justify-end pt-4">
-          <Button type="submit" size="lg" loading={submitting}>
+        <div className="sticky bottom-4 flex justify-end z-20">
+          <Button type="submit" size="lg" loading={submitting} className="shadow-lg">
             <FileText className="w-5 h-5 mr-2" />Guardar Consulta Completa
           </Button>
         </div>
@@ -549,7 +564,7 @@ export default function ConsultaCompletaPage() {
           <div className="space-y-3 max-h-[60vh] overflow-y-auto">
             {[...interaccionData].sort((a, b) => {
               const order = ['contraindicada', 'severa', 'moderada', 'leve'];
-              return order.indexOf(a.severidad) - order.indexOf(b.severidad);
+              return order.indexOf(a.severidad ?? '') - order.indexOf(b.severidad ?? '');
             }).map((i, idx) => (
               <div key={idx} className="relative p-4 bg-[var(--bg-secondary)] rounded-lg border border-l-4" style={{ borderLeftColor: i.severidad === 'contraindicada' ? 'var(--danger-600)' : i.severidad === 'severa' ? 'var(--danger-500)' : i.severidad === 'moderada' ? 'var(--warning-500)' : 'var(--warning-500)' }}>
                 <div className="flex items-center gap-2 mb-1">

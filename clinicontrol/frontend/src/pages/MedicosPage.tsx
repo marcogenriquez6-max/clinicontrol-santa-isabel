@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Stethoscope } from 'lucide-react';
 import { Button, Modal, Input, Select, FormSection, StatusBadge, Card } from '../components/ui';
+import PageHeader from '../components/ui/PageHeader';
 import DataTable from '../components/ui/DataTable';
 import type { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -35,7 +36,7 @@ export default function MedicosPage() {
     setIsModalOpen(true);
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: Record<string, string>) => {
     setFormLoading(true);
     try {
       const payload = {
@@ -80,22 +81,23 @@ export default function MedicosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between pb-5 mb-6 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">
-            <Stethoscope className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">Médicos</h1>
-            <p className="text-sm text-gray-500">{medicos.length} activos</p>
-          </div>
-        </div>
-        <Button onClick={() => handleOpenModal()}><Plus className="w-4 h-4" />Nuevo Médico</Button>
-      </div>
+      <PageHeader
+        icon={Stethoscope}
+        title="Médicos"
+        subtitle="Directorio médico y especialidades"
+        stats={[{ label: 'Activos', value: medicos.length }]}
+        action={<Button onClick={() => handleOpenModal()}><Plus className="w-4 h-4" />Nuevo Médico</Button>}
+      />
 
       <Card padding={false}>
         <DataTable className="table-premium" columns={columns} data={medicos} keyExtractor={(m) => m.id!}
-          searchPlaceholder="Buscar por nombre o especialidad..." searchKeys={['nombre', 'apellido']} />
+          searchPlaceholder="Buscar por nombre o especialidad..." searchKeys={['nombre', 'apellido', 'especialidad.nombre']}
+          filters={[{
+            key: 'especialidad',
+            label: 'Especialidad',
+            options: [...new Set(medicos.map(m => m.especialidad?.nombre).filter(Boolean))].map(n => ({ value: n as string, label: n as string })),
+            predicate: (m, v) => m.especialidad?.nombre === v,
+          }]} />
       </Card>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}

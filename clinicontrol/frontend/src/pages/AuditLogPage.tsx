@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ClipboardList, Search, ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
+import { ClipboardList, Search } from 'lucide-react';
 import { PageHeader, Card, Input, Select } from '../components/ui';
+import DataTable from '../components/ui/DataTable';
 import { toast } from '../components/ui/Toast';
 import api from '../api/axios';
 
@@ -11,7 +12,7 @@ interface AuditEntry {
   action: string;
   entityType: string;
   entityId: string;
-  changes?: Record<string, any>;
+  changes?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
   createdAt: string;
@@ -28,7 +29,7 @@ export default function AuditLogPage() {
   const loadLogs = async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit };
+      const params: Record<string, string | number> = { page, limit };
       if (filters.entityType) params.entityType = filters.entityType;
       if (filters.userId) params.userId = filters.userId;
       if (filters.action) params.action = filters.action;
@@ -42,7 +43,13 @@ export default function AuditLogPage() {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { loadLogs(); }, [page]);
+  useEffect(() => {
+    let cancelado = false;
+    const init = async () => { if (!cancelado) await loadLogs(); };
+    init();
+    return () => { cancelado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   const handleFilter = () => {
     setPage(1);
@@ -55,7 +62,6 @@ export default function AuditLogPage() {
     <div className="space-y-6 animate-in-up">
       <PageHeader
         icon={ClipboardList}
-        gradient="from-slate-600 to-slate-800"
         title="Registro de Auditoría"
         subtitle="Todas las acciones del sistema"
         stats={[{ label: 'registros', value: total }]}
@@ -79,67 +85,36 @@ export default function AuditLogPage() {
         </div>
       </Card>
 
-      <Card>
-        {loading ? (
-          <div className="text-center py-8 text-sm text-[var(--text-tertiary)]">Cargando...</div>
-        ) : logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-[var(--text-tertiary)]">
-            <Inbox className="w-12 h-12 mb-3" />
-            <p className="text-sm font-medium">No se encontraron registros</p>
-            <p className="text-xs mt-1">Intente ajustar los filtros de búsqueda</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm table-premium">
-              <thead>
-                <tr className="border-b border-[var(--border-primary)]">
-                  {['Fecha', 'Usuario', 'Acción', 'Entidad', 'ID', 'IP'].map(h => (
-                    <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map(entry => (
-                  <tr key={entry.id} className="border-b border-[var(--border-primary)] hover:bg-[var(--bg-secondary)] transition-colors">
-                    <td className="px-3 py-2 text-xs text-[var(--text-secondary)] whitespace-nowrap">
-                      {new Date(entry.createdAt).toLocaleString('es-ES')}
-                    </td>
-                    <td className="px-3 py-2 text-[var(--text-primary)]">{entry.userEmail || entry.userId}</td>
-                    <td className="px-3 py-2">
-                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
-                        entry.action === 'LOGIN' ? 'bg-[var(--success-100)] text-[var(--success-700)]' :
-                        entry.action === 'LOGOUT' ? 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)]' :
-                        entry.action === 'DELETE' ? 'bg-[var(--danger-100)] text-[var(--danger-700)]' :
-                        entry.action === 'CREATE' ? 'bg-[var(--info-100)] text-[var(--info-500)]' :
-                        'bg-[var(--warning-100)] text-[var(--warning-700)]'
-                      }`}>{entry.action}</span>
-                    </td>
-                    <td className="px-3 py-2 text-[var(--text-secondary)]">{entry.entityType}</td>
-                    <td className="px-3 py-2 text-[var(--text-secondary)]">{entry.entityId}</td>
-                    <td className="px-3 py-2 text-xs text-[var(--text-tertiary)]">{entry.ipAddress || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-4 border-t border-[var(--border-primary)]">
-            <span className="text-sm text-[var(--text-tertiary)]">{(page - 1) * limit + 1}-{Math.min(page * limit, total)} de {total}</span>
-            <div className="flex items-center gap-1">
-              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] disabled:opacity-30 transition-colors">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="px-3 py-1 text-sm font-medium text-[var(--text-primary)]">{page} / {totalPages}</span>
-              <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] disabled:opacity-30 transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
+      <Card className="!p-0 overflow-hidden">
+        <DataTable
+          columns={[
+            { key: 'createdAt', header: 'Fecha', width: '170px', render: (e) => (
+              <span className="text-xs whitespace-nowrap">{new Date(e.createdAt).toLocaleString('es-ES')}</span>
+            ) },
+            { key: 'userEmail', header: 'Usuario', render: (e) => e.userEmail || e.userId },
+            { key: 'action', header: 'Acción', width: '120px', render: (e) => (
+              <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
+                e.action === 'LOGIN' ? 'bg-[var(--success-100)] text-[var(--success-700)]' :
+                e.action === 'LOGOUT' ? 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)]' :
+                e.action === 'DELETE' ? 'bg-[var(--danger-100)] text-[var(--danger-700)]' :
+                e.action === 'CREATE' ? 'bg-[var(--info-100)] text-[var(--info-500)]' :
+                'bg-[var(--warning-100)] text-[var(--warning-700)]'
+              }`}>{e.action}</span>
+            ) },
+            { key: 'entityType', header: 'Entidad' },
+            { key: 'entityId', header: 'ID', width: '80px' },
+            { key: 'ipAddress', header: 'IP', width: '130px', render: (e) => (
+              <span className="text-xs">{e.ipAddress || '-'}</span>
+            ) },
+          ]}
+          data={logs}
+          keyExtractor={(e) => e.id}
+          searchable={false}
+          loading={loading}
+          emptyMessage="No se encontraron registros. Ajuste los filtros de búsqueda."
+          pageSize={limit}
+          server={{ page, totalPages, totalItems: total, limit, onPageChange: setPage }}
+        />
       </Card>
     </div>
   );

@@ -172,7 +172,7 @@ export default function TurnosTVPage() {
       fullscreen ? 'rounded-none border-0 h-screen flex flex-col' : ''
     }`}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-900 px-6 lg:px-10 py-6 lg:py-8 text-center flex-shrink-0">
+      <div className="bg-[var(--primary-900)] px-6 lg:px-10 py-6 lg:py-8 text-center flex-shrink-0">
         <Monitor className={`${fullscreen ? 'w-16 h-16' : 'w-10 h-10'} text-white/40 mx-auto mb-2`} />
         <h2 className={`font-bold text-white mb-1 ${fullscreen ? 'text-4xl' : 'text-2xl'}`}>
           {config.nombreClinica || 'Clínica Santa Isabel'}
@@ -208,14 +208,14 @@ export default function TurnosTVPage() {
                 <div key={t.id || t.numero || idx}
                   className={`flex items-center gap-4 p-4 lg:p-5 rounded-xl border transition-all duration-300 ${
                     idx === 0
-                      ? 'bg-gradient-to-r from-[var(--warning-50)] to-[var(--warning-50)] border-[var(--warning-200)] shadow-md shadow-[var(--warning-100)]'
+                      ? 'bg-[var(--warning-50)] border border-[var(--warning-300)]'
                       : 'bg-[var(--bg-primary)] border-[var(--border-primary)] hover:border-[var(--warning-200)]'
                   }`}
                 >
                   <div className={`flex items-center justify-center font-bold text-white shadow-sm ${
                     idx === 0
-                      ? 'w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-2xl lg:text-3xl ring-2 ring-[var(--warning-200)]'
-                      : 'w-14 h-14 lg:w-16 lg:h-16 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-xl lg:text-2xl'
+                      ? 'w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-[var(--warning-500)] text-white text-2xl lg:text-3xl'
+                      : 'w-14 h-14 lg:w-16 lg:h-16 rounded-xl bg-[var(--primary-700)] text-white text-xl lg:text-2xl'
                   }`}>
                     #{t.numero}
                   </div>
@@ -265,7 +265,7 @@ export default function TurnosTVPage() {
                 <div className="space-y-4">
                   {turnosAtencion.map(t => (
                     <div key={t.id || t.numero}
-                      className="p-6 lg:p-8 bg-gradient-to-br from-[var(--success-50)] to-[var(--success-50)] rounded-2xl border-2 border-[var(--success-200)] text-center"
+                      className="p-6 lg:p-8 bg-[var(--success-50)] rounded-xl border border-[var(--success-200)] text-center"
                     >
                       <p className={`text-[var(--text-tertiary)] mb-1 ${fullscreen ? 'text-lg' : 'text-sm'}`}>
                         {t.medicoNombre}
@@ -354,7 +354,7 @@ export default function TurnosTVPage() {
         <div className="mb-6">
           <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 shadow-sm p-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg text-white flex items-center justify-center" style={{ backgroundColor: 'var(--primary-700)' }}>
                 <Tv className="w-5 h-5" />
               </div>
               <div>

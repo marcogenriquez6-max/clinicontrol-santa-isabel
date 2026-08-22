@@ -153,7 +153,7 @@ const ALERGIA_VALIDACIONES = {
           <>
             <div className="flex items-center justify-between mb-4 p-4 bg-[var(--primary-50)] dark:bg-indigo-500/10 rounded-lg">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-full bg-[var(--primary-600)] flex items-center justify-center shrink-0">
                   <User className="w-5 h-5 text-white" />
                 </div>
                 <div>

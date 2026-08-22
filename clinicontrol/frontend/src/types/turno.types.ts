@@ -1,5 +1,5 @@
 export interface Turno {
-  id: string;
+  id: number;
   numero: number;
   pacienteNombre: string;
   pacienteCI: string;

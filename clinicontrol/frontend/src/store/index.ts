@@ -43,9 +43,9 @@ interface AppState {
   updateCita: (id: number, data: Partial<Cita>) => Promise<void>;
   deleteCita: (id: number) => Promise<void>;
   addTurno: (turno: Turno) => void;
-  updateTurnoEstado: (id: string, estado: Turno['estado']) => void;
-  marcarTurnoPagado: (id: string) => void;
-  removeTurno: (id: string) => void;
+  updateTurnoEstado: (id: number, estado: Turno['estado']) => void;
+  marcarTurnoPagado: (id: number) => void;
+  removeTurno: (id: number) => void;
 }
 
 export const useStore = create<AppState>()(

@@ -14,34 +14,20 @@ interface CardProps {
 }
 
 const accentStyles: Record<string, string> = {
-  primary: 'border-l-4 border-l-blue-500',
-  success: 'border-l-4 border-l-green-500',
-  danger: 'border-l-4 border-l-red-500',
-  warning: 'border-l-4 border-l-amber-500',
-  accent: 'border-l-4 border-l-violet-500',
-  fuchsia: 'border-l-4 border-l-fuchsia-500',
-  rose: 'border-l-4 border-l-rose-500',
+  primary: 'border-l-2 border-l-[var(--primary-600)]',
+  success: 'border-l-2 border-l-[var(--success-500)]',
+  danger: 'border-l-2 border-l-[var(--danger-500)]',
+  warning: 'border-l-2 border-l-[var(--warning-500)]',
+  accent: 'border-l-2 border-l-[var(--info-500)]',
 };
 
-const gradientStyles: Record<string, string> = {
-  primary: 'bg-gradient-to-br from-blue-50 to-white',
-  success: 'bg-gradient-to-br from-green-50 to-white',
-  danger: 'bg-gradient-to-br from-red-50 to-white',
-  warning: 'bg-gradient-to-br from-amber-50 to-white',
-  accent: 'bg-gradient-to-br from-violet-50 to-white',
-  fuchsia: 'bg-gradient-to-br from-fuchsia-50 to-white',
-  rose: 'bg-gradient-to-br from-rose-50 to-white',
-};
-
-export default function Card({ children, className = '', title, subtitle, action, padding = true, hover = false, gradient, glow, accent }: CardProps) {
+export default function Card({ children, className = '', title, subtitle, action, padding = true, hover = false, accent }: Omit<CardProps, 'glow'>) {
   return (
     <div
       className={`
-        bg-white rounded-lg border border-gray-200 shadow-sm
-        ${hover ? 'hover:shadow-md hover:-translate-y-0.5 transition-shadow' : ''}
-        ${gradient && accent ? gradientStyles[accent] || '' : ''}
-        ${accent && !gradient ? accentStyles[accent] || '' : ''}
-        ${glow ? 'shadow-lg shadow-blue-100/50' : ''}
+        bg-white rounded-md border border-gray-200
+        ${hover ? 'hover:border-gray-300 transition-colors' : ''}
+        ${accent ? accentStyles[accent] || '' : ''}
         ${className}
       `}
     >

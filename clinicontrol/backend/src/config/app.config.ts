@@ -21,7 +21,7 @@ export default registerAs('app', () => ({
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     database: process.env.DB_DATABASE || 'hospital_db',
-    synchronize: false,
+    synchronize: process.env.DB_SYNCHRONIZE === 'true',
     logging: process.env.DB_LOGGING === 'true',
     poolSize: parseInt(process.env.DB_POOL_SIZE || '20', 10),
   },

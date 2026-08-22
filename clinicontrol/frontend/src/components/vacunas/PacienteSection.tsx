@@ -1,5 +1,6 @@
 import { User, Plus, Trash2, Syringe, Calendar } from 'lucide-react';
 import { Button, Card } from '../ui';
+import DataTable from '../ui/DataTable';
 import { estadoBadge, estadoIcon } from './constants';
 import type { Paciente, PacienteVacuna, CalendarioVacuna, Vacuna } from '../../types';
 
@@ -101,95 +102,82 @@ export default function PacienteSection({
               <div className="flex justify-end mb-4">
                 <Button variant="premium" size="sm" onClick={() => onAplicar()}><Plus className="w-4 h-4 mr-1" />Aplicar Vacuna</Button>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full table-premium">
-                  <thead className="bg-[var(--bg-secondary)]">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase">Vacuna</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase">Dosis</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase">Fecha</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase">Lote</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase">Próxima Dosis</th>
-                      <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-tertiary)] uppercase">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--border-primary)]">
-                    {patientVacunas.map((pv) => (
-                      <tr key={pv.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
-                        <td className="px-6 py-4 text-sm font-medium text-[var(--text-primary)]">{pv.vacuna?.nombre || `ID: ${pv.vacunaId}`}</td>
-                        <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">{pv.dosisNumero}</td>
-                        <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">{pv.fechaAplicacion}</td>
-                        <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">{pv.lote || '-'}</td>
-                        <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">{pv.proximaDosis || '-'}</td>
-                        <td className="px-6 py-4 text-right">
-                          <Button variant="ghost" size="sm" icon onClick={() => onDeleteAplicacion(pv.id)}>
-                            <Trash2 className="w-4 h-4 text-[var(--danger-500)]" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                    {patientVacunas.length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-sm text-[var(--text-tertiary)]">
-                          Este paciente no tiene vacunas registradas.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable
+                columns={[
+                  { key: 'vacuna', header: 'Vacuna', render: (pv) => (
+                    <span className="font-medium text-[var(--text-primary)]">{pv.vacuna?.nombre || `ID: ${pv.vacunaId}`}</span>
+                  ) },
+                  { key: 'dosisNumero', header: 'Dosis', width: '80px' },
+                  { key: 'fechaAplicacion', header: 'Fecha' },
+                  { key: 'lote', header: 'Lote', render: (pv) => pv.lote || '-' },
+                  { key: 'proximaDosis', header: 'Próxima Dosis', render: (pv) => pv.proximaDosis || '-' },
+                  { key: 'acciones', header: 'Acciones', align: 'right', width: '90px', sortable: false, render: (pv) => (
+                    <div className="flex justify-end">
+                      <Button variant="ghost" size="sm" icon onClick={() => onDeleteAplicacion(pv.id)} aria-label="Eliminar aplicación">
+                        <Trash2 className="w-4 h-4 text-[var(--danger-500)]" />
+                      </Button>
+                    </div>
+                  ) },
+                ]}
+                data={patientVacunas}
+                keyExtractor={(pv) => pv.id}
+                searchPlaceholder="Buscar en el historial..."
+                searchKeys={['vacuna']}
+                emptyMessage="Este paciente no tiene vacunas registradas."
+                pageSize={8}
+                toolbar={
+                  <Button variant="primary" size="sm" onClick={() => onAplicar()}>
+                    <Plus className="w-4 h-4" />Aplicar Vacuna
+                  </Button>
+                }
+              />
             </>
           )}
 
           {viewType === 'calendar' && (
-            <div className="overflow-x-auto">
-              <table className="w-full table-premium">
-                <thead className="bg-[var(--bg-secondary)]">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase">Vacuna</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase">Dosis Recomendadas</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase">Dosis Aplicadas</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase">Estado</th>
-                    <th className="px-6 py-3 text-center text-xs font-semibold text-[var(--text-tertiary)] uppercase">Acción</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border-primary)]">
-                  {calendario.map((item) => {
-                    const Icon = estadoIcon(item.estado);
-                    return (
-                      <tr key={item.vacuna.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
-                        <td className="px-6 py-4 text-sm font-medium text-[var(--text-primary)]">{item.vacuna.nombre}</td>
-                        <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">{item.vacuna.dosisRecomendadas}</td>
-                        <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">{item.dosisAplicadas}</td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${estadoBadge(item.estado)}`}>
-                            <Icon className="w-3 h-3" />
-                            {item.estado === 'completa' ? 'Completa' :
-                             item.estado === 'incompleta' ? 'Incompleta' :
-                             item.estado === 'pendiente' ? 'Pendiente' :
-                             item.estado === 'atrasada' ? 'Atrasada' : 'No corresponde'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          {item.estado !== 'completa' && item.estado !== 'no_corresponde' && (
-                            <Button variant="premium" size="sm" onClick={() => onAplicar(item.vacuna)}>
-                              <Syringe className="w-4 h-4 mr-1" />Aplicar
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {calendario.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-sm text-[var(--text-tertiary)]">
-                        No hay vacunas recomendadas disponibles.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              columns={[
+                { key: 'nombre', header: 'Vacuna', render: (item) => (
+                  <span className="font-medium text-[var(--text-primary)]">{item.vacuna.nombre}</span>
+                ) },
+                { key: 'recomendadas', header: 'Dosis Recomendadas', sortable: false, render: (item) => item.vacuna.dosisRecomendadas },
+                { key: 'aplicadas', header: 'Dosis Aplicadas', align: 'center', width: '140px', render: (item) => item.dosisAplicadas },
+                { key: 'estado', header: 'Estado', width: '150px', render: (item) => {
+                  const Icon = estadoIcon(item.estado);
+                  return (
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${estadoBadge(item.estado)}`}>
+                      <Icon className="w-3 h-3" />
+                      {item.estado === 'completa' ? 'Completa' :
+                       item.estado === 'incompleta' ? 'Incompleta' :
+                       item.estado === 'pendiente' ? 'Pendiente' :
+                       item.estado === 'atrasada' ? 'Atrasada' : 'No corresponde'}
+                    </span>
+                  );
+                } },
+                { key: 'accion', header: 'Acción', align: 'center', width: '120px', sortable: false, render: (item) => (
+                  item.estado !== 'completa' && item.estado !== 'no_corresponde' ? (
+                    <Button variant="primary" size="sm" onClick={() => onAplicar(item.vacuna)}>
+                      <Syringe className="w-4 h-4" />Aplicar
+                    </Button>
+                  ) : null
+                ) },
+              ]}
+              data={calendario}
+              keyExtractor={(item) => item.vacuna.id!}
+              searchable={false}
+              emptyMessage="No hay vacunas recomendadas disponibles."
+              filters={[{
+                key: 'estado',
+                label: 'Estado',
+                options: [
+                  { value: 'pendiente', label: 'Pendiente' },
+                  { value: 'atrasada', label: 'Atrasada' },
+                  { value: 'incompleta', label: 'Incompleta' },
+                  { value: 'completa', label: 'Completa' },
+                ],
+                predicate: (item, v) => item.estado === v,
+              }]}
+            />
           )}
         </>
       )}

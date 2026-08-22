@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, ClipboardCheck, Plus } from 'lucide-react';
-import { Button, Card, Input, Textarea, Badge } from '../components/ui';
+import { LayoutDashboard, ClipboardCheck } from 'lucide-react';
+import { Button, Card, Input, Textarea } from '../components/ui';
+import DataTable from '../components/ui/DataTable';
 import { toast } from '../components/ui/Toast';
+import { errMsg } from '../api/errMsg';
 import PageHeader from '../components/ui/PageHeader';
 import { arqueoCajaService } from '../api/arqueoCaja.service';
 import { useAuthStore } from '../store/authStore';
@@ -25,7 +27,13 @@ export default function ArqueoPage() {
     }
   };
 
-  useEffect(() => { fetchArqueos(); }, []);
+  useEffect(() => {
+    let cancelado = false;
+    const init = async () => { if (!cancelado) await fetchArqueos(); };
+    init();
+    return () => { cancelado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const crearArqueo = async () => {
     if (!montoEsperado || !montoReal || Number(montoEsperado) < 0 || Number(montoReal) < 0) {
@@ -51,8 +59,8 @@ export default function ArqueoPage() {
         'Arqueo registrado',
         `Diferencia: Bs. ${diff.toFixed(2)}`
       );
-    } catch (e: any) {
-      toast('error', 'Error al registrar arqueo', e?.response?.data?.message || 'Intente nuevamente');
+    } catch (e: unknown) {
+      toast('error', 'Error al registrar arqueo', errMsg(e));
     } finally {
       setLoading(false);
     }
@@ -111,49 +119,50 @@ export default function ArqueoPage() {
         </div>
 
         <div className="lg:col-span-2">
-          <Card title="Historial de Arqueos" subtitle={`${arqueos.length} registro(s)`} accent="accent" className="animate-in-up animation-delay-200">
-            {arqueos.length === 0 ? (
-              <div className="text-center py-8 text-[var(--text-tertiary)]">No hay arqueos registrados</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="table-premium">
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Esperado</th>
-                      <th>Real</th>
-                      <th>Diferencia</th>
-                      <th>Observaciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {arqueos.map((a) => {
-                      const diff = Number(a.diferencia);
-                      return (
-                        <tr key={a.id}>
-                          <td className="text-sm whitespace-nowrap">
-                            {new Date(a.fecha).toLocaleString('es-ES', {
-                              day: '2-digit', month: '2-digit', year: 'numeric',
-                              hour: '2-digit', minute: '2-digit',
-                            })}
-                          </td>
-                          <td className="font-medium">Bs. {Number(a.montoEsperado).toFixed(2)}</td>
-                          <td className="font-medium">Bs. {Number(a.montoReal).toFixed(2)}</td>
-                          <td>
-                            <Badge variant={diff === 0 ? 'success' : 'danger'}>
-                              {diff >= 0 ? '+' : ''}{diff.toFixed(2)}
-                            </Badge>
-                          </td>
-                          <td className="text-sm text-[var(--text-tertiary)] max-w-[200px] truncate">
-                            {a.observaciones || '-'}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+          <Card accent="accent" className="animate-in-up animation-delay-200 !p-0 overflow-hidden">
+            <DataTable
+              title="Historial de Arqueos"
+              subtitle={`${arqueos.length} registro(s)`}
+              columns={[
+                { key: 'fecha', header: 'Fecha', width: '170px', render: (a) => (
+                  <span className="whitespace-nowrap">{new Date(a.fecha).toLocaleString('es-ES', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  })}</span>
+                ) },
+                { key: 'montoEsperado', header: 'Esperado', align: 'right', render: (a) => (
+                  <span className="font-medium">Bs. {Number(a.montoEsperado).toFixed(2)}</span>
+                ) },
+                { key: 'montoReal', header: 'Real', align: 'right', render: (a) => (
+                  <span className="font-medium">Bs. {Number(a.montoReal).toFixed(2)}</span>
+                ) },
+                { key: 'diferencia', header: 'Diferencia', align: 'center', render: (a) => {
+                  const diff = Number(a.diferencia);
+                  return (
+                    <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ${
+                      diff === 0 ? 'bg-[var(--success-100)] text-[var(--success-700)]' : 'bg-[var(--danger-100)] text-[var(--danger-700)]'
+                    }`}>
+                      {diff >= 0 ? '+' : ''}{diff.toFixed(2)}
+                    </span>
+                  );
+                } },
+                { key: 'observaciones', header: 'Observaciones', truncate: true, render: (a) => a.observaciones || '-' },
+              ]}
+              data={arqueos}
+              keyExtractor={(a) => a.id!}
+              searchPlaceholder="Buscar en observaciones..."
+              searchKeys={['observaciones']}
+              emptyMessage="No hay arqueos registrados"
+              filters={[{
+                key: 'cuadre',
+                label: 'Resultado',
+                options: [
+                  { value: 'ok', label: 'Cuadrado' },
+                  { value: 'dif', label: 'Con diferencia' },
+                ],
+                predicate: (a, v) => v === 'ok' ? Number(a.diferencia) === 0 : Number(a.diferencia) !== 0,
+              }]}
+            />
           </Card>
         </div>
       </div>

@@ -34,7 +34,7 @@ export class UsuarioService {
     const existing = await this.usuarioRepo.findByEmail(dto.email);
     if (existing) throw new ConflictException('El email ya está registrado');
 
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await bcrypt.hash(dto.password, 12);
     const saved = await this.usuarioRepo.create({
       ...dto,
       password: hashedPassword,
@@ -54,7 +54,7 @@ export class UsuarioService {
     }
 
     if (dto.password) {
-      dto.password = await bcrypt.hash(dto.password, 10);
+      dto.password = await bcrypt.hash(dto.password, 12);
     }
 
     return this.usuarioRepo.update(id, dto as any);

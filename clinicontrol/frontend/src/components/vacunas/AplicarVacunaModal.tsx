@@ -9,7 +9,7 @@ interface AplicarVacunaModalProps {
   vacunas: Vacuna[];
   selectedVacuna: Vacuna | null;
   loading: boolean;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: Record<string, string>) => void;
 }
 
 const APLICACION_VALIDACIONES = {

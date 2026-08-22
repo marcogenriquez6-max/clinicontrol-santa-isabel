@@ -1,35 +1,107 @@
 import { useState, useEffect, useRef } from 'react';
-import { ClipboardList, Ticket, Printer, Users, Eye, Play, CheckCircle, XCircle, Monitor, DollarSign } from 'lucide-react';
+import { ClipboardList, Ticket, Printer, Users, Eye, Play, CheckCircle, XCircle, Monitor, DollarSign, Stethoscope, FlaskConical, Syringe } from 'lucide-react';
 import { Button, Card, Modal, Input, Select, Badge } from '../components/ui';
 import { toast } from '../components/ui/Toast';
 import PageHeader from '../components/ui/PageHeader';
 import { turnoService, medicoService, pacienteService } from '../api/services';
-import type { Turno } from '../types';
+import type { Turno, Medico, Paciente } from '../types';
+import { errMsg } from '../api/errMsg';
+
+const TIPOS_ATENCION = [
+  { id: 'consulta', label: 'Consulta', precio: 200, Icono: Stethoscope },
+  { id: 'examen', label: 'Examen', precio: 350, Icono: FlaskConical },
+  { id: 'vacuna', label: 'Vacuna', precio: 150, Icono: Syringe },
+] as const;
+
+function TicketPreview({ turno, printRef }: { turno: Turno; printRef?: React.RefObject<HTMLDivElement | null> }) {
+    const ahora = new Date();
+    return (
+      <div ref={printRef} id="print-area" className="bg-white text-black p-5 max-w-[300px] mx-auto shadow-sm"
+        style={{ fontFamily: '"JetBrains Mono", ui-monospace, monospace', fontSize: '12px' }}>
+        {/* Encabezado */}
+        <p className="text-center font-bold tracking-[0.15em] text-sm">CLÍNICA SANTA ISABEL</p>
+        <p className="text-center text-[10px] mt-1">RIF: J-40123456-7</p>
+        <p className="text-center text-[10px]">Av. Principal · Tel. (0281) 000-0000</p>
+
+        <div className="border-t border-dashed border-neutral-400 my-3" />
+
+        {/* Número de turno */}
+        <p className="text-center text-[10px] tracking-[0.3em]">TURNO</p>
+        <p className="text-center font-bold" style={{ fontSize: '46px', lineHeight: '52px' }}>
+          {String(turno.numero).padStart(3, '0')}
+        </p>
+        <p className="text-center text-[10px]">
+          {ahora.toLocaleDateString('es-VE')} · {ahora.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}
+        </p>
+
+        <div className="border-t border-dashed border-neutral-400 my-3" />
+
+        {/* Datos */}
+        <div className="space-y-1">
+          <p><span className="opacity-70">PACIENTE:</span> <span className="font-semibold">{turno.pacienteNombre}</span></p>
+          <p><span className="opacity-70">C.I.:</span> {turno.pacienteCI}</p>
+          <p><span className="opacity-70">MEDICO:</span> {turno.medicoNombre}</p>
+          <p><span className="opacity-70">ESPECIALIDAD:</span> {turno.especialidad}</p>
+          <p><span className="opacity-70">CONSULTORIO:</span> {turno.consultorio}</p>
+        </div>
+
+        <div className="border-t border-dashed border-neutral-400 my-3" />
+
+        <p className="flex justify-between"><span className="opacity-70">FORMA DE PAGO</span><span>EFECTIVO</span></p>
+        <p className="flex justify-between font-bold" style={{ fontSize: '14px' }}><span>TOTAL BS.</span>{Number(turno.monto).toFixed(2)}</p>
+
+        {/* Código de barras */}
+        <div className="my-3 mx-auto" style={{
+          width: '85%', height: '38px',
+          background: 'repeating-linear-gradient(90deg,#000 0 2px,transparent 2px 4px,#000 4px 7px,transparent 7px 8px,#000 8px 9px,transparent 9px 13px)',
+        }} />
+        <p className="text-center text-[10px] tracking-[0.25em]">{String(turno.numero).padStart(6, '0')}</p>
+
+        <div className="border-t border-dashed border-neutral-400 my-3" />
+        <p className="text-center text-[10px] leading-relaxed">
+          Será llamado por pantalla y audio.<br />Conserve este ticket.
+        </p>
+        <p className="text-center text-[10px] mt-2 opacity-70">Gracias por su preferencia</p>
+      </div>
+    );
+  };
 
 export default function TurnosPage() {
-  const [turnos, setTurnos] = useState<any[]>([]);
-  const [medicos, setMedicos] = useState<any[]>([]);
+  const [turnos, setTurnos] = useState<Turno[]>([]);
+  const [medicos, setMedicos] = useState<Medico[]>([]);
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [, setShowRegistro] = useState(false);
   const [selectedMedico, setSelectedMedico] = useState(0);
-  const [turnoActual, setTurnoActual] = useState<any | null>(null);
+  const [turnoActual, setTurnoActual] = useState<Turno | null>(null);
   const [showConfirmPago, setShowConfirmPago] = useState(false);
-  const [modalTurno, setModalTurno] = useState<any | null>(null);
+  const [modalTurno, setModalTurno] = useState<Turno | null>(null);
   const [formData, setFormData] = useState({
     nombre: '', ci: '', telefono: '', tipo: 'consulta' as 'consulta' | 'examen' | 'vacuna',
   });
   const [activeSection, setActiveSection] = useState<'caja' | 'sala' | 'pantalla'>('caja');
+  const [cajaTab, setCajaTab] = useState<'nuevo' | 'cobros'>('nuevo');
   const printRef = useRef<HTMLDivElement>(null);
+  const [horaActual, setHoraActual] = useState(new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setHoraActual(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [turnosRes, medicosRes] = await Promise.all([
+        const [turnosRes, medicosRes, pacientesRes] = await Promise.all([
           turnoService.getAll({ limit: 100 }),
           medicoService.getAll(),
+          pacienteService.getAll(),
         ]);
-        setTurnos(Array.isArray(turnosRes) ? turnosRes : (turnosRes as any)?.data ?? []);
-        setMedicos(Array.isArray(medicosRes) ? medicosRes : (medicosRes as any)?.data ?? []);
-      } catch {}
+        setTurnos(Array.isArray(turnosRes) ? turnosRes : (turnosRes as { data?: Turno[] })?.data ?? []);
+        setMedicos(Array.isArray(medicosRes) ? medicosRes : (medicosRes as { data?: Medico[] })?.data ?? []);
+        setPacientes(Array.isArray(pacientesRes) ? pacientesRes : (pacientesRes as { data?: Paciente[] })?.data ?? []);
+      } catch {
+        // sin datos demo: las secciones muestran sus estados vacíos
+      }
     };
     fetchData();
   }, []);
@@ -40,16 +112,17 @@ export default function TurnosPage() {
       return;
     }
     const medico = medicos[selectedMedico];
+    const ciBuscado = formData.ci.trim();
+    const existente = pacientes.find(p => (p.ci ?? '').trim() === ciBuscado);
+    if (!existente) {
+      toast('warning', 'Paciente no registrado',
+        `${formData.nombre} no está en el Padrón. Regístrelo primero en Pacientes e intente de nuevo.`);
+      return;
+    }
     try {
-      const res = await pacienteService.create({
-        nombre: formData.nombre,
-        ci: formData.ci,
-        telefono: formData.telefono || undefined,
-      });
-      const paciente = res.data ?? res;
       const turnoRes = await turnoService.create({
-        pacienteId: paciente.id!,
-        medicoId: medico.id,
+        pacienteId: existente.id!,
+        medicoId: medico.id!,
         monto: formData.tipo === 'consulta' ? 200 : formData.tipo === 'examen' ? 350 : 150,
         tipo: formData.tipo,
         pagado: false,
@@ -59,16 +132,16 @@ export default function TurnosPage() {
       setTurnoActual(creado);
       setShowConfirmPago(true);
       toast('success', `Turno #${creado.numero} generado`, `Paciente: ${formData.nombre}`);
-    } catch (e: any) {
-      toast('error', 'Error al generar turno', e?.response?.data?.message || 'Intente nuevamente');
+    } catch (e: unknown) {
+      toast('error', 'Error al generar turno', errMsg(e));
     }
   };
 
   const confirmarPago = async () => {
     if (!turnoActual) return;
     try {
-      await turnoService.marcarPagado(turnoActual.id);
-      setTurnos(prev => prev.map((t: any) => t.id === turnoActual.id ? { ...t, pagado: true } : t));
+      await turnoService.marcarPagado(turnoActual.id!);
+      setTurnos(prev => prev.map((t) => t.id === turnoActual!.id ? { ...t, pagado: true } : t));
       setShowConfirmPago(false);
       setShowRegistro(false);
       setFormData({ nombre: '', ci: '', telefono: '', tipo: 'consulta' });
@@ -79,40 +152,40 @@ export default function TurnosPage() {
     }
   };
 
-  const llamarTurno = async (turno: any) => {
+  const llamarTurno = async (turno: Turno) => {
     try {
-      await turnoService.updateEstado(turno.id, 'llamado');
-      setTurnos(prev => prev.map((t: any) => t.id === turno.id ? { ...t, estado: 'llamado' } : t));
+      await turnoService.updateEstado(turno.id!, 'llamado');
+      setTurnos(prev => prev.map((t) => t.id === turno.id ? { ...t, estado: 'llamado' as const } : t));
       toast('info', `Turno #${turno.numero} llamado`, `Consultorio ${turno.consultorio}`);
     } catch {
       toast('error', 'Error al llamar turno');
     }
   };
 
-  const iniciarAtencion = async (turno: any) => {
+  const iniciarAtencion = async (turno: Turno) => {
     try {
-      await turnoService.updateEstado(turno.id, 'atencion');
-      setTurnos(prev => prev.map((t: any) => t.id === turno.id ? { ...t, estado: 'atencion' } : t));
+      await turnoService.updateEstado(turno.id!, 'atencion');
+      setTurnos(prev => prev.map((t) => t.id === turno.id ? { ...t, estado: 'atencion' as const } : t));
       toast('success', `Atendiendo turno #${turno.numero}`);
     } catch {
       toast('error', 'Error al iniciar atención');
     }
   };
 
-  const completarTurno = async (turno: any) => {
+  const completarTurno = async (turno: Turno) => {
     try {
-      await turnoService.updateEstado(turno.id, 'completado');
-      setTurnos(prev => prev.map((t: any) => t.id === turno.id ? { ...t, estado: 'completado' } : t));
+      await turnoService.updateEstado(turno.id!, 'completado');
+      setTurnos(prev => prev.map((t) => t.id === turno.id ? { ...t, estado: 'completado' as const } : t));
       toast('success', `Turno #${turno.numero} completado`);
     } catch {
       toast('error', 'Error al completar turno');
     }
   };
 
-  const cancelarTurno = async (turno: any) => {
+  const cancelarTurno = async (turno: Turno) => {
     try {
-      await turnoService.updateEstado(turno.id, 'cancelado');
-      setTurnos(prev => prev.map((t: any) => t.id === turno.id ? { ...t, estado: 'cancelado' } : t));
+      await turnoService.updateEstado(turno.id!, 'cancelado');
+      setTurnos(prev => prev.map((t) => t.id === turno.id ? { ...t, estado: 'cancelado' as const } : t));
       toast('info', `Turno #${turno.numero} cancelado`);
     } catch {
       toast('error', 'Error al cancelar turno');
@@ -135,47 +208,16 @@ export default function TurnosPage() {
     return <Badge variant={map[estado].variant}>{map[estado].label}</Badge>;
   };
 
-  const TicketPreview = ({ turno }: { turno: Turno }) => (
-      <div ref={printRef} className="bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--border-primary)] max-w-xs mx-auto" style={{ fontFamily: 'monospace' }}>
-      <div className="text-center border-b border-dashed border-[var(--border-primary)] pb-4 mb-4">
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2">
-          <Ticket className="w-6 h-6 text-white" />
-        </div>
-        <h3 className="text-lg font-bold text-[var(--text-primary)]">Clínica Santa Isabel</h3>
-        <p className="text-xs text-[var(--text-tertiary)]">Sistema de Gestión Hospitalaria</p>
-      </div>
-      <div className="text-center mb-4">
-        <p className="text-5xl font-bold text-[var(--primary-600)] mb-1">#{String(turno.numero).padStart(3, '0')}</p>
-        <p className="text-sm text-[var(--text-tertiary)]">{new Date().toLocaleDateString('es-ES')}</p>
-      </div>
-      <div className="space-y-2 text-sm border-t border-dashed border-[var(--border-primary)] pt-4">
-        <div className="flex justify-between"><span className="text-[var(--text-tertiary)]">Paciente:</span><span className="font-medium text-[var(--text-primary)]">{turno.pacienteNombre}</span></div>
-        <div className="flex justify-between"><span className="text-[var(--text-tertiary)]">Médico:</span><span className="font-medium text-[var(--text-primary)]">{turno.medicoNombre}</span></div>
-        <div className="flex justify-between"><span className="text-[var(--text-tertiary)]">Consultorio:</span><span className="font-medium text-[var(--text-primary)]">{turno.consultorio}</span></div>
-        <div className="flex justify-between"><span className="text-[var(--text-tertiary)]">Especialidad:</span><span className="font-medium text-[var(--text-primary)]">{turno.especialidad}</span></div>
-        <div className="flex justify-between"><span className="text-[var(--text-tertiary)]">Tipo:</span><span className="font-medium text-[var(--text-primary)]">{turno.tipo === 'consulta' ? 'Consulta' : turno.tipo === 'examen' ? 'Examen' : 'Vacuna'}</span></div>
-        <div className="flex justify-between border-t border-dashed border-[var(--border-primary)] pt-2 mt-2">
-          <span className="text-[var(--text-tertiary)]">Monto Pagado:</span>
-          <span className="font-bold text-[var(--success-600)]">Bs. {Number(turno.monto).toFixed(2)}</span>
-        </div>
-      </div>
-      <div className="text-center text-[10px] text-[var(--text-tertiary)] border-t border-dashed border-[var(--border-primary)] pt-3 mt-4">
-        <p>Gracias por su preferencia</p>
-        <p>Presentar este ticket en su consulta</p>
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-6 animate-in-up">
-      <PageHeader icon={ClipboardList} gradient="from-blue-500 to-indigo-600" title="Turnos" subtitle="Gestión de turnos" stats={[{ label: 'En espera', value: turnosEnEspera.length }, { label: 'En atención', value: turnosAtencion.length }]} />
+      <PageHeader icon={ClipboardList} title="Turnos" subtitle="Gestión de turnos y emisión de tickets" stats={[{ label: 'En espera', value: turnosEnEspera.length }, { label: 'En atención', value: turnosAtencion.length }]} />
 
       {/* Secciones */}
       <div className="flex gap-1 p-1 bg-[var(--bg-tertiary)] rounded-xl">
         {[
-          { id: 'caja' as const, label: '💰 Caja / Admisión', icon: DollarSign },
-          { id: 'sala' as const, label: '🩺 Sala de Espera', icon: Users },
-          { id: 'pantalla' as const, label: '📺 Pantalla TV', icon: Monitor },
+          { id: 'caja' as const, label: 'Caja y Admisión', icon: DollarSign },
+          { id: 'sala' as const, label: 'Sala de Espera', icon: Users },
+          { id: 'pantalla' as const, label: 'Pantalla TV', icon: Monitor },
         ].map(sec => (
           <button key={sec.id} onClick={() => setActiveSection(sec.id)}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeSection === sec.id ? 'bg-[var(--bg-primary)] text-[var(--primary-600)] shadow-sm' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
@@ -184,261 +226,278 @@ export default function TurnosPage() {
         ))}
       </div>
 
-      {/* SECCIÓN CAJA */}
+      {/* SECCIÓN CAJA — pestañas internas */}
       {activeSection === 'caja' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in-up animation-delay-100">
-            {/* Registro de Turno */}
-            <div className="lg:col-span-1">
-              <Card title="Registrar Nuevo Turno" subtitle="Datos del paciente" accent="primary" className="animate-in-up animation-delay-200">
-              <div className="space-y-4">
-                <Input label="Nombre del Paciente *" placeholder="Nombre completo" value={formData.nombre} onChange={e => setFormData(f => ({ ...f, nombre: e.target.value }))} />
-                <Input label="Cédula de Identidad *" placeholder="1234567" value={formData.ci} onChange={e => setFormData(f => ({ ...f, ci: e.target.value }))} />
-                <Input label="Teléfono" placeholder="77712345" value={formData.telefono} onChange={e => setFormData(f => ({ ...f, telefono: e.target.value }))} />
-                <Select label="Tipo de Atención" value={formData.tipo} onChange={e => setFormData(f => ({ ...f, tipo: e.target.value as any }))}
-                  options={[
-                    { value: 'consulta', label: '🩺 Consulta Médica - Bs. 200' },
-                    { value: 'examen', label: '🔬 Examen / Laboratorio - Bs. 350' },
-                    { value: 'vacuna', label: '💉 Vacuna - Bs. 150' },
-                  ]}
-                />
-                <Select label="Seleccionar Médico" value={selectedMedico} onChange={e => setSelectedMedico(Number(e.target.value))}
-                  options={[
-                    { value: -1, label: 'Seleccionar médico...' },
-                    ...medicos.map((m, i) => ({ value: i, label: `${m.nombre} ${m.apellido} - ${m.especialidad?.nombre || ''}` })),
-                  ]}
-                />
-                <Button className="w-full" size="lg" variant="premium" onClick={generarTurno}>
-                  <Ticket className="w-4 h-4" />
-                  Generar Turno y Cobrar
-                </Button>
-              </div>
-            </Card>
+        <div className="space-y-5">
+          <div className="flex gap-6 border-b border-[var(--border-primary)]">
+            {([
+              { id: 'nuevo' as const, label: 'Nuevo Turno' },
+              { id: 'cobros' as const, label: `Cobros y Cola${turnosPendientesPago.length > 0 ? ` · ${turnosPendientesPago.length}` : ''}` },
+            ]).map(tab => (
+              <button key={tab.id} onClick={() => setCajaTab(tab.id)}
+                className={`pb-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${cajaTab === tab.id ? 'border-[var(--primary-600)] text-[var(--primary-700)]' : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          {/* Turnos Pendientes de Pago / Recientes */}
-          <div className="lg:col-span-2 space-y-6">
-            {turnosPendientesPago.length > 0 && (
-              <Card title={`⏳ ${turnosPendientesPago.length} pendiente(s) de pago`} subtitle="Pacientes registrados que aún no pagaron" accent="warning" className="animate-in-up animation-delay-300">
-                <div className="space-y-3">
-                  {turnosPendientesPago.map(t => (
-                    <div key={t.id} className="flex items-center justify-between p-4 rounded-xl bg-[var(--warning-50)] border border-[var(--warning-200)]">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[var(--warning-100)] flex items-center justify-center text-lg font-bold text-[var(--warning-600)]">#{t.numero}</div>
-                        <div>
-                          <p className="font-medium text-[var(--text-primary)]">{t.pacienteNombre}</p>
-                          <p className="text-xs text-[var(--text-tertiary)]">{t.medicoNombre} · Bs. {Number(t.monto).toFixed(2)}</p>
+          {cajaTab === 'nuevo' && (
+            <div className="max-w-xl">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+                <div className="col-span-2">
+                  <Input label="Nombre del paciente *" placeholder="Nombre completo" value={formData.nombre} onChange={e => setFormData(f => ({ ...f, nombre: e.target.value }))} />
+                </div>
+                <Input label="Cédula *" placeholder="1234567" value={formData.ci} onChange={e => setFormData(f => ({ ...f, ci: e.target.value }))} />
+                <Input label="Teléfono" placeholder="77712345" value={formData.telefono} onChange={e => setFormData(f => ({ ...f, telefono: e.target.value }))} />
+                <div className="col-span-2">
+                  <Select label="Médico asignado *" value={selectedMedico} onChange={e => setSelectedMedico(Number(e.target.value))}
+                    options={[
+                      { value: -1, label: 'Seleccionar médico...' },
+                      ...medicos.map((m, i) => ({ value: i, label: `${m.nombre} ${m.apellido}${m.especialidad?.nombre ? ` · ${m.especialidad.nombre}` : ''}` })),
+                    ]}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">Tipo de atención *</p>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {TIPOS_ATENCION.map(tp => {
+                      const activo = formData.tipo === tp.id;
+                      return (
+                        <button key={tp.id} type="button" onClick={() => setFormData(f => ({ ...f, tipo: tp.id }))}
+                          className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${activo ? 'border-[var(--primary-700)] bg-[var(--primary-700)] text-white' : 'border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-[var(--neutral-300)]'}`}>
+                          {tp.label} · Bs. {tp.precio}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-[var(--border-primary)]">
+                <span className="text-sm text-[var(--text-secondary)]">
+                  Total a cobrar{' '}
+                  <span className="ml-1 text-lg font-bold tabular-nums text-[var(--primary-800)]">
+                    Bs. {TIPOS_ATENCION.find(t => t.id === formData.tipo)?.precio ?? 0}
+                  </span>
+                </span>
+                <Button onClick={generarTurno}>
+                  <Ticket className="w-4 h-4" />Generar y cobrar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {cajaTab === 'cobros' && (
+            <div className="max-w-3xl space-y-7">
+              <section aria-label="Pendientes de cobro">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">
+                  Pendientes de cobro ({turnosPendientesPago.length})
+                </h3>
+                {turnosPendientesPago.length === 0 ? (
+                  <p className="py-6 text-sm text-[var(--text-quaternary)]">Sin pendientes de cobro</p>
+                ) : (
+                  <ul className="divide-y divide-[var(--border-secondary)]">
+                    {turnosPendientesPago.map(t => (
+                      <li key={t.id} className="flex items-center gap-3 py-2.5">
+                        <span className="w-9 h-9 rounded-md flex items-center justify-center text-xs font-bold tabular-nums shrink-0" style={{ backgroundColor: 'var(--warning-100)', color: 'var(--warning-700)' }}>
+                          {String(t.numero).padStart(3, '0')}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-[var(--text-primary)] truncate">{t.pacienteNombre}</p>
+                          <p className="text-xs text-[var(--text-tertiary)] truncate">{t.medicoNombre}</p>
+                        </div>
+                        <span className="font-semibold tabular-nums text-sm shrink-0">Bs. {Number(t.monto).toFixed(2)}</span>
+                        <Button size="sm" variant="outline" onClick={() => { setTurnoActual(t); setShowConfirmPago(true); }} className="shrink-0">
+                          Cobrar
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              <section aria-label="Últimos turnos">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">Últimos turnos</h3>
+                {[...turnos].length === 0 ? (
+                  <p className="py-6 text-sm text-[var(--text-quaternary)]">Aún no hay turnos hoy</p>
+                ) : (
+                  <ul className="divide-y divide-[var(--border-secondary)]">
+                    {[...turnos].reverse().slice(0, 4).map(t => (
+                      <li key={t.id} className="flex items-center gap-3 py-2.5">
+                        <span className="w-9 h-9 rounded-md flex items-center justify-center text-xs font-bold text-white tabular-nums shrink-0" style={{ backgroundColor: 'var(--primary-700)' }}>
+                          {String(t.numero).padStart(3, '0')}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-[var(--text-primary)] truncate">{t.pacienteNombre}</p>
+                          <p className="text-xs text-[var(--text-tertiary)] truncate">{t.medicoNombre}</p>
+                        </div>
+                        {estadoBadge(t.estado)}
+                        <Badge variant={t.pagado ? 'success' : 'danger'}>{t.pagado ? 'Pagado' : 'Pendiente'}</Badge>
+                        <Button variant="ghost" size="sm" icon onClick={() => setModalTurno(t)} aria-label="Ver ticket">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SECCIÓN SALA DE ESPERA — flujo kanban */}
+      {activeSection === 'sala' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {([
+            { titulo: 'En Espera', lista: turnosEnEspera, color: 'var(--warning-500)', accion: llamarTurno, label: 'Llamar', Icono: Play },
+            { titulo: 'Llamados', lista: turnosLlamados, color: 'var(--primary-600)', accion: iniciarAtencion, label: 'Iniciar', Icono: CheckCircle },
+          ] as const).map(col => (
+            <Card key={col.titulo} title={col.titulo} subtitle={`${col.lista.length} paciente(s)`}>
+              {col.lista.length === 0 ? (
+                <p className="text-center py-10 text-sm text-[var(--text-tertiary)]">Sin pacientes</p>
+              ) : (
+                <div className="space-y-2">
+                  {col.lista.map(t => (
+                    <div key={t.id} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-bold text-white tabular-nums shrink-0" style={{ backgroundColor: col.color }}>
+                          {String(t.numero).padStart(3, '0')}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-medium text-[var(--text-primary)] truncate">{t.pacienteNombre}</p>
+                          <p className="text-xs text-[var(--text-tertiary)] truncate">{t.medicoNombre} · Cons. {t.consultorio}</p>
                         </div>
                       </div>
-                      <Button size="sm" variant="premium" onClick={() => { setTurnoActual(t); setShowConfirmPago(true); }}>
-                        <DollarSign className="w-4 h-4" />Cobrar Bs. {t.monto}
+                      <Button size="sm" onClick={() => col.accion(t)} className="shrink-0">
+                        <col.Icono className="w-4 h-4" />{col.label}
                       </Button>
                     </div>
                   ))}
                 </div>
-              </Card>
-            )}
-
-            {/* Últimos turnos */}
-            <Card title="📋 Últimos Turnos" subtitle="Registro de turnos generados hoy" accent="accent" className="animate-in-up animation-delay-400">
-              <div className="overflow-x-auto">
-                <table className="table-premium">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Paciente</th>
-                      <th>Médico</th>
-                      <th>Estado</th>
-                      <th>Pago</th>
-                      <th align="right">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...turnos].reverse().slice(0, 10).map(t => (
-                      <tr key={t.id}>
-                        <td className="font-bold text-lg">#{t.numero}</td>
-                        <td>
-                          <p className="font-medium text-[var(--text-primary)]">{t.pacienteNombre}</p>
-                          <p className="text-xs text-[var(--text-tertiary)]">{t.pacienteCI}</p>
-                        </td>
-                        <td className="text-sm">{t.medicoNombre}</td>
-                        <td>{estadoBadge(t.estado)}</td>
-                        <td>{t.pagado ? <Badge variant="success">Pagado Bs. {t.monto}</Badge> : <Badge variant="danger">Pendiente</Badge>}</td>
-                        <td align="right">
-                          <Button variant="ghost" size="sm" icon onClick={() => setModalTurno(t)}>
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              )}
             </Card>
-          </div>
-        </div>
-      )}
+          ))}
 
-      {/* SECCIÓN SALA DE ESPERA */}
-      {activeSection === 'sala' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in-up animation-delay-100">
-          <Card title="🟡 En Espera" subtitle={`${turnosEnEspera.length} paciente(s) esperando`} accent="warning" className="animate-in-up animation-delay-200">
-            {turnosEnEspera.length === 0 ? (
-              <div className="text-center py-8 text-[var(--text-tertiary)]">No hay pacientes en espera</div>
+          <Card title="En Atención" subtitle={`${turnosAtencion.length} consulta(s) en curso`}>
+            {turnosAtencion.length === 0 ? (
+              <p className="text-center py-10 text-sm text-[var(--text-tertiary)]">Sin consultas activas</p>
             ) : (
-              <div className="space-y-3">
-                {turnosEnEspera.map(t => (
-                  <div key={t.id} className="flex items-center justify-between p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)] hover:border-[var(--primary-300)] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-xl font-bold text-white shadow-sm">
-                        #{t.numero}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-[var(--text-primary)]">{t.pacienteNombre}</p>
-                        <p className="text-xs text-[var(--text-tertiary)]">{t.medicoNombre} · Cons. {t.consultorio}</p>
+              <div className="space-y-2">
+                {turnosAtencion.map(t => (
+                  <div key={t.id} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-[var(--success-200)] bg-[var(--success-50)]">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-bold text-white tabular-nums shrink-0" style={{ backgroundColor: 'var(--success-600)' }}>
+                        {String(t.numero).padStart(3, '0')}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-medium text-[var(--text-primary)] truncate">{t.pacienteNombre}</p>
+                        <p className="text-xs text-[var(--text-tertiary)] truncate">{t.medicoNombre}</p>
                       </div>
                     </div>
-                    <Button size="sm" onClick={() => llamarTurno(t)}>
-                      <Play className="w-4 h-4" />Llamar
-                    </Button>
+                    <div className="flex gap-1 shrink-0">
+                      <Button size="sm" variant="success" icon onClick={() => completarTurno(t)} aria-label="Completar">
+                        <CheckCircle className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" icon onClick={() => cancelarTurno(t)} aria-label="Cancelar">
+                        <XCircle className="w-4 h-4 text-[var(--danger-500)]" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </Card>
-
-          <div className="space-y-6">
-            <Card title="🔵 Llamados" subtitle="Pacientes notificados" accent="accent" className="animate-in-up animation-delay-300">
-              {turnosLlamados.length === 0 ? (
-                <div className="text-center py-6 text-[var(--text-tertiary)] text-sm">Sin pacientes llamados</div>
-              ) : (
-                <div className="space-y-2">
-                  {turnosLlamados.map(t => (
-                    <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-[var(--info-50)] border border-[var(--info-200)]">
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg font-bold text-[var(--info-500)]">#{t.numero}</span>
-                        <div>
-                          <p className="font-medium text-[var(--text-primary)]">{t.pacienteNombre}</p>
-                          <p className="text-xs text-[var(--text-tertiary)]">Cons. {t.consultorio}</p>
-                        </div>
-                      </div>
-                      <Button size="sm" variant="primary" onClick={() => iniciarAtencion(t)}>
-                        <CheckCircle className="w-4 h-4" />Iniciar
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-
-            <Card title="🟢 En Atención" subtitle="Consultas en curso" accent="success" className="animate-in-up animation-delay-400">
-              {turnosAtencion.length === 0 ? (
-                <div className="text-center py-6 text-[var(--text-tertiary)] text-sm">Sin pacientes en atención</div>
-              ) : (
-                <div className="space-y-2">
-                  {turnosAtencion.map(t => (
-                    <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-[var(--success-50)] border border-[var(--success-200)]">
-                      <div className="flex items-center gap-3">
-                        <span className="w-2 h-2 rounded-full bg-[var(--success-500)] animate-pulse" />
-                        <div>
-                          <p className="font-medium text-[var(--text-primary)]">#{t.numero} - {t.pacienteNombre}</p>
-                          <p className="text-xs text-[var(--text-tertiary)]">{t.medicoNombre}</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="success" onClick={() => completarTurno(t)}>
-                          <CheckCircle className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => cancelarTurno(t)}>
-                          <XCircle className="w-4 h-4 text-[var(--danger-500)]" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-          </div>
         </div>
       )}
 
-      {/* SECCIÓN PANTALLA TV */}
+      {/* SECCIÓN PANTALLA TV — vista kiosk */}
       {activeSection === 'pantalla' && (
-        <div className="bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-2xl shadow-[var(--shadow-md)] overflow-hidden animate-in-up animation-delay-100">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-8 text-center">
-            <Monitor className="w-12 h-12 text-white/50 mx-auto mb-3" />
-            <h2 className="text-3xl font-bold text-white mb-2">Clínica Santa Isabel</h2>
-            <p className="text-blue-200 text-lg">Sistema de Turnos en Tiempo Real</p>
-            <p className="text-blue-300 text-sm mt-2">
-              {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
-          </div>
+        <div className="rounded-xl overflow-hidden border border-[var(--border-primary)] bg-white">
+          <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 lg:px-10 py-6" style={{ backgroundColor: 'var(--primary-900)' }}>
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--primary-200)]">Clínica Santa Isabel</p>
+              <p className="text-white text-2xl font-bold mt-1">Turnos en tiempo real</p>
+            </div>
+            <div className="sm:text-right">
+              <p className="text-white font-bold tabular-nums text-5xl leading-none">
+                {horaActual.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}
+              </p>
+              <p className="text-[var(--primary-300)] text-sm capitalize mt-1">
+                {horaActual.toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+          </header>
 
-          <div className="p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* En Espera */}
-              <div>
-                <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-4 flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-[var(--warning-500)]" />
-                  PRÓXIMOS TURNOS
-                </h3>
-                <div className="space-y-4">
-                  {turnosEnEspera.slice(0, 8).map(t => (
-                    <div key={t.id} className="flex items-center gap-4 p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-primary)]">
-                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-2xl font-bold text-white shadow">
-                        #{t.numero}
-                      </div>
-                      <div>
-                        <p className="text-lg font-semibold text-[var(--text-primary)]">{t.pacienteNombre}</p>
-                        <p className="text-sm text-[var(--text-tertiary)]">{t.medicoNombre} · Cons. {t.consultorio}</p>
-                      </div>
-                    </div>
-                  ))}
-                  {turnosEnEspera.length === 0 && (
-                    <p className="text-[var(--text-tertiary)] text-center py-8">No hay turnos en espera</p>
-                  )}
-                </div>
+          <section className="px-6 lg:px-10 py-7">
+            <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-4">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--success-500)' }} />
+              Atendiendo ahora
+            </h3>
+            {turnosAtencion.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-[var(--border-primary)] px-6 py-10 text-center">
+                <p className="text-[var(--text-tertiary)]">Esperando el próximo paciente</p>
               </div>
-
-              {/* En Atención */}
-              <div>
-                <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-4 flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-[var(--success-500)] animate-pulse" />
-                  ATENDIENDO AHORA
-                </h3>
-                <div className="space-y-4">
-                  {turnosAtencion.map(t => (
-                    <div key={t.id} className="p-6 bg-[var(--success-50)] rounded-2xl border-2 border-[var(--success-200)] text-center">
-                      <p className="text-sm text-[var(--text-tertiary)] mb-1">Consultorio {t.consultorio}</p>
-                      <p className="text-5xl font-bold text-[var(--success-600)] mb-2">#{t.numero}</p>
-                      <p className="text-xl font-semibold text-[var(--text-primary)]">{t.pacienteNombre}</p>
-                      <p className="text-sm text-[var(--text-tertiary)]">{t.medicoNombre} · {t.especialidad}</p>
-                    </div>
-                  ))}
-                  {turnosAtencion.length === 0 && (
-                    <div className="p-6 bg-[var(--bg-secondary)] rounded-2xl border-2 border-dashed border-[var(--border-primary)] text-center">
-                      <p className="text-3xl text-[var(--text-tertiary)] mb-2">—</p>
-                      <p className="text-lg text-[var(--text-tertiary)]">Esperando próximo paciente</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Últimos llamados */}
-                {turnosLlamados.length > 0 && (
-                  <div className="mt-6">
-                    <h4 className="text-sm font-semibold text-[var(--text-tertiary)] mb-3">Últimos Llamados</h4>
-                    <div className="space-y-2">
-                      {turnosLlamados.slice(0, 3).map(t => (
-                        <div key={t.id} className="flex items-center gap-3 p-3 bg-[var(--info-50)] rounded-lg border border-[var(--info-200)]">
-                          <span className="text-lg font-bold text-[var(--info-500)]">#{t.numero}</span>
-                          <p className="text-sm font-medium text-[var(--text-secondary)]">{t.pacienteNombre}</p>
-                          <span className="text-xs text-[var(--text-tertiary)] ml-auto">Cons. {t.consultorio}</span>
-                        </div>
-                      ))}
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {turnosAtencion.map(t => (
+                  <div key={t.id} className="flex items-center gap-5 rounded-lg border border-[var(--success-200)] bg-[var(--success-50)] px-6 py-5">
+                    <span className="text-5xl font-bold tabular-nums text-[var(--success-700)] w-24 shrink-0">{String(t.numero).padStart(3, '0')}</span>
+                    <div className="min-w-0">
+                      <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-white border border-[var(--success-300)] text-[var(--success-700)] mb-1.5">Consultorio {t.consultorio}</span>
+                      <p className="text-xl font-semibold text-[var(--text-primary)] truncate">{t.pacienteNombre}</p>
+                      <p className="text-sm text-[var(--text-secondary)] truncate">{t.medicoNombre} · {t.especialidad}</p>
                     </div>
                   </div>
-                )}
+                ))}
               </div>
-            </div>
+            )}
+          </section>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 border-t border-[var(--border-primary)]">
+            <section className="px-6 lg:px-10 py-6 border-b md:border-b-0 md:border-r border-[var(--border-primary)]">
+              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-4">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--warning-500)' }} />
+                Próximos turnos
+              </h3>
+              {turnosEnEspera.length === 0 ? (
+                <p className="text-sm text-[var(--text-tertiary)] py-6">No hay turnos en espera</p>
+              ) : (
+                <ul className="space-y-2.5">
+                  {turnosEnEspera.slice(0, 6).map(t => (
+                    <li key={t.id} className="flex items-center gap-4">
+                      <span className="w-12 h-12 rounded-md flex items-center justify-center font-bold text-white tabular-nums shrink-0" style={{ backgroundColor: 'var(--primary-700)' }}>
+                        {String(t.numero).padStart(3, '0')}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-[var(--text-primary)] truncate">{t.pacienteNombre}</p>
+                        <p className="text-sm text-[var(--text-tertiary)] truncate">{t.medicoNombre} · Cons. {t.consultorio}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="px-6 lg:px-10 py-6">
+              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-4">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--info-500)' }} />
+                Últimos llamados
+              </h3>
+              {turnosLlamados.length === 0 ? (
+                <p className="text-sm text-[var(--text-tertiary)] py-6">Sin llamados recientes</p>
+              ) : (
+                <ul className="space-y-2.5">
+                  {turnosLlamados.slice(0, 6).map(t => (
+                    <li key={t.id} className="flex items-center gap-3 rounded-md border border-[var(--info-200)] bg-[var(--info-50)] px-4 py-2.5">
+                      <span className="font-bold tabular-nums text-[var(--info-700)]">{String(t.numero).padStart(3, '0')}</span>
+                      <span className="text-sm font-medium text-[var(--text-primary)] truncate">{t.pacienteNombre}</span>
+                      <span className="ml-auto text-xs text-[var(--text-tertiary)] shrink-0">Cons. {t.consultorio}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           </div>
         </div>
       )}
@@ -448,7 +507,7 @@ export default function TurnosPage() {
         {turnoActual && (
           <div className="space-y-6">
             <div className="p-4 bg-[var(--info-50)] rounded-xl border border-[var(--info-200)]">
-              <h4 className="font-semibold text-[var(--info-700)] mb-2">📋 Resumen del Turno</h4>
+              <h4 className="font-semibold text-[var(--info-700)] mb-2">Resumen del Turno</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-[var(--text-tertiary)]">Paciente:</span><span className="font-medium text-[var(--text-primary)]">{turnoActual.pacienteNombre}</span></div>
                 <div className="flex justify-between"><span className="text-[var(--text-tertiary)]">C.I.:</span><span className="font-medium text-[var(--text-primary)]">{turnoActual.pacienteCI}</span></div>
@@ -463,14 +522,14 @@ export default function TurnosPage() {
             {/* Vista previa del ticket */}
             <div>
               <p className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Vista previa del ticket</p>
-              <TicketPreview turno={turnoActual} />
+              <TicketPreview turno={turnoActual} printRef={printRef} />
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="secondary" onClick={() => { setShowConfirmPago(false); setTurnoActual(null); }}>
                 Cancelar
               </Button>
-              <Button variant="premium" size="lg" onClick={confirmarPago}>
+              <Button variant="primary" size="lg" onClick={confirmarPago}>
                 <DollarSign className="w-4 h-4" />
                   Confirmar Pago Bs. {turnoActual.monto}
               </Button>
@@ -484,7 +543,7 @@ export default function TurnosPage() {
         {modalTurno && (
           <div className="space-y-4">
             <div className="flex items-center justify-center mb-4">
-              <TicketPreview turno={modalTurno} />
+              <TicketPreview turno={modalTurno} printRef={printRef} />
             </div>
             <div className="flex justify-center gap-3 pt-2">
               <Button size="sm" onClick={() => { window.print(); toast('info', 'Enviando a impresión'); }}>

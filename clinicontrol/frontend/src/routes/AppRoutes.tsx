@@ -8,29 +8,29 @@ const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 const DashboardPage = lazy(() => import('../pages/DashboardPage'));
 const PacientesPage = lazy(() => import('../pages/PacientesPage'));
-const MedicosPage = lazy(() => import('../pages/MedicosPage'));
 const CitasPage = lazy(() => import('../pages/CitasPage'));
+const TurnosPage = lazy(() => import('../pages/TurnosPage'));
+const AgendaPage = lazy(() => import('../pages/AgendaPage'));
+const CajaPage = lazy(() => import('../pages/CajaPage'));
+const AlergiasPage = lazy(() => import('../pages/AlergiasPage'));
+const VacunasPage = lazy(() => import('../pages/VacunasPage'));
+const MedicosPage = lazy(() => import('../pages/MedicosPage'));
+const ArqueoPage = lazy(() => import('../pages/ArqueoPage'));
+const SucursalAdminPage = lazy(() => import('../pages/SucursalAdminPage'));
+const MfaSetupPage = lazy(() => import('../pages/MfaSetupPage'));
+const TurnosSalaPage = lazy(() => import('../pages/TurnosSalaPage'));
+const TurnosTVPage = lazy(() => import('../pages/TurnosTVPage'));
 const ConsultasPage = lazy(() => import('../pages/ConsultasPage'));
 const RecetasPage = lazy(() => import('../pages/RecetasPage'));
 const HistoriaClinicaPage = lazy(() => import('../pages/HistoriaClinicaPage'));
 const ConsultaCompletaPage = lazy(() => import('../pages/ConsultaCompletaPage'));
-const AlergiasPage = lazy(() => import('../pages/AlergiasPage'));
-const VacunasPage = lazy(() => import('../pages/VacunasPage'));
-const AgendaPage = lazy(() => import('../pages/AgendaPage'));
-const SucursalAdminPage = lazy(() => import('../pages/SucursalAdminPage'));
-const TurnosPage = lazy(() => import('../pages/TurnosPage'));
-const TurnosSalaPage = lazy(() => import('../pages/TurnosSalaPage'));
-const TurnosTVPage = lazy(() => import('../pages/TurnosTVPage'));
 const UsuariosPage = lazy(() => import('../pages/UsuariosPage'));
 const ChangePasswordPage = lazy(() => import('../pages/ChangePasswordPage'));
-const MfaSetupPage = lazy(() => import('../pages/MfaSetupPage'));
 const RolesPage = lazy(() => import('../pages/RolesPage'));
 const AuditLogPage = lazy(() => import('../pages/AuditLogPage'));
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
 const TriajePage = lazy(() => import('../pages/TriajePage'));
 const HospitalizacionPage = lazy(() => import('../pages/HospitalizacionPage'));
-const CajaPage = lazy(() => import('../pages/CajaPage'));
-const ArqueoPage = lazy(() => import('../pages/ArqueoPage'));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'));
 
 function PageLoader() {
@@ -78,29 +78,30 @@ export default function AppRoutes() {
           <Route path="/" element={<RoleRoute roles={TODOS}><Layout><DashboardPage /></Layout></RoleRoute>} />
           <Route path="/dashboard" element={<RoleRoute roles={TODOS}><Layout><DashboardPage /></Layout></RoleRoute>} />
           <Route path="/pacientes" element={<RoleRoute roles={STAFF_PAC}><Layout><PacientesPage /></Layout></RoleRoute>} />
-          <Route path="/medicos" element={<RoleRoute roles={['admin']}><Layout><MedicosPage /></Layout></RoleRoute>} />
           <Route path="/citas" element={<RoleRoute roles={ADMISION}><Layout><CitasPage /></Layout></RoleRoute>} />
+          <Route path="/turnos" element={<RoleRoute roles={ADMISION}><Layout><TurnosPage /></Layout></RoleRoute>} />
+          <Route path="/agenda" element={<RoleRoute roles={[...ADMISION, 'medico']}><Layout><AgendaPage /></Layout></RoleRoute>} />
+          <Route path="/caja" element={<RoleRoute roles={ADMISION}><Layout><CajaPage /></Layout></RoleRoute>} />
+          <Route path="/alergias" element={<RoleRoute roles={CLINICO}><Layout><AlergiasPage /></Layout></RoleRoute>} />
+          <Route path="/vacunas" element={<RoleRoute roles={CLINICO}><Layout><VacunasPage /></Layout></RoleRoute>} />
+          <Route path="/medicos" element={<RoleRoute roles={['admin']}><Layout><MedicosPage /></Layout></RoleRoute>} />
+          <Route path="/admin/arqueo" element={<RoleRoute roles={GERENCIA}><Layout><ArqueoPage /></Layout></RoleRoute>} />
+          <Route path="/admin/sucursales" element={<RoleRoute roles={GERENCIA}><Layout><SucursalAdminPage /></Layout></RoleRoute>} />
+          <Route path="/perfil/mfa" element={<RoleRoute roles={TODOS}><Layout><MfaSetupPage /></Layout></RoleRoute>} />
+          {/* Pantallas kiosk sin Layout (sala de espera / TV) */}
+          <Route path="/sala-espera" element={<RoleRoute roles={TODOS}><TurnosSalaPage /></RoleRoute>} />
+          <Route path="/pantalla-turnos" element={<RoleRoute roles={TODOS}><TurnosTVPage /></RoleRoute>} />
           <Route path="/consultas" element={<RoleRoute roles={CLINICO}><Layout><ConsultasPage /></Layout></RoleRoute>} />
           <Route path="/triaje" element={<RoleRoute roles={CLINICO}><Layout><TriajePage /></Layout></RoleRoute>} />
           <Route path="/hospitalizacion" element={<RoleRoute roles={CLINICO}><Layout><HospitalizacionPage /></Layout></RoleRoute>} />
           <Route path="/recetas" element={<RoleRoute roles={MEDICO}><Layout><RecetasPage /></Layout></RoleRoute>} />
           <Route path="/historia-clinica" element={<RoleRoute roles={CLINICO}><Layout><HistoriaClinicaPage /></Layout></RoleRoute>} />
           <Route path="/consulta-completa" element={<RoleRoute roles={MEDICO}><Layout><ConsultaCompletaPage /></Layout></RoleRoute>} />
-          <Route path="/vacunas" element={<RoleRoute roles={CLINICO}><Layout><VacunasPage /></Layout></RoleRoute>} />
-          <Route path="/agenda" element={<RoleRoute roles={MEDICO}><Layout><AgendaPage /></Layout></RoleRoute>} />
-          <Route path="/alergias" element={<RoleRoute roles={STAFF_PAC}><Layout><AlergiasPage /></Layout></RoleRoute>} />
-          <Route path="/turnos/sala-espera" element={<RoleRoute roles={STAFF_PAC}><Layout><TurnosSalaPage /></Layout></RoleRoute>} />
-          <Route path="/turnos/pantalla" element={<RoleRoute roles={TODOS}><Layout><TurnosTVPage /></Layout></RoleRoute>} />
-          <Route path="/admin/sucursales" element={<RoleRoute roles={['admin']}><Layout><SucursalAdminPage /></Layout></RoleRoute>} />
           <Route path="/admin/usuarios" element={<RoleRoute roles={['admin']}><Layout><UsuariosPage /></Layout></RoleRoute>} />
           <Route path="/admin/roles" element={<RoleRoute roles={['admin']}><Layout><RolesPage /></Layout></RoleRoute>} />
           <Route path="/admin/audit" element={<RoleRoute roles={GERENCIA}><Layout><AuditLogPage /></Layout></RoleRoute>} />
           <Route path="/perfil" element={<RoleRoute roles={TODOS}><Layout><ProfilePage /></Layout></RoleRoute>} />
           <Route path="/perfil/cambiar-password" element={<RoleRoute roles={TODOS}><Layout><ChangePasswordPage /></Layout></RoleRoute>} />
-          <Route path="/perfil/mfa" element={<RoleRoute roles={TODOS}><Layout><MfaSetupPage /></Layout></RoleRoute>} />
-          <Route path="/turnos" element={<RoleRoute roles={['admin']}><Layout><TurnosPage /></Layout></RoleRoute>} />
-          <Route path="/caja" element={<RoleRoute roles={ADMISION}><Layout><CajaPage /></Layout></RoleRoute>} />
-          <Route path="/arqueo" element={<RoleRoute roles={['admin', 'gerente']}><Layout><ArqueoPage /></Layout></RoleRoute>} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>

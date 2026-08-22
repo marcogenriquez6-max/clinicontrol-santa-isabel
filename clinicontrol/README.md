@@ -9,7 +9,6 @@ Sistema web full-stack para la digitalización de procesos asistenciales y admin
 | Frontend | React 19, TypeScript, Tailwind CSS, Zustand, Vite |
 | Backend | NestJS 11, TypeScript, TypeORM 0.3 |
 | Base de datos | PostgreSQL 15 |
-| Cache | Redis 7 |
 | Storage | MinIO (object storage) |
 | Infraestructura | Docker, Docker Compose, Nginx |
 
@@ -28,21 +27,17 @@ modules/
 
 | Módulo | Funcionalidad |
 |--------|--------------|
-| Auth | JWT dual-token, MFA (TOTP), RBAC 6 roles |
+| Auth | JWT dual-token, RBAC 6 roles |
 | Pacientes | Registro único, validación CI, búsqueda ágil |
 | Historia Clínica | HCE longitudinal, formato SOAP, CIE-10 |
 | Recetas | Prescripción electrónica con seguridad farmacológica |
 | Seguridad Farmacológica | Alertas de alergias e interacciones medicamentosas |
 | Citas | Agendamiento y gestión de citas médicas |
-| Turnos | Admisión, cola de espera, asignación de consultorios |
+| Turnos | Admisión y asignación de consultorios |
 | Triaje | Clasificación ESI (E1-E5) |
 | Hospitalización | Control de camas, admisiones, altas |
-| Vacunación | Catálogo de vacunas, registro de aplicaciones |
 | Exámenes | Solicitud, resultados, valores de referencia |
 | Cirugías | Registro de cirugías previas |
-| Compras | Proveedores, órdenes de compra |
-| Farmacia | Inventario, movimientos, dispensación |
-| Caja/Arqueo | Facturación, arqueo diario |
 | Reportes | Dashboard, reportes operativos |
 | Auditoría | Log inmutable de acciones (trazabilidad) |
 | Usuarios | Gestión de usuarios y roles (RBAC) |
@@ -55,9 +50,9 @@ modules/
 |-----|---------------------|
 | `admin` | Acceso total al sistema |
 | `gerente` | Reportes, facturación, gestión de usuarios/sucursales |
-| `secretaria` | Pacientes, citas, consultas, recetas, vacunas |
+| `secretaria` | Pacientes, citas, consultas, recetas |
 | `medico` | Consultas, recetas, exámenes, historia clínica |
-| `enfermera` | Triaje, vacunación, hospitalización |
+| `enfermera` | Triaje, hospitalización |
 | `recepcionista` | Admisión, turnos, pacientes |
 
 ## Requisitos Previos
@@ -144,10 +139,9 @@ clinicontrol/
 │   │   │   ├── layout/       # TopNav, Sidebar, Layout
 │   │   │   ├── ui/           # DataTable, Modal, Badge, etc.
 │   │   │   ├── consulta/     # Componentes de consulta
-│   │   │   ├── vacunas/      # Modales de vacunación
 │   │   │   └── examenes/     # Modales de exámenes
 │   │   ├── hooks/            # useTheme, custom hooks
-│   │   ├── pages/            # 33 páginas (lazy-loaded)
+│   │   ├── pages/            # Páginas (lazy-loaded)
 │   │   ├── store/            # Zustand (app + auth)
 │   │   ├── styles/           # Theme CSS variables
 │   │   └── types/            # Interfaces TypeScript
@@ -162,12 +156,11 @@ clinicontrol/
 ## Seguridad
 
 - **Autenticación**: JWT dual-token (Access 15min + Refresh 7d HttpOnly cookie)
-- **MFA**: TOTP (Google Authenticator) con rate limiting
 - **RBAC**: 6 roles con permisos granulares por módulo
 - **Ownership Guard**: Verificación de propiedad del expediente
 - **Auditoría**: Registro inmutable de acciones con usuario, entidad, timestamp e IP
 - **Bcrypt**: Hashing de contraseñas (cost factor 12)
-- **Rate Limiting**: Protección contra fuerza bruta en login y MFA
+- **Rate Limiting**: Protección contra fuerza bruta en login
 - **Helmet**: Headers de seguridad HTTP
 
 ## Documentación

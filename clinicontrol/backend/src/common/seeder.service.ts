@@ -222,7 +222,7 @@ export class SeederService implements OnModuleInit {
 
     let demoMedicoUserId: number | null = null;
     if (process.env.NODE_ENV !== 'production') {
-      const demoPass = await bcrypt.hash('123456', 12);
+      const demoPass = await bcrypt.hash('Demo2026!', 12);
       const demoUsers = await this.usuarioRepo.save([
         {
           nombre: 'Gerente',
@@ -267,13 +267,13 @@ export class SeederService implements OnModuleInit {
       ]);
       demoMedicoUserId = demoUsers[3].id ?? null; // usuario 'medico@clinica.com'
       this.logger.warn(`========================================`);
-      this.logger.warn(`DEMO USERS (dev only) — contraseña: 123456`);
+      this.logger.warn(`DEMO USERS (dev only) — contraseña: Demo2026!`);
       this.logger.warn(`  admin@clinica.com / ${adminPassword}`);
-      this.logger.warn(`  gerente@clinica.com / 123456`);
-      this.logger.warn(`  secretaria@clinica.com / 123456`);
-      this.logger.warn(`  recepcion@clinica.com / 123456`);
-      this.logger.warn(`  medico@clinica.com / 123456`);
-      this.logger.warn(`  enfermeria@clinica.com / 123456`);
+      this.logger.warn(`  gerente@clinica.com / Demo2026!`);
+      this.logger.warn(`  secretaria@clinica.com / Demo2026!`);
+      this.logger.warn(`  recepcion@clinica.com / Demo2026!`);
+      this.logger.warn(`  medico@clinica.com / Demo2026!`);
+      this.logger.warn(`  enfermeria@clinica.com / Demo2026!`);
       this.logger.warn(`========================================`);
     }
 

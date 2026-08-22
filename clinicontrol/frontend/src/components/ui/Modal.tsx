@@ -13,7 +13,7 @@ interface ModalProps {
 }
 
 const accentBars: Record<string, string> = {
-  primary: 'bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)]',
+  primary: 'bg-[var(--primary-700)]',
   success: 'bg-gradient-to-r from-[var(--success-500)] to-[var(--success-600)]',
   danger: 'bg-gradient-to-r from-[var(--danger-500)] to-[var(--danger-600)]',
   warning: 'bg-gradient-to-r from-[var(--warning-500)] to-[var(--warning-600)]',

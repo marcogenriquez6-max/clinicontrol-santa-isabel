@@ -1,44 +1,86 @@
 import { useEffect, useState } from 'react';
-import { Plus, Activity, HeartPulse } from 'lucide-react';
-import { Button, Modal, Input, Select, Textarea, FormSection, Card } from '../components/ui';
+import { Plus, Activity, HeartPulse, Timer, AlertOctagon } from 'lucide-react';
+import PageHeader from '../components/ui/PageHeader';
+import { Button, Modal, Input, Select, Textarea, FormSection, Card, EsiBadge, esiMeta } from '../components/ui';
 import { toast } from '../components/ui/Toast';
 import { useStore } from '../store';
 import { useForm } from 'react-hook-form';
 import { triageService, type Triage } from '../api/triage.service';
 
 const ESI = [
-  { nivel: 1, label: 'E1 — Reanimación (crítico)', cls: 'bg-red-100 text-red-700 border-red-200', dot: 'bg-red-500' },
-  { nivel: 2, label: 'E2 — Emergencia', cls: 'bg-orange-100 text-orange-700 border-orange-200', dot: 'bg-orange-500' },
-  { nivel: 3, label: 'E3 — Urgente', cls: 'bg-amber-100 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
-  { nivel: 4, label: 'E4 — Menor urgencia', cls: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
-  { nivel: 5, label: 'E5 — No urgente', cls: 'bg-blue-100 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
+  { nivel: 1, label: 'E1 — Reanimación (crítico)' },
+  { nivel: 2, label: 'E2 — Emergencia' },
+  { nivel: 3, label: 'E3 — Urgente' },
+  { nivel: 4, label: 'E4 — Menor urgencia' },
+  { nivel: 5, label: 'E5 — No urgente' },
 ];
-const esiInfo = (n: number) => ESI.find(e => e.nivel === n) || ESI[2];
 
 const ESTADO_LABEL: Record<string, string> = {
   activo: 'Activo', en_espera: 'En espera', en_atencion: 'En atención', completado: 'Completado', cancelado: 'Cancelado',
 };
+
+function useNow(intervalMs = 30000) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+  return now;
+}
+
+interface TriajeFormValues {
+  pacienteId: string;
+  esiNivel: string;
+  temperatura?: string;
+  frecuenciaCardiaca?: string;
+  presionSistolica?: string;
+  presionDiastolica?: string;
+  frecuenciaRespiratoria?: string;
+  spo2?: string;
+  glucosa?: string;
+  peso?: string;
+  talla?: string;
+  motivoConsulta?: string;
+}
 
 export default function TriajePage() {
   const { pacientes, fetchPacientes } = useStore();
   const [triages, setTriages] = useState<Triage[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const now = useNow();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<TriajeFormValues>();
 
   const load = async () => {
     try {
       const res = await triageService.getAll();
-      const data: any = res.data;
-      setTriages(Array.isArray(data) ? data : (data?.data ?? data?.items ?? []));
+      const payload = res.data as unknown;
+      const data = Array.isArray(payload)
+        ? (payload as Triage[])
+        : ((payload as { data?: Triage[] })?.data ?? (payload as { items?: Triage[] })?.items ?? []);
+      setTriages(data);
     } catch { toast('error', 'Error', 'No se pudieron cargar los triajes'); }
   };
 
-  useEffect(() => { fetchPacientes(); load(); }, []);
+  useEffect(() => {
+    const init = async () => {
+      fetchPacientes();
+      await load();
+    };
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const pacienteNombre = (id: number) => {
     const p = pacientes.find(x => x.id === id);
     return p ? `${p.nombre} ${p.apellido}` : `Paciente #${id}`;
+  };
+
+  const espera = (t: Triage) => {
+    if (!t.fechaHora || t.estado === 'completado' || t.estado === 'cancelado') return null;
+    const inicio = new Date(t.fechaHora).getTime();
+    if (Number.isNaN(inicio)) return null;
+    return Math.max(0, Math.floor((now - inicio) / 60000));
   };
 
   const openModal = () => {
@@ -46,9 +88,10 @@ export default function TriajePage() {
     setIsModalOpen(true);
   };
 
-  const num = (v: any) => (v === '' || v === undefined || v === null ? undefined : Number(v));
+  const num = (v: string | number | null | undefined) =>
+    v === '' || v === undefined || v === null ? undefined : Number(v);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: TriajeFormValues) => {
     setFormLoading(true);
     try {
       await triageService.create({
@@ -67,63 +110,91 @@ export default function TriajePage() {
       toast('success', 'Triaje registrado', 'El paciente fue clasificado por prioridad ESI');
       setIsModalOpen(false);
       load();
-    } catch (e: any) {
-      const msg = e?.response?.data?.message;
-      toast('error', 'No se pudo registrar', Array.isArray(msg) ? msg.join(' · ') : (msg || 'Revise los datos'));
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
+      toast('error', 'No se pudo registrar', Array.isArray(msg) ? msg.join(' · ') : String(msg ?? 'Revise los datos'));
     } finally { setFormLoading(false); }
   };
 
-  // Orden por prioridad ESI (E1 primero), activos antes que completados
+  // Orden por prioridad ESI (E1 primero)
   const ordenados = [...triages].sort((a, b) => a.esiNivel - b.esiNivel);
+
+  const conteo = [1, 2, 3, 4, 5].map((n) => ({
+    nivel: n,
+    total: ordenados.filter((t) => t.esiNivel === n && t.estado !== 'completado' && t.estado !== 'cancelado').length,
+  }));
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between pb-5 mb-6 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center"><Activity className="w-5 h-5" /></div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">Triaje ESI</h1>
-            <p className="text-sm text-gray-500">{triages.length} clasificaciones · prioridad por severidad</p>
-          </div>
-        </div>
-        <Button onClick={openModal}><Plus className="w-4 h-4" />Nuevo Triaje</Button>
-      </div>
+      <PageHeader
+        icon={Activity}
+        title="Triaje ESI"
+        subtitle="Clasificación por severidad — prioridad de urgencias"
+        stats={[{ label: 'Clasificados', value: ordenados.length }]}
+        action={<Button onClick={openModal}><Plus className="w-4 h-4" />Nuevo Triaje</Button>}
+      />
 
-      {/* Leyenda ESI */}
-      <div className="flex flex-wrap gap-2">
-        {ESI.map(e => (
-          <span key={e.nivel} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${e.cls}`}>
-            <span className={`w-2 h-2 rounded-full ${e.dot}`} />{e.label}
-          </span>
-        ))}
+      {/* Tarjetas de severidad E1–E5 */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {conteo.map(({ nivel, total }) => {
+          const meta = esiMeta(nivel);
+          return (
+            <div key={nivel} className="rounded-xl p-4 border-l-4 shadow-sm"
+              style={{ backgroundColor: meta.bg, borderLeftColor: meta.accent }}>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-extrabold" style={{ color: meta.text }}>{meta.label} · {meta.desc}</span>
+              </div>
+              <p className="text-2xl font-bold mt-1" style={{ color: meta.text }}>{total}</p>
+              <p className="text-[11px] mt-0.5" style={{ color: meta.text }}>
+                {meta.maxWaitMin === 0 ? 'Atención inmediata' : `Espera máx. ${meta.maxWaitMin} min`}
+              </p>
+            </div>
+          );
+        })}
       </div>
 
       {ordenados.length === 0 ? (
-        <Card><p className="text-sm text-gray-500 text-center py-8">No hay triajes registrados</p></Card>
+        <Card><p className="text-sm text-center py-8" style={{ color: 'var(--text-tertiary)' }}>No hay triajes registrados</p></Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {ordenados.map(t => {
-            const info = esiInfo(t.esiNivel);
+          {ordenados.map((t) => {
+            const meta = esiMeta(t.esiNivel);
+            const min = espera(t);
+            const vencido = min != null && meta.maxWaitMin > 0 && min > meta.maxWaitMin;
             return (
               <Card key={t.id}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-semibold text-gray-900">{pacienteNombre(t.pacienteId)}</p>
-                    <p className="text-xs text-gray-500">{ESTADO_LABEL[t.estado] || t.estado}</p>
+                    <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{pacienteNombre(t.pacienteId)}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{ESTADO_LABEL[t.estado] || t.estado}</p>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border ${info.cls}`}>
-                    <span className={`w-2 h-2 rounded-full ${info.dot}`} />E{t.esiNivel}
-                  </span>
+                  <EsiBadge nivel={t.esiNivel} />
                 </div>
-                {t.motivoConsulta && <p className="text-sm text-gray-600 mt-2">{t.motivoConsulta}</p>}
-                <div className="grid grid-cols-3 gap-2 mt-3 text-xs text-gray-600">
-                  {t.temperatura != null && <span className="flex items-center gap-1"><HeartPulse className="w-3 h-3 text-gray-400" />T {t.temperatura}°</span>}
+                {t.motivoConsulta && <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>{t.motivoConsulta}</p>}
+                <div className="grid grid-cols-3 gap-2 mt-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  {t.temperatura != null && <span className="flex items-center gap-1"><HeartPulse className="w-3 h-3" style={{ color: 'var(--text-tertiary)' }} />T {t.temperatura}°</span>}
                   {t.frecuenciaCardiaca != null && <span>FC {t.frecuenciaCardiaca}</span>}
                   {t.presionArterial && <span>PA {t.presionArterial}</span>}
                   {t.frecuenciaRespiratoria != null && <span>FR {t.frecuenciaRespiratoria}</span>}
                   {t.saturacionOxigeno != null && <span>SpO₂ {t.saturacionOxigeno}%</span>}
                   {t.glucosa != null && <span>Gluc {t.glucosa}</span>}
                 </div>
+                {min != null && (
+                  <div
+                    className="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-lg text-xs font-bold"
+                    style={{
+                      backgroundColor: vencido ? 'var(--alert-critical-bg)' : 'var(--bg-secondary)',
+                      color: vencido ? 'var(--alert-critical-text)' : 'var(--text-secondary)',
+                      border: `1px solid ${vencido ? 'var(--alert-critical-accent)' : 'transparent'}`,
+                    }}
+                  >
+                    {vencido
+                      ? <AlertOctagon className="w-3.5 h-3.5" />
+                      : <Timer className="w-3.5 h-3.5" />}
+                    {min < 60 ? `${min} min en espera` : `${Math.floor(min / 60)} h ${min % 60} min`}
+                    {vencido && ' · superó tiempo máximo'}
+                  </div>
+                )}
               </Card>
             );
           })}
@@ -142,7 +213,7 @@ export default function TriajePage() {
                 error={errors.esiNivel?.message as string} {...register('esiNivel', { required: 'El nivel ESI es requerido' })} />
             </div>
           </FormSection>
-          <div className="border-t border-gray-100 pt-5">
+          <div className="border-t pt-5" style={{ borderColor: 'var(--border-secondary)' }}>
             <FormSection title="Signos vitales" color="emerald">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Input label="Temperatura (°C)" type="number" step="0.1" placeholder="36.5" {...register('temperatura')} />
@@ -155,10 +226,10 @@ export default function TriajePage() {
               </div>
             </FormSection>
           </div>
-          <div className="border-t border-gray-100 pt-5">
+          <div className="border-t pt-5" style={{ borderColor: 'var(--border-secondary)' }}>
             <Textarea label="Motivo de consulta" placeholder="Motivo por el que acude el paciente..." {...register('motivoConsulta')} />
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--border-secondary)' }}>
             <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
             <Button type="submit" loading={formLoading}>Registrar Triaje</Button>
           </div>
