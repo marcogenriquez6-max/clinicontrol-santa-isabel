@@ -295,6 +295,7 @@ export default function TurnosPage() {
   const turnosEnEspera = turnos.filter(t => t.estado === 'espera' && t.pagado);
   const turnosLlamados = turnos.filter(t => t.estado === 'llamado');
   const turnosAtencion = turnos.filter(t => t.estado === 'atencion');
+  const turnosAtendidos = turnos.filter(t => t.estado === 'completado');
 
   return (
     <div className="space-y-6 animate-in-up">
@@ -537,6 +538,27 @@ export default function TurnosPage() {
               )}
             </Card>
           ))}
+
+          <Card title="Atendidos" subtitle={`${turnosAtendidos.length} paciente(s)`}>
+            {turnosAtendidos.length === 0 ? (
+              <p className="text-center py-10 text-sm text-[var(--text-tertiary)]">Sin pacientes</p>
+            ) : (
+              <div className="space-y-2">
+                {turnosAtendidos.map(t => (
+                  <div key={t.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-[var(--border-primary)] bg-[var(--bg-secondary)] opacity-80">
+                    <span className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-bold text-white tabular-nums shrink-0" style={{ backgroundColor: 'var(--success-500)' }}>
+                      {String(t.numero).padStart(3, '0')}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-medium text-[var(--text-primary)] truncate">{t.pacienteNombre}</p>
+                      <p className="text-xs text-[var(--text-tertiary)] truncate">{t.medicoNombre} · Cons. {t.consultorio}</p>
+                    </div>
+                    <CheckCircle className="w-4 h-4 ml-auto shrink-0" style={{ color: 'var(--success-500)' }} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
 
           <Card title="En Atención" subtitle={`${turnosAtencion.length} consulta(s) en curso`}>
             {turnosAtencion.length === 0 ? (
