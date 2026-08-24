@@ -130,7 +130,7 @@ function KpiCard({ card, value }: { card: StatCardDef; value: number }) {
         <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-tertiary)' }} />
       </div>
       <p className="text-3xl font-bold tabular-nums tracking-tight leading-none" style={{ color: 'var(--text-primary)' }}>
-        {value.toLocaleString('es-VE')}
+        {value.toLocaleString('es-BO')}
       </p>
       <p className="text-xs font-medium mt-2 uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
         {card.label}
@@ -203,7 +203,7 @@ export default function DashboardPage() {
         if (lastPaciente?.createdAt) {
           acts.push({
             type: 'paciente',
-            time: new Date(lastPaciente.createdAt).toLocaleString('es-VE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            time: new Date(lastPaciente.createdAt).toLocaleString('es-BO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
             text: `Último paciente registrado: ${[lastPaciente.nombre, lastPaciente.apellido].filter(Boolean).join(' ') || '—'}`,
           });
         }
@@ -211,7 +211,7 @@ export default function DashboardPage() {
         if (ultimaCita?.fecha) {
           acts.push({
             type: 'cita',
-            time: new Date(ultimaCita.fecha).toLocaleString('es-VE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            time: new Date(ultimaCita.fecha).toLocaleString('es-BO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
             text: `Última cita: ${ultimaCita.paciente ? `${ultimaCita.paciente.nombre ?? ''} ${ultimaCita.paciente.apellido ?? ''}`.trim() : 'agendada'}`,
           });
         }
@@ -225,7 +225,7 @@ export default function DashboardPage() {
           if (rows.length > 0) {
             setActivity(rows.slice(0, 5).map(r => ({
               type: 'auditoria' as ActivityKind,
-              time: r.createdAt ? new Date(r.createdAt).toLocaleString('es-VE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '',
+              time: r.createdAt ? new Date(r.createdAt).toLocaleString('es-BO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '',
               text: [r.accion, r.entidad].filter(Boolean).join(' · ') || 'Acción registrada',
             })));
           }
@@ -282,7 +282,7 @@ export default function DashboardPage() {
             {saludo}{user?.nombre ? `, ${user.nombre}` : ''}
           </h1>
           <p className="text-sm mt-0.5 capitalize" style={{ color: 'var(--text-tertiary)' }}>
-            {new Date().toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            {new Date().toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             {' · '}
             <span className="capitalize inline-block first-letter:normal-case">{userRole}</span>
           </p>
@@ -318,7 +318,7 @@ export default function DashboardPage() {
           <ProgressRing pct={pendientesPct} color="var(--primary-600)" />
           <div>
             <p className="text-3xl font-bold tabular-nums tracking-tight" style={{ color: 'var(--text-primary)' }}>
-              {stats.citasPendientes.toLocaleString('es-VE')}
+              {stats.citasPendientes.toLocaleString('es-BO')}
             </p>
             <p className="text-xs font-medium mt-1 uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Citas pendientes</p>
             <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Programadas por atender</p>
@@ -330,7 +330,7 @@ export default function DashboardPage() {
           <ProgressRing pct={Math.min(stats.turnosHoy * 10, 100)} color="var(--success-500)" />
           <div>
             <p className="text-3xl font-bold tabular-nums tracking-tight" style={{ color: 'var(--text-primary)' }}>
-              {stats.turnosHoy.toLocaleString('es-VE')}
+              {stats.turnosHoy.toLocaleString('es-BO')}
             </p>
             <p className="text-xs font-medium mt-1 uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Citas de hoy</p>
             <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Agenda del día en curso</p>
@@ -368,7 +368,7 @@ export default function DashboardPage() {
             <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Actividad reciente</h3>
             {actualizado && (
               <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                <Clock className="w-3 h-3" />{actualizado.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}
+                <Clock className="w-3 h-3" />{actualizado.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
           </header>

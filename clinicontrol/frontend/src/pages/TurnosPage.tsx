@@ -31,8 +31,8 @@ function TicketPreview({ turno, printRef }: { turno: Turno; printRef?: React.Ref
         style={{ fontFamily: '"JetBrains Mono", ui-monospace, monospace', fontSize: '12px' }}>
         {/* Encabezado */}
         <p className="text-center font-bold tracking-[0.15em] text-sm">CLÍNICA SANTA ISABEL</p>
-        <p className="text-center text-[10px] mt-1">RIF: J-40123456-7</p>
-        <p className="text-center text-[10px]">Av. Principal · Tel. (0281) 000-0000</p>
+        <p className="text-center text-[10px] mt-1">NIT: 40123456-7</p>
+        <p className="text-center text-[10px]">Bolívar esq. Tarapacá · Tel. 68283500 · 61813407</p>
 
         <div className="border-t border-dashed border-neutral-400 my-3" />
 
@@ -44,7 +44,7 @@ function TicketPreview({ turno, printRef }: { turno: Turno; printRef?: React.Ref
         <p className="text-center text-[10px]">
           {turno.fechaProgramada
             ? turno.fechaProgramada.slice(0, 10).split('-').reverse().join('/') + ' · ' + (turno.horaProgramada ?? '')
-            : ahora.toLocaleDateString('es-VE') + ' · ' + ahora.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}
+            : ahora.toLocaleDateString('es-BO') + ' · ' + ahora.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })}
         </p>
 
         <div className="border-t border-dashed border-neutral-400 my-3" />
@@ -602,10 +602,10 @@ export default function TurnosPage() {
             </div>
             <div className="sm:text-right">
               <p className="text-white font-bold tabular-nums text-5xl leading-none">
-                {horaActual.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}
+                {horaActual.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })}
               </p>
               <p className="text-[var(--primary-300)] text-sm capitalize mt-1">
-                {horaActual.toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                {horaActual.toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
           </header>

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import { Plus, Pencil, Power, X, Circle, AlertTriangle, Ban, Skull, Archive, ChevronDown, Check, type LucideIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Pencil, Power, X, Circle, AlertTriangle, Ban, Skull, Archive, ChevronDown, Check, FolderOpen, type LucideIcon } from 'lucide-react';
 import { Button, Modal, Input, Select, FormSection } from '../components/ui';
 import DataTable from '../components/ui/DataTable';
 import type { Column } from '../components/ui/DataTable';
@@ -17,6 +18,7 @@ const ESTADOS: { value: EstadoPaciente; label: string; icon: LucideIcon; badge: 
 ];
 
 export default function PacientesPage() {
+  const navigate = useNavigate();
   const { pacientes, fetchPacientes, fetchHelpers, generos, gruposSanguineos, addPaciente, updatePaciente } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEstadoModalOpen, setIsEstadoModalOpen] = useState(false);
@@ -30,7 +32,7 @@ export default function PacientesPage() {
   const [showEstadoMenu, setShowEstadoMenu] = useState(false);
   const [showGeneroMenu, setShowGeneroMenu] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm();
 
   useEffect(() => { fetchPacientes(); fetchHelpers(); }, []);
 
@@ -90,6 +92,17 @@ export default function PacientesPage() {
     return !dup || `Ya existe un paciente registrado con la C.I. ${value}`;
   };
 
+  // HU-02: al detectar CI existente, ofrecer abrir el expediente ya registrado
+  const ciActual = String(watch('ci') ?? '').trim();
+  const pacienteDuplicado = ciActual.length >= 5 && pacientes.find(
+    (p) => p.ci === ciActual && p.id !== editingPaciente?.id,
+  ) || null;
+
+  const abrirExpedienteExistente = (id: number) => {
+    setIsModalOpen(false);
+    navigate(`/historia-clinica?pacienteId=${id}`);
+  };
+
   const handleOpenModal = (paciente?: Paciente) => {
     setEditingPaciente(paciente || null);
     reset(paciente ? {
@@ -144,9 +157,14 @@ export default function PacientesPage() {
       setIsModalOpen(false);
       fetchPacientes();
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string | string[] } } };
+      const err = e as { response?: { data?: { message?: string | string[] }; status?: number } };
       const msg = err?.response?.data?.message;
-      toast('error', 'No se pudo guardar', Array.isArray(msg) ? msg.join(' · ') : (msg || 'Revise los datos e intente nuevamente'));
+      const textoMsg = Array.isArray(msg) ? msg.join(' · ') : (msg || '');
+      if (err?.response?.status === 409 || textoMsg.includes('Ya existe un paciente')) {
+        toast('warning', 'Paciente ya registrado', 'Revise el aviso del formulario y use "Abrir expediente existente".');
+      } else {
+        toast('error', 'No se pudo guardar', textoMsg || 'Revise los datos e intente nuevamente');
+      }
     } finally { setFormLoading(false); }
   };
 
@@ -322,6 +340,23 @@ export default function PacientesPage() {
               <Input label="C.I. *" placeholder="1234567 (solo números)" error={errors.ci?.message as string} {...register('ci', { ...VALIDACIONES.ci, validate: ciDuplicada })} />
               <Input label="Fecha de Nacimiento *" type="date" error={errors.fechaNacimiento?.message as string} {...register('fechaNacimiento', VALIDACIONES.fechaNacimiento)} />
             </div>
+            {pacienteDuplicado && (
+              <div className="mt-4 p-3.5 rounded-lg border flex flex-col sm:flex-row sm:items-center gap-3"
+                style={{ backgroundColor: 'var(--warning-50)', borderColor: 'var(--warning-300)' }}>
+                <AlertTriangle className="w-5 h-5 shrink-0 hidden sm:block" style={{ color: 'var(--warning-600)' }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold" style={{ color: 'var(--warning-800)' }}>
+                    Ya existe un expediente con la C.I. {pacienteDuplicado.ci}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--warning-700)' }}>
+                    {pacienteDuplicado.nombre} {pacienteDuplicado.apellido} ya está registrado. No se creará un expediente duplicado.
+                  </p>
+                </div>
+                <Button size="sm" onClick={() => abrirExpedienteExistente(pacienteDuplicado.id!)} className="shrink-0">
+                  <FolderOpen className="w-4 h-4" />Abrir expediente existente
+                </Button>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <Select label="Género *" placeholder="Seleccionar..." options={(generos || []).map(g => ({ value: g.id, label: g.nombre }))} error={errors.generoId?.message as string} {...register('generoId', { required: 'El género es requerido' })} />
               <Select label="Grupo Sanguíneo" placeholder="Seleccionar..." options={(gruposSanguineos || []).map(g => ({ value: g.id, label: g.nombre }))} {...register('grupoSanguineoId')} />
