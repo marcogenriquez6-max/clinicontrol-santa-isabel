@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    try { await authService.logout(); } catch {}
+    try { await authService.logout(); } catch { /* el backend ya invalido la sesion */ }
     clearAccessToken();
     set({ user: null, token: null, isAuthenticated: false });
   },

@@ -447,7 +447,7 @@ export default function RecetasPage() {
           <Eye className="w-3.5 h-3.5" />
         </Button>
         {r.estado !== 'cancelada' && (
-          <Button variant="ghost" size="sm" icon onClick={() => handleDarDeBaja(r)} className="hover:text-red-500">
+          <Button variant="ghost" size="sm" icon onClick={() => handleDarDeBaja(r)} className="hover:text-[var(--danger-500)]">
             <X className="w-3.5 h-3.5" />
           </Button>
         )}
@@ -645,7 +645,7 @@ export default function RecetasPage() {
                       <div className="flex items-start justify-between mb-3">
                         <span className="text-xs font-semibold text-[var(--text-tertiary)] uppercase">Medicamento #{idx + 1}</span>
                         <Button variant="ghost" size="sm" icon onClick={() => removeMedicamento(idx)}>
-                          <X className="w-3.5 h-3.5 text-red-500" />
+                          <X className="w-3.5 h-3.5 text-[var(--danger-500)]" />
                         </Button>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -756,17 +756,17 @@ export default function RecetasPage() {
       <Modal isOpen={showBajaModal} onClose={() => { setShowBajaModal(false); setRecetaToBaja(null); }} title="Confirmar" size="sm" accent="danger">
         {recetaToBaja && (
           <div className="space-y-4">
-            <div className="flex items-start gap-3 p-4 bg-red-50 rounded-xl border border-red-200">
-              <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-4 bg-[var(--danger-50)] rounded-xl border border-[var(--danger-200)]">
+              <AlertTriangle className="w-5 h-5 text-[var(--danger-500)] flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-red-700">¿Dar de baja esta receta?</p>
-                <p className="text-xs text-red-600 mt-1">
+                <p className="text-sm font-medium text-[var(--danger-700)]">¿Dar de baja esta receta?</p>
+                <p className="text-xs text-[var(--danger-600)] mt-1">
                   Paciente: {recetaToBaja.consulta?.paciente?.nombre || '—'} {recetaToBaja.consulta?.paciente?.apellido || ''}
                 </p>
-                <p className="text-xs text-red-600">
+                <p className="text-xs text-[var(--danger-600)]">
                   Fecha: {recetaToBaja.createdAt ? new Date(recetaToBaja.createdAt).toLocaleDateString('es-ES') : '—'}
                 </p>
-                <p className="text-xs text-red-500 mt-2">La receta quedará con estado "Cancelada" y no podrá ser dispensada.</p>
+                <p className="text-xs text-[var(--danger-500)] mt-2">La receta quedará con estado "Cancelada" y no podrá ser dispensada.</p>
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-2">

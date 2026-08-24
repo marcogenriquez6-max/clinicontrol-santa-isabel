@@ -52,13 +52,15 @@ export default function HistoriaClinicaPage() {
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    pacienteService.getAll().then(res => setTodosPacientes(Array.isArray(res.data) ? res.data : [])).catch(() => {});
+    pacienteService.getAll().then(res => setTodosPacientes(Array.isArray(res.data) ? res.data : [])).catch(() => { /* sin conexión */ });
   }, []);
 
   useEffect(() => {
     if (search.length < 2) {
-      setSearchResults([]);
-      setShowResults(false);
+      queueMicrotask(() => {
+        setSearchResults([]);
+        setShowResults(false);
+      });
       return;
     }
     const timer = setTimeout(async () => {
@@ -242,12 +244,12 @@ export default function HistoriaClinicaPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onFocus={() => setShowResults(true)}
-            className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl shadow-sm text-sm text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] outline-none focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all"
+            className="w-full pl-11 pr-4 py-3.5 bg-[var(--bg-card)] dark:bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl shadow-sm text-sm text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] outline-none focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all"
           />
           {searchLoading && <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[var(--primary-600)] border-t-transparent rounded-full animate-spin" />}
 
           {showResults && (
-            <div className="absolute z-50 mt-2 w-full bg-white dark:bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl shadow-xl max-h-[340px] overflow-y-auto">
+            <div className="absolute z-50 mt-2 w-full bg-[var(--bg-card)] dark:bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl shadow-xl max-h-[340px] overflow-y-auto">
               {loading && listaMostrar.length === 0 ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="w-6 h-6 border-2 border-[var(--primary-600)] border-t-transparent rounded-full animate-spin" />
@@ -264,7 +266,7 @@ export default function HistoriaClinicaPage() {
                 </div>
               ) : (
                 <>
-                  <div className="sticky top-0 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider bg-white dark:bg-[var(--bg-card)] border-b border-[var(--border-secondary)]" style={{ color: 'var(--text-quaternary)' }}>
+                  <div className="sticky top-0 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider bg-[var(--bg-card)] dark:bg-[var(--bg-card)] border-b border-[var(--border-secondary)]" style={{ color: 'var(--text-quaternary)' }}>
                     Pacientes ({listaMostrar.length})
                   </div>
                   {listaMostrar.map((p, i) => {
@@ -275,16 +277,16 @@ export default function HistoriaClinicaPage() {
                       <button
                         key={p.id ?? i}
                         onClick={() => handleSelectPatient(p)}
-                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left border-b border-[var(--border-secondary)] last:border-b-0 group"
+                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--bg-secondary)] transition-colors text-left border-b border-[var(--border-secondary)] last:border-b-0 group"
                       >
                         <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm bg-[var(--primary-50)] text-[var(--primary-600)] border border-[var(--primary-200)]">
                           {p.nombre.charAt(0)}{p.apellido?.charAt(0) || ''}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-slate-800 truncate">{p.nombre} {p.apellido}</p>
-                          <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500 flex-wrap">
+                          <p className="text-sm font-bold text-[var(--text-primary)] truncate">{p.nombre} {p.apellido}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5 text-xs text-[var(--text-secondary)] flex-wrap">
                             <span className="font-medium">CI: {p.ci}</span>
-                            {p.telefono && <><span className="text-slate-300">·</span><span>{p.telefono}</span></>}
+                            {p.telefono && <><span className="text-[var(--text-tertiary)]">·</span><span>{p.telefono}</span></>}
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
@@ -292,10 +294,10 @@ export default function HistoriaClinicaPage() {
                             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--primary-50)] text-[var(--primary-600)] border border-[var(--primary-200)]">{edad} años</span>
                           )}
                           {(typeof ultima === 'string') && (
-                            <span className="text-[10px] text-slate-400">Últ.: {formatDateShort(ultima)}</span>
+                            <span className="text-[10px] text-[var(--text-tertiary)]">Últ.: {formatDateShort(ultima)}</span>
                           )}
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[var(--primary-500)] transition-all group-hover:translate-x-0.5 flex-shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)] group-hover:text-[var(--primary-500)] transition-all group-hover:translate-x-0.5 flex-shrink-0" />
                       </button>
                     );
                   })}
@@ -317,7 +319,7 @@ export default function HistoriaClinicaPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Patient header */}
-      <div className="bg-white dark:bg-[var(--bg-card)] rounded-xl border border-[var(--border-primary)] shadow-sm overflow-hidden">
+      <div className="bg-[var(--bg-card)] dark:bg-[var(--bg-card)] rounded-xl border border-[var(--border-primary)] shadow-sm overflow-hidden">
         <div className="h-1" style={{ background: 'var(--primary-700)' }} />
         <div className="px-6 py-5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -344,7 +346,7 @@ export default function HistoriaClinicaPage() {
               className="w-full pl-9 pr-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md text-sm text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] outline-none focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all"
             />
             {showResults && (
-              <div className="absolute z-50 mt-1 w-full bg-white dark:bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-md shadow-lg max-h-60 overflow-y-auto divide-y divide-[var(--border-secondary)]">
+              <div className="absolute z-50 mt-1 w-full bg-[var(--bg-card)] dark:bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-md shadow-lg max-h-60 overflow-y-auto divide-y divide-[var(--border-secondary)]">
                 {searchResults.map((p) => (
                   <button key={p.id} onClick={() => handleSelectPatient(p)} className="w-full px-3 py-2 flex items-center gap-2 hover:bg-[var(--primary-50)] text-left">
                     <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold" style={{ backgroundColor: 'var(--primary-100)', color: 'var(--primary-700)' }}>
@@ -377,7 +379,7 @@ export default function HistoriaClinicaPage() {
               { label: 'Citas Pendientes', value: perfil?.citasPendientes ?? 0, icon: Calendar, color: 'var(--warning-600)', bg: 'var(--warning-50)' },
               { label: 'Última Visita', value: perfil?.ultimaConsulta ? formatDateShort(perfil.ultimaConsulta) : (sortedHistorial[0]?.fecha ? formatDateShort(sortedHistorial[0].fecha) : '-'), icon: Clock, color: 'var(--info-700)', bg: 'var(--info-50)' },
             ].map((stat) => (
-              <div key={stat.label} className="bg-white dark:bg-[var(--bg-card)] rounded-xl border border-[var(--border-primary)] shadow-sm p-4 hover:shadow-md transition-shadow">
+              <div key={stat.label} className="bg-[var(--bg-card)] dark:bg-[var(--bg-card)] rounded-xl border border-[var(--border-primary)] shadow-sm p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-lg" style={{ backgroundColor: stat.bg, color: stat.color }}>
                     <stat.icon className="w-4 h-4" />
@@ -450,7 +452,7 @@ export default function HistoriaClinicaPage() {
           </Card>
 
           {/* Timeline filters */}
-          <div className="bg-white dark:bg-[var(--bg-card)] rounded-xl border border-[var(--border-primary)] shadow-sm">
+          <div className="bg-[var(--bg-card)] dark:bg-[var(--bg-card)] rounded-xl border border-[var(--border-primary)] shadow-sm">
             <div className="px-5 py-4 border-b border-[var(--border-secondary)] flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-[var(--text-primary)]">Historial de Consultas</h3>
@@ -503,7 +505,7 @@ export default function HistoriaClinicaPage() {
                       <button
                         key={entry.consultaId || entry.id || idx}
                         onClick={() => setConsultaDetalle(entry)}
-                        className="w-full flex items-center gap-4 p-3 pl-4 bg-white dark:bg-[var(--bg-card)] rounded-xl border border-[var(--border-secondary)] shadow-sm hover:border-[var(--primary-300)] hover:shadow-md transition-all duration-200 text-left group relative overflow-hidden"
+                        className="w-full flex items-center gap-4 p-3 pl-4 bg-[var(--bg-card)] dark:bg-[var(--bg-card)] rounded-xl border border-[var(--border-secondary)] shadow-sm hover:border-[var(--primary-300)] hover:shadow-md transition-all duration-200 text-left group relative overflow-hidden"
                       >
                         {/* Acento lateral que se ilumina al pasar el mouse */}
                         <span className="absolute left-0 top-0 bottom-0 w-1 rounded-full transition-all duration-200 group-hover:w-1.5" style={{ backgroundColor: 'var(--primary-400)' }} />
@@ -623,18 +625,18 @@ export default function HistoriaClinicaPage() {
                 { label: 'Email', value: perfil.email || '-' },
               ].map(field => (
                 <div key={field.label}>
-                  <p className="text-xs text-gray-500">{field.label}</p>
-                  <p className="text-sm font-medium text-gray-900">{field.value}</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{field.label}</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{field.value}</p>
                 </div>
               ))}
             </div>
             {perfil.direccion && (
               <div>
-                <p className="text-xs text-gray-500">Dirección</p>
-                <p className="text-sm font-medium text-gray-900">{perfil.direccion}</p>
+                <p className="text-xs text-[var(--text-secondary)]">Dirección</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">{perfil.direccion}</p>
               </div>
             )}
-            <div className="border-t border-gray-100 pt-5">
+            <div className="border-t border-[var(--border-secondary)] pt-5">
               <div className="grid grid-cols-2 gap-4">
                 {[
                   { label: 'Total Consultas', value: perfil.totalConsultas },
@@ -643,8 +645,8 @@ export default function HistoriaClinicaPage() {
                   { label: 'Registrado Desde', value: formatDateShort(perfil.registradoDesde) },
                 ].map(stat => (
                   <div key={stat.label}>
-                    <p className="text-xs text-gray-500">{stat.label}</p>
-                    <p className="text-base font-semibold text-gray-900">{stat.value}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{stat.label}</p>
+                    <p className="text-base font-semibold text-[var(--text-primary)]">{stat.value}</p>
                   </div>
                 ))}
               </div>

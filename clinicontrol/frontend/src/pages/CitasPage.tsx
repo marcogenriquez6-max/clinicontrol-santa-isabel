@@ -10,14 +10,14 @@ import { citaService } from '../api/cita.service';
 import { useForm } from 'react-hook-form';
 import type { Cita } from '../types';
 
-const campoBase = 'w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-[var(--primary-500)] focus:border-[var(--primary-600)] outline-none transition-all duration-200 text-slate-700 text-sm';
+const campoBase = 'w-full border border-[var(--border-primary)] rounded-xl px-4 py-3 bg-[var(--bg-secondary)]/50 focus:bg-[var(--bg-card)] focus:ring-2 focus:ring-[var(--primary-500)] focus:border-[var(--primary-600)] outline-none transition-all duration-200 text-[var(--text-primary)] text-sm';
 
 function FieldLabel({ icon: Icon, text, required }: { icon: LucideIcon; text: string; required?: boolean }) {
   return (
-    <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+    <span className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">
       <Icon className="w-3.5 h-3.5" />
       {text}
-      {required && <span className="text-red-400">*</span>}
+      {required && <span className="text-[var(--danger-500)]">*</span>}
     </span>
   );
 }
@@ -107,17 +107,17 @@ const CITA_VALIDACIONES = {
   const columns: Column<Cita>[] = [
     { key: 'fecha', header: 'Fecha y Hora', sortable: true, render: (c) => (
       <div className="flex flex-col">
-        <span className="text-sm font-medium text-gray-900">{new Date(c.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-        <span className="text-xs text-gray-500">{new Date(c.fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+        <span className="text-sm font-medium text-[var(--text-primary)]">{new Date(c.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+        <span className="text-xs text-[var(--text-secondary)]">{new Date(c.fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
       </div>
     )},
     { key: 'paciente', header: 'Paciente', sortable: true, render: (c) => {
       const p = c.paciente || (pacientes || []).find(x => x.id === c.pacienteId);
-      return <span className="font-medium text-gray-900">{p ? `${p.nombre} ${p.apellido}` : '—'}</span>;
+      return <span className="font-medium text-[var(--text-primary)]">{p ? `${p.nombre} ${p.apellido}` : '—'}</span>;
     } },
     { key: 'medico', header: 'Médico', render: (c) => {
       const m = c.medico || (medicos || []).find(x => x.id === c.medicoId);
-      return <span className="text-gray-500">{m ? `Dr. ${m.nombre} ${m.apellido}` : '—'}</span>;
+      return <span className="text-[var(--text-secondary)]">{m ? `Dr. ${m.nombre} ${m.apellido}` : '—'}</span>;
     } },
     { key: 'estado', header: 'Estado', render: (c) => {
       const est = (typeof c.estado === 'string' ? c.estado : c.estado?.nombre) || 'pendiente';
@@ -125,8 +125,8 @@ const CITA_VALIDACIONES = {
     } },
     { key: 'acciones', header: 'Acciones', align: 'right', render: (c) => (
       <div className="flex justify-end gap-1">
-        <button onClick={() => handleOpenModal(c)} className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"><Pencil className="w-3.5 h-3.5" /></button>
-        <button onClick={() => openCancelModal(c)} className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50">
+        <button onClick={() => handleOpenModal(c)} className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"><Pencil className="w-3.5 h-3.5" /></button>
+        <button onClick={() => openCancelModal(c)} className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--danger-500)] hover:bg-[var(--danger-50)]">
           <XCircle className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -172,32 +172,32 @@ const CITA_VALIDACIONES = {
           <div>
             <FieldLabel icon={UserRound} text="Paciente" required />
             <div className="relative">
-              <UserRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <UserRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
               <select className={`${campoBase} pl-10 pr-10 appearance-none cursor-pointer`} {...register('pacienteId', CITA_VALIDACIONES.pacienteId)}>
                 <option value="" disabled>Seleccionar paciente...</option>
                 {(pacientes || []).map(p => (
                   <option key={p.id} value={String(p.id)}>{`${p.nombre} ${p.apellido}${p.ci ? ` · CI ${p.ci}` : ''}`}</option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
             </div>
-            {errors.pacienteId && <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.pacienteId.message as string}</p>}
+            {errors.pacienteId && <p className="mt-1.5 text-xs text-[var(--danger-500)] font-medium">{errors.pacienteId.message as string}</p>}
           </div>
 
           {/* Médico */}
           <div>
             <FieldLabel icon={Stethoscope} text="Médico" required />
             <div className="relative">
-              <Stethoscope className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <Stethoscope className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
               <select className={`${campoBase} pl-10 pr-10 appearance-none cursor-pointer`} {...register('medicoId', CITA_VALIDACIONES.medicoId)}>
                 <option value="" disabled>Seleccionar médico...</option>
                 {(medicos || []).map(m => (
                   <option key={m.id} value={String(m.id)}>{`Dr. ${m.nombre} ${m.apellido}${m.especialidad?.nombre ? ` · ${m.especialidad.nombre}` : ''}`}</option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
             </div>
-            {errors.medicoId && <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.medicoId.message as string}</p>}
+            {errors.medicoId && <p className="mt-1.5 text-xs text-[var(--danger-500)] font-medium">{errors.medicoId.message as string}</p>}
           </div>
 
           {/* Fecha y Hora */}
@@ -205,18 +205,18 @@ const CITA_VALIDACIONES = {
             <div>
               <FieldLabel icon={CalendarDays} text="Fecha" required />
               <div className="relative">
-                <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
                 <input type="date" className={`${campoBase} pl-10`} {...register('fecha', CITA_VALIDACIONES.fecha)} />
               </div>
-              {errors.fecha && <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.fecha.message as string}</p>}
+              {errors.fecha && <p className="mt-1.5 text-xs text-[var(--danger-500)] font-medium">{errors.fecha.message as string}</p>}
             </div>
             <div>
               <FieldLabel icon={Clock} text="Hora" required />
               <div className="relative">
-                <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
                 <input type="time" className={`${campoBase} pl-10`} {...register('hora', CITA_VALIDACIONES.hora)} />
               </div>
-              {errors.hora && <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.hora.message as string}</p>}
+              {errors.hora && <p className="mt-1.5 text-xs text-[var(--danger-500)] font-medium">{errors.hora.message as string}</p>}
             </div>
           </div>
 
@@ -224,29 +224,29 @@ const CITA_VALIDACIONES = {
           <div>
             <FieldLabel icon={Flag} text="Estado de la cita" />
             <div className="relative">
-              <Flag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <Flag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
               <select className={`${campoBase} pl-10 pr-10 appearance-none cursor-pointer`} {...register('estadoId')}>
                 {(estadosCita || []).map(e => (
                   <option key={e.id} value={e.id}>{e.nombre}</option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
             </div>
           </div>
 
           {/* Barra de acciones */}
-          <div className="flex justify-end gap-3 pt-5 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-5 border-t border-[var(--border-secondary)]">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-300 active:scale-[0.98] transition-all duration-200"
+              className="px-5 py-2.5 rounded-xl border border-[var(--border-primary)] bg-[var(--bg-card)] text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--neutral-300)] active:scale-[0.98] transition-all duration-200"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={formLoading}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[var(--primary-600)] text-white text-sm font-semibold  hover:bg-[var(--primary-700)] hover:shadow-lg hover:shadow-blue-600/30 active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[var(--primary-600)] text-white text-sm font-semibold  hover:bg-[var(--primary-700)] hover:shadow-lg hover:shadow-primary-600/30 active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {formLoading
                 ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -261,18 +261,18 @@ const CITA_VALIDACIONES = {
         title="Cancelar Cita" size="sm">
         {cancelTarget && (
           <div className="space-y-5">
-            <div className="p-4 bg-red-50 rounded-lg border border-red-100 space-y-2">
+            <div className="p-4 bg-[var(--danger-50)] rounded-lg border border-[var(--danger-100)] space-y-2">
               <p className="text-sm font-medium text-red-800">
                 {cancelTarget.paciente?.nombre} {cancelTarget.paciente?.apellido}
               </p>
-              <p className="text-xs text-red-600">
+              <p className="text-xs text-[var(--danger-600)]">
                 {new Date(cancelTarget.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
                 {' · '}
                 {new Date(cancelTarget.fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                 {' · Dr. '}{cancelTarget.medico?.nombre} {cancelTarget.medico?.apellido}
               </p>
             </div>
-            <p className="text-xs text-red-600">Esta acción cancelará la cita y liberará el horario. No se puede deshacer.</p>
+            <p className="text-xs text-[var(--danger-600)]">Esta acción cancelará la cita y liberará el horario. No se puede deshacer.</p>
             <Input
               label="Motivo de cancelación *"
               value={cancelMotivo}

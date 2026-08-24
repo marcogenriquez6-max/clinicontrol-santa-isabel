@@ -12,8 +12,8 @@ interface KpiCardProps {
 }
 
 const colorMap: Record<string, { bg: string; icon: string; text: string }> = {
-  blue: { bg: 'bg-blue-50 dark:bg-blue-900/20', icon: 'text-blue-600 dark:text-blue-400', text: 'text-blue-700 dark:text-blue-300' },
-  emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', icon: 'text-emerald-600 dark:text-emerald-400', text: 'text-emerald-700 dark:text-emerald-300' },
+  blue: { bg: 'bg-[var(--primary-50)] dark:bg-blue-900/20', icon: 'text-[var(--primary-600)] dark:text-[var(--primary-400)]', text: 'text-[var(--primary-700)] dark:text-[var(--primary-300)]' },
+  emerald: { bg: 'bg-[var(--success-50)] dark:bg-emerald-900/20', icon: 'text-[var(--success-600)] dark:text-[var(--success-500)]', text: 'text-[var(--success-700)] dark:text-emerald-300' },
   violet: { bg: 'bg-violet-50 dark:bg-violet-900/20', icon: 'text-violet-600 dark:text-violet-400', text: 'text-violet-700 dark:text-violet-300' },
   amber: { bg: 'bg-amber-50 dark:bg-amber-900/20', icon: 'text-amber-600 dark:text-amber-400', text: 'text-amber-700 dark:text-amber-300' },
   rose: { bg: 'bg-rose-50 dark:bg-rose-900/20', icon: 'text-rose-600 dark:text-rose-400', text: 'text-rose-700 dark:text-rose-300' },
@@ -46,7 +46,7 @@ export default function KpiCard({ icon: Icon, label, value, color = 'blue', badg
         </p>
         {trend && (
           <div className="flex items-center gap-1 mt-2">
-            <span className={`text-xs font-medium ${trend.up ? 'text-emerald-600' : 'text-red-600'}`}>
+            <span className={`text-xs font-medium ${trend.up ? 'text-[var(--success-600)]' : 'text-[var(--danger-600)]'}`}>
               {trend.up ? '↑' : '↓'} {trend.value}
             </span>
           </div>
@@ -54,7 +54,7 @@ export default function KpiCard({ icon: Icon, label, value, color = 'blue', badg
         {max != null && (
           <div className="mt-3 h-1.5 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
             <div
-              className="h-full rounded-full bg-blue-500"
+              className="h-full rounded-full bg-[var(--primary-500)]"
               style={{ width: `${Math.min(100, ((Number(value) || 0) / max) * 100)}%` }}
             />
           </div>

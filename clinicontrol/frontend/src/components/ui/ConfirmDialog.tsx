@@ -37,12 +37,14 @@ export default function ConfirmDialog({
 
   useEffect(() => {
     if (isOpen) {
-      setMounted(true);
-      requestAnimationFrame(() => setVisible(true));
+      requestAnimationFrame(() => {
+        setMounted(true);
+        requestAnimationFrame(() => setVisible(true));
+      });
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
     } else {
-      setVisible(false);
+      requestAnimationFrame(() => setVisible(false));
       const timer = setTimeout(() => setMounted(false), 200);
       document.body.style.overflow = 'unset';
       window.removeEventListener('keydown', handleKeyDown);
@@ -58,25 +60,25 @@ export default function ConfirmDialog({
 
   const config = {
     danger: {
-      icon: icon || <XCircle className="w-10 h-10 text-red-500" />,
-      bg: 'bg-red-50',
-      border: 'border-red-200',
-      btn: 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm hover:from-red-600 hover:to-red-700',
-      iconCircle: 'bg-red-100',
+      icon: icon || <XCircle className="w-10 h-10 text-[var(--danger-500)]" />,
+      bg: 'bg-[var(--danger-50)]',
+      border: 'border-[var(--danger-200)]',
+      btn: 'bg-gradient-to-r from-danger-500 to-danger-600 text-white shadow-sm hover:from-danger-600 hover:to-danger-700',
+      iconCircle: 'bg-[var(--danger-100)]',
     },
     success: {
-      icon: icon || <CheckCircle className="w-10 h-10 text-emerald-500" />,
-      bg: 'bg-emerald-50',
-      border: 'border-emerald-200',
-      btn: 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-sm hover:from-emerald-600 hover:to-emerald-700',
-      iconCircle: 'bg-emerald-100',
+      icon: icon || <CheckCircle className="w-10 h-10 text-[var(--success-500)]" />,
+      bg: 'bg-[var(--success-50)]',
+      border: 'border-[var(--success-200)]',
+      btn: 'bg-gradient-to-r from-success-500 to-success-600 text-white shadow-sm hover:from-success-600 hover:to-success-700',
+      iconCircle: 'bg-[var(--success-100)]',
     },
     info: {
-      icon: icon || <Info className="w-10 h-10 text-blue-500" />,
-      bg: 'bg-blue-50',
-      border: 'border-blue-200',
-      btn: 'bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-800)] text-white shadow-sm hover:from-blue-700 hover:to-blue-800',
-      iconCircle: 'bg-blue-100',
+      icon: icon || <Info className="w-10 h-10 text-[var(--primary-500)]" />,
+      bg: 'bg-[var(--primary-50)]',
+      border: 'border-[var(--primary-200)]',
+      btn: 'bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-800)] text-white shadow-sm hover:from-primary-700 hover:to-blue-800',
+      iconCircle: 'bg-[var(--primary-100)]',
     },
     warning: {
       icon: icon || <AlertTriangle className="w-10 h-10 text-amber-500" />,

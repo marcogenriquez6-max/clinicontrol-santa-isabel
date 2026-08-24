@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
           <div className="w-full max-w-[420px]">
             <div className="bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl p-8 shadow-md">
               <div className="text-center">
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <AlertCircle className="w-12 h-12 text-[var(--danger-500)] mx-auto mb-4" />
                 <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Enlace inválido</h2>
                 <p className="text-sm text-[var(--text-secondary)] mb-6">
                   El enlace de recuperación no es válido o ha expirado.
@@ -92,7 +92,7 @@ export default function ResetPasswordPage() {
             </div>
 
             {error && (
-              <div className="mb-5 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-800/40 rounded-lg flex items-start gap-2 text-sm text-red-700 dark:text-red-300">
+              <div className="mb-5 p-3 bg-[var(--danger-50)] dark:bg-[var(--danger-500/10)]/10 border border-[var(--danger-200)] dark:border-red-800/40 rounded-lg flex items-start gap-2 text-sm text-[var(--danger-700)] dark:text-[var(--danger-200)]">
                 <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -100,8 +100,8 @@ export default function ResetPasswordPage() {
 
             {success ? (
               <div className="space-y-5">
-                <div className="p-4 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-800/30 rounded-lg">
-                  <p className="text-sm text-green-700 dark:text-green-300">
+                <div className="p-4 bg-[var(--success-50)] dark:bg-[var(--success-500/10)]/10 border border-[var(--success-200)] dark:border-green-800/30 rounded-lg">
+                  <p className="text-sm text-[var(--success-700)] dark:text-[var(--success-200)]">
                     Ya puede iniciar sesión con su nueva contraseña.
                   </p>
                 </div>

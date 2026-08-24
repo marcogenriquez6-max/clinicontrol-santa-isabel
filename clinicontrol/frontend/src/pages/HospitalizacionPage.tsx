@@ -8,11 +8,11 @@ import { useForm } from 'react-hook-form';
 import { hospitalizacionService, camaService, type Hospitalizacion, type Cama, type HospStats } from '../api/hospitalizacion.service';
 
 const CAMA_CLS: Record<string, string> = {
-  disponible: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-  ocupado: 'bg-red-50 border-red-200 text-red-700',
+  disponible: 'bg-[var(--success-50)] border-[var(--success-200)] text-[var(--success-700)]',
+  ocupado: 'bg-[var(--danger-50)] border-[var(--danger-200)] text-[var(--danger-700)]',
   reservado: 'bg-amber-50 border-amber-200 text-amber-700',
-  limpieza: 'bg-blue-50 border-blue-200 text-blue-700',
-  mantenimiento: 'bg-gray-100 border-gray-200 text-gray-500',
+  limpieza: 'bg-[var(--primary-50)] border-[var(--primary-200)] text-[var(--primary-700)]',
+  mantenimiento: 'bg-[var(--bg-tertiary)] border-[var(--border-primary)] text-[var(--text-secondary)]',
 };
 const ESTADO_HOSP: Record<string, string> = {
   admitido: 'Admitido', en_observacion: 'En observación', internado: 'Internado', alta: 'De alta', traslado: 'Traslado', fallecido: 'Fallecido',
@@ -45,7 +45,10 @@ export default function HospitalizacionPage() {
     } catch { toast('error', 'Error', 'No se pudo cargar hospitalización'); }
   };
 
-  useEffect(() => { fetchPacientes(); fetchMedicos(); load(); }, []);
+  useEffect(() => {
+    const t = setTimeout(() => { fetchPacientes(); fetchMedicos(); load(); }, 0);
+    return () => clearTimeout(t);
+  }, []);
 
   const pName = (id: number) => { const p = pacientes.find(x => x.id === id); return p ? `${p.nombre} ${p.apellido}` : `Paciente #${id}`; };
   const mName = (id: number) => { const m = medicos.find(x => x.id === id); return m ? `Dr. ${m.nombre} ${m.apellido}` : `Médico #${id}`; };
@@ -127,16 +130,16 @@ export default function HospitalizacionPage() {
       {/* KPIs de ocupación */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map(k => (
-          <Card key={k.label}><p className="text-xs text-gray-500 uppercase tracking-wide">{k.label}</p><p className="text-2xl font-bold text-gray-900 mt-1">{k.value}</p></Card>
+          <Card key={k.label}><p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">{k.label}</p><p className="text-2xl font-bold text-[var(--text-primary)] mt-1">{k.value}</p></Card>
         ))}
       </div>
 
       {/* Mapa de camas */}
       <Card>
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Estado de camas</h3>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Estado de camas</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
           {camas.map(c => (
-            <div key={c.id} className={`rounded-lg border p-3 ${CAMA_CLS[c.estado] || 'bg-gray-50 border-gray-200'}`}>
+            <div key={c.id} className={`rounded-lg border p-3 ${CAMA_CLS[c.estado] || 'bg-[var(--bg-secondary)] border-[var(--border-primary)]'}`}>
               <div className="flex items-center gap-1.5"><BedDouble className="w-4 h-4" /><span className="font-semibold text-sm">{c.codigoCama}</span></div>
               <p className="text-xs mt-1">{c.servicio}</p>
               <p className="text-[11px] capitalize mt-0.5 opacity-80">{c.estado}</p>
@@ -147,21 +150,21 @@ export default function HospitalizacionPage() {
 
       {/* Internados */}
       <Card>
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Pacientes internados</h3>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Pacientes internados</h3>
         {activos.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-6">No hay pacientes internados</p>
+          <p className="text-sm text-[var(--text-secondary)] text-center py-6">No hay pacientes internados</p>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-[var(--border-secondary)]">
             {activos.map(h => (
               <div key={h.id} className="py-3 flex items-center justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-900">{pName(h.pacienteId)}</p>
-                  <p className="text-xs text-gray-500 truncate">{cName(h.camaId)} · {mName(h.medicoTratanteId)} · {ESTADO_HOSP[h.estado] || h.estado}</p>
-                  {h.motivoIngreso && <p className="text-sm text-gray-600 mt-0.5 truncate">{h.motivoIngreso}</p>}
+                  <p className="font-medium text-[var(--text-primary)]">{pName(h.pacienteId)}</p>
+                  <p className="text-xs text-[var(--text-secondary)] truncate">{cName(h.camaId)} · {mName(h.medicoTratanteId)} · {ESTADO_HOSP[h.estado] || h.estado}</p>
+                  {h.motivoIngreso && <p className="text-sm text-[var(--text-secondary)] mt-0.5 truncate">{h.motivoIngreso}</p>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => { notaForm.reset({ nota: '', plan: '', indicaciones: '' }); setNotaTarget(h); }} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-gray-600 hover:bg-gray-100"><FileText className="w-3.5 h-3.5" />Nota</button>
-                  <button onClick={() => { altaForm.reset({ diagnosticoAlta: '', notasAlta: '' }); setAltaTarget(h); }} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-blue-600 hover:bg-blue-50"><LogOut className="w-3.5 h-3.5" />Alta</button>
+                  <button onClick={() => { notaForm.reset({ nota: '', plan: '', indicaciones: '' }); setNotaTarget(h); }} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]"><FileText className="w-3.5 h-3.5" />Nota</button>
+                  <button onClick={() => { altaForm.reset({ diagnosticoAlta: '', notasAlta: '' }); setAltaTarget(h); }} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-[var(--primary-600)] hover:bg-[var(--primary-50)]"><LogOut className="w-3.5 h-3.5" />Alta</button>
                 </div>
               </div>
             ))}
@@ -185,12 +188,12 @@ export default function HospitalizacionPage() {
                 error={ingresoForm.formState.errors.camaId?.message as string} {...ingresoForm.register('camaId', { required: 'Cama requerida' })} />
             </div>
           </FormSection>
-          <div className="border-t border-gray-100 pt-5 space-y-4">
+          <div className="border-t border-[var(--border-secondary)] pt-5 space-y-4">
             <Input label="Motivo de ingreso" placeholder="Motivo de la internación" required
               error={ingresoForm.formState.errors.motivoIngreso?.message as string} {...ingresoForm.register('motivoIngreso', { required: 'Motivo requerido' })} />
             <Textarea label="Diagnóstico de ingreso" placeholder="Diagnóstico presuntivo (opcional)" {...ingresoForm.register('diagnosticoIngreso')} />
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-secondary)]">
             <Button type="button" variant="secondary" onClick={() => setIngresoOpen(false)}>Cancelar</Button>
             <Button type="submit" loading={loading}>Registrar Ingreso</Button>
           </div>
@@ -199,11 +202,11 @@ export default function HospitalizacionPage() {
 
       {/* Modal: Dar de Alta */}
       <Modal isOpen={!!altaTarget} onClose={() => setAltaTarget(null)} title="Dar de Alta" size="md">
-        {altaTarget && <p className="text-sm text-gray-500 mb-4">Paciente: <strong>{pName(altaTarget.pacienteId)}</strong> · {cName(altaTarget.camaId)}</p>}
+        {altaTarget && <p className="text-sm text-[var(--text-secondary)] mb-4">Paciente: <strong>{pName(altaTarget.pacienteId)}</strong> · {cName(altaTarget.camaId)}</p>}
         <form onSubmit={altaForm.handleSubmit(onAlta)} className="space-y-4">
           <Textarea label="Diagnóstico de alta" placeholder="Diagnóstico final" {...altaForm.register('diagnosticoAlta')} />
           <Textarea label="Notas / indicaciones de alta" placeholder="Indicaciones al paciente" {...altaForm.register('notasAlta')} />
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-secondary)]">
             <Button type="button" variant="secondary" onClick={() => setAltaTarget(null)}>Cancelar</Button>
             <Button type="submit" loading={loading}>Confirmar Alta</Button>
           </div>
@@ -212,13 +215,13 @@ export default function HospitalizacionPage() {
 
       {/* Modal: Nota de evolución */}
       <Modal isOpen={!!notaTarget} onClose={() => setNotaTarget(null)} title="Nota de Evolución" size="md">
-        {notaTarget && <p className="text-sm text-gray-500 mb-4">Paciente: <strong>{pName(notaTarget.pacienteId)}</strong></p>}
+        {notaTarget && <p className="text-sm text-[var(--text-secondary)] mb-4">Paciente: <strong>{pName(notaTarget.pacienteId)}</strong></p>}
         <form onSubmit={notaForm.handleSubmit(onNota)} className="space-y-4">
           <Textarea label="Evolución" placeholder="Evolución clínica del paciente" required
             error={notaForm.formState.errors.nota?.message as string} {...notaForm.register('nota', { required: 'La nota es requerida' })} />
           <Textarea label="Plan" placeholder="Plan de manejo (opcional)" {...notaForm.register('plan')} />
           <Textarea label="Indicaciones" placeholder="Indicaciones (opcional)" {...notaForm.register('indicaciones')} />
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-secondary)]">
             <Button type="button" variant="secondary" onClick={() => setNotaTarget(null)}>Cancelar</Button>
             <Button type="submit" loading={loading}>Guardar Nota</Button>
           </div>

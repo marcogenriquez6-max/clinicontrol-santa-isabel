@@ -70,7 +70,10 @@ export default function UsuariosPage() {
     }).catch(() => { Swal.fire({ icon: 'error', title: 'Error al cargar datos' }); }).finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    const t = setTimeout(loadData, 0);
+    return () => clearTimeout(t);
+  }, []);
 
   const openCreate = () => {
     setEditingUser(null);
@@ -168,7 +171,7 @@ export default function UsuariosPage() {
     <div className="space-y-6 animate-in-up">
       <PageHeader
         icon={Users}
-        gradient="from-indigo-500 to-purple-600"
+        gradient="from-primary-500 to-purple-600"
         title="Usuarios del Sistema"
         subtitle="Gestión de usuarios y roles"
         stats={[
@@ -201,7 +204,7 @@ export default function UsuariosPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {usuariosPorRol.map(({ rol, usuarios: users, icon: Icon, color, accent }, idx) => (
-            <div key={rol.id} className={`animate-in-up rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] p-5 ${accent === 'primary' ? 'border-l-4 border-l-[var(--primary-500)]' : accent === 'danger' ? 'border-l-4 border-l-red-500' : accent === 'warning' ? 'border-l-4 border-l-amber-500' : ''}`} style={{ animationDelay: `${idx * 100}ms` }}>
+            <div key={rol.id} className={`animate-in-up rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] p-5 ${accent === 'primary' ? 'border-l-4 border-l-[var(--primary-500)]' : accent === 'danger' ? 'border-l-4 border-l-danger-500' : accent === 'warning' ? 'border-l-4 border-l-amber-500' : ''}`} style={{ animationDelay: `${idx * 100}ms` }}>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className={`p-2.5 rounded-xl bg-gradient-to-br ${color} shadow-sm`}>

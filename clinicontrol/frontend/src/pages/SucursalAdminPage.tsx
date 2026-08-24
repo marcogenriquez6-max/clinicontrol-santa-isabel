@@ -23,10 +23,6 @@ export default function SucursalAdminPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({ nombre: '', direccion: '', telefono: '', email: '', planSuscripcionId: '' });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
   const loadData = async () => {
     try {
       // Los "planes de suscripción" son una feature multi-tenant opcional; su ausencia
@@ -43,6 +39,11 @@ export default function SucursalAdminPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const t = setTimeout(loadData, 0);
+    return () => clearTimeout(t);
+  }, []);
 
   const openCreate = () => {
     setEditing(null);
@@ -109,7 +110,7 @@ export default function SucursalAdminPage() {
     <div className="space-y-6 animate-in-up">
       <PageHeader
         icon={Building2}
-        gradient="from-indigo-500 to-blue-600"
+        gradient="from-primary-500 to-primary-600"
         title="Administración de Sucursal"
         subtitle="Gestión de sucursales"
         action={
@@ -128,7 +129,7 @@ export default function SucursalAdminPage() {
             <Card key={s.id}>
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-500/20 dark:to-orange-500/20">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-500/20 dark:to-warning-500/20">
                     <Building2 className="w-6 h-6 text-[var(--warning-600)]" />
                   </div>
                   <div>

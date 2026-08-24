@@ -124,8 +124,8 @@ export default function AgendaPage() {
   };
 
   const slotColor = (slot: SlotDisponible) => {
-    if (slot.estado === 'bloqueado') return 'bg-[var(--danger-100)] dark:bg-[var(--danger-500)]/10 text-[var(--danger-700)] dark:text-red-300 border-[var(--danger-200)] cursor-not-allowed';
-    if (slot.estado === 'ocupado') return 'bg-[var(--bg-tertiary)] dark:bg-gray-500/10 text-[var(--text-tertiary)] border-[var(--border-primary)] cursor-not-allowed';
+    if (slot.estado === 'bloqueado') return 'bg-[var(--danger-100)] dark:bg-[var(--danger-500)]/10 text-[var(--danger-700)] dark:text-[var(--danger-200)] border-[var(--danger-200)] cursor-not-allowed';
+    if (slot.estado === 'ocupado') return 'bg-[var(--bg-tertiary)] dark:bg-[var(--neutral-500)]/10 text-[var(--text-tertiary)] border-[var(--border-primary)] cursor-not-allowed';
     return 'bg-[var(--success-50)] dark:bg-[var(--success-500)]/10 text-[var(--success-700)] dark:text-emerald-300 border-[var(--success-200)] hover:bg-[var(--success-100)] dark:hover:bg-[var(--success-500)]/20 cursor-pointer';
   };
 
@@ -148,7 +148,7 @@ export default function AgendaPage() {
         </div>
         <div className="inline-flex gap-1 p-1 bg-[var(--bg-tertiary)] rounded-lg self-start">
           {tabs.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-white text-[var(--primary-700)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-[var(--bg-card)] text-[var(--primary-700)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
               {tab.label}
             </button>
           ))}

@@ -9,10 +9,10 @@ import { useForm } from 'react-hook-form';
 import type { Paciente, EstadoPaciente } from '../types';
 
 const ESTADOS: { value: EstadoPaciente; label: string; icon: LucideIcon; badge: string; dot: string }[] = [
-  { value: 'activo', label: 'Activo', icon: Circle, badge: 'bg-emerald-50 text-emerald-700 border-emerald-200/60', dot: 'bg-emerald-500' },
+  { value: 'activo', label: 'Activo', icon: Circle, badge: 'bg-[var(--success-50)] text-[var(--success-700)] border-[var(--success-200/60)]/60', dot: 'bg-[var(--success-500)]' },
   { value: 'inactivo', label: 'Inactivo', icon: AlertTriangle, badge: 'bg-amber-50 text-amber-700 border-amber-200/60', dot: 'bg-amber-500' },
-  { value: 'suspendido', label: 'Suspendido', icon: Ban, badge: 'bg-red-50 text-red-700 border-red-200/60', dot: 'bg-red-500' },
-  { value: 'fallecido', label: 'Fallecido', icon: Skull, badge: 'bg-slate-100 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
+  { value: 'suspendido', label: 'Suspendido', icon: Ban, badge: 'bg-[var(--danger-50)] text-[var(--danger-700)] border-[var(--danger-200/60)]/60', dot: 'bg-[var(--danger-500)]' },
+  { value: 'fallecido', label: 'Fallecido', icon: Skull, badge: 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border-[var(--border-primary)]', dot: 'bg-[var(--neutral-400)]' },
   { value: 'archivado', label: 'Archivado', icon: Archive, badge: 'bg-[var(--primary-50)] text-[var(--primary-700)] border-[var(--primary-200)]', dot: 'bg-[var(--primary-500)]' },
 ];
 
@@ -170,18 +170,18 @@ export default function PacientesPage() {
           {p.nombre?.charAt(0)}{p.apellido?.charAt(0)}
         </div>
         <div className="min-w-0">
-          <p className="font-semibold text-slate-800 truncate">{p.nombre} {p.apellido}</p>
-          <p className="text-xs text-slate-400">{p.genero?.nombre || (generos || []).find(g => g.id === p.generoId)?.nombre || '—'}</p>
+          <p className="font-semibold text-[var(--text-primary)] truncate">{p.nombre} {p.apellido}</p>
+          <p className="text-xs text-[var(--text-tertiary)]">{p.genero?.nombre || (generos || []).find(g => g.id === p.generoId)?.nombre || '—'}</p>
         </div>
       </div>
     )},
-    { key: 'ci', header: 'C.I.', sortable: true, render: (p) => (<span className="font-medium text-slate-600 tabular-nums">{p.ci}</span>) },
+    { key: 'ci', header: 'C.I.', sortable: true, render: (p) => (<span className="font-medium text-[var(--text-secondary)] tabular-nums">{p.ci}</span>) },
     { key: 'estado', header: 'Estado', render: (p) => estadoBadge(p.estado) },
-    { key: 'telefono', header: 'Teléfono', render: (p) => (<span className="text-slate-500">{p.telefono || '—'}</span>) },
+    { key: 'telefono', header: 'Teléfono', render: (p) => (<span className="text-[var(--text-secondary)]">{p.telefono || '—'}</span>) },
     { key: 'acciones', header: 'Acciones', align: 'right', render: (p) => (
       <div className="flex justify-end gap-1">
-        <button title="Editar paciente" onClick={() => handleOpenModal(p)} className="p-2 rounded-lg text-slate-400 hover:text-[var(--primary-600)] hover:bg-[var(--primary-50)] active:scale-95 transition-all"><Pencil className="w-4 h-4" /></button>
-        <button title="Cambiar estado" onClick={() => openEstadoModal(p)} className="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 active:scale-95 transition-all"><Power className="w-4 h-4" /></button>
+        <button title="Editar paciente" onClick={() => handleOpenModal(p)} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--primary-600)] hover:bg-[var(--primary-50)] active:scale-95 transition-all"><Pencil className="w-4 h-4" /></button>
+        <button title="Cambiar estado" onClick={() => openEstadoModal(p)} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-amber-600 hover:bg-amber-50 active:scale-95 transition-all"><Power className="w-4 h-4" /></button>
       </div>
     )},
   ];
@@ -195,14 +195,14 @@ export default function PacientesPage() {
   return (
     <div className="space-y-5">
       {/* Header compacto */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[var(--border-primary)]/80">
         <div>
-          <h1 className="text-lg font-bold text-slate-800 tracking-tight">Padrón de Pacientes</h1>
-          <p className="text-sm text-slate-500 mt-0.5">{pacientes.length} pacientes registrados en el sistema</p>
+          <h1 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">Padrón de Pacientes</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-0.5">{pacientes.length} pacientes registrados en el sistema</p>
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="inline-flex items-center gap-2 pl-4 pr-5 py-2.5 rounded-xl bg-[var(--primary-600)] text-white text-sm font-semibold  hover:bg-[var(--primary-700)] hover:shadow-lg hover:shadow-blue-600/30 active:scale-[0.98] transition-all duration-200"
+          className="inline-flex items-center gap-2 pl-4 pr-5 py-2.5 rounded-xl bg-[var(--primary-600)] text-white text-sm font-semibold  hover:bg-[var(--primary-700)] hover:shadow-lg hover:shadow-primary-600/30 active:scale-[0.98] transition-all duration-200"
         >
           <Plus className="w-4 h-4" />
           Nuevo Paciente
@@ -216,18 +216,18 @@ export default function PacientesPage() {
           <div className="relative">
             <button
               onClick={() => { setShowEstadoMenu(!showEstadoMenu); setShowGeneroMenu(false); }}
-              className={`inline-flex items-center gap-2 pl-3.5 pr-3 py-2.5 rounded-xl border text-sm font-medium transition-all duration-150 ${filterEstado ? 'border-[var(--primary-300)] bg-[var(--primary-50)] text-[var(--primary-700)] shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
+              className={`inline-flex items-center gap-2 pl-3.5 pr-3 py-2.5 rounded-xl border text-sm font-medium transition-all duration-150 ${filterEstado ? 'border-[var(--primary-300)] bg-[var(--primary-50)] text-[var(--primary-700)] shadow-sm' : 'border-[var(--border-primary)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--neutral-300)] hover:bg-[var(--bg-secondary)]'}`}
             >
-              <span className={`w-2 h-2 rounded-full ${filterEstado ? ESTADOS.find(e => e.value === filterEstado)?.dot : 'bg-slate-300'}`} />
+              <span className={`w-2 h-2 rounded-full ${filterEstado ? ESTADOS.find(e => e.value === filterEstado)?.dot : 'bg-[var(--neutral-300)]'}`} />
               {ESTADOS.find(e => e.value === filterEstado)?.label || 'Estado'}
               <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showEstadoMenu ? 'rotate-180' : ''}`} />
             </button>
             {showEstadoMenu && (
-              <div className="absolute z-40 mt-2 w-60 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 origin-top-left animate-scale">
-                <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Filtrar por estado</p>
-                <button onClick={() => { setFilterEstado(''); setShowEstadoMenu(false); }} className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-slate-50 transition-colors">
-                  <span className="text-slate-700">Todos los estados</span>
-                  <span className="text-xs text-slate-400 tabular-nums">{pacientes.length}</span>
+              <div className="absolute z-40 mt-2 w-60 bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl shadow-xl py-1.5 origin-top-left animate-scale">
+                <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Filtrar por estado</p>
+                <button onClick={() => { setFilterEstado(''); setShowEstadoMenu(false); }} className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-[var(--bg-secondary)] transition-colors">
+                  <span className="text-[var(--text-primary)]">Todos los estados</span>
+                  <span className="text-xs text-[var(--text-tertiary)] tabular-nums">{pacientes.length}</span>
                 </button>
                 {ESTADOS.map(e => {
                   const Icon = e.icon;
@@ -235,10 +235,10 @@ export default function PacientesPage() {
                   const active = filterEstado === e.value;
                   return (
                     <button key={e.value} onClick={() => { setFilterEstado(active ? '' : e.value); setShowEstadoMenu(false); }}
-                      className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors ${active ? 'bg-[var(--primary-50)]' : 'hover:bg-slate-50'}`}>
-                      <Icon className={`w-3.5 h-3.5 ${active ? 'text-[var(--primary-600)]' : 'text-slate-400'}`} />
-                      <span className={`flex-1 text-left ${active ? 'font-semibold text-[var(--primary-700)]' : 'text-slate-600'}`}>{e.label}</span>
-                      <span className="text-xs text-slate-400 tabular-nums">{count}</span>
+                      className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors ${active ? 'bg-[var(--primary-50)]' : 'hover:bg-[var(--bg-secondary)]'}`}>
+                      <Icon className={`w-3.5 h-3.5 ${active ? 'text-[var(--primary-600)]' : 'text-[var(--text-tertiary)]'}`} />
+                      <span className={`flex-1 text-left ${active ? 'font-semibold text-[var(--primary-700)]' : 'text-[var(--text-secondary)]'}`}>{e.label}</span>
+                      <span className="text-xs text-[var(--text-tertiary)] tabular-nums">{count}</span>
                       {active && <Check className="w-3.5 h-3.5 text-[var(--primary-600)]" />}
                     </button>
                   );
@@ -251,21 +251,21 @@ export default function PacientesPage() {
           <div className="relative">
             <button
               onClick={() => { setShowGeneroMenu(!showGeneroMenu); setShowEstadoMenu(false); }}
-              className={`inline-flex items-center gap-2 pl-3.5 pr-3 py-2.5 rounded-xl border text-sm font-medium transition-all duration-150 ${filterGenero ? 'border-[var(--primary-300)] bg-[var(--primary-50)] text-[var(--primary-700)] shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
+              className={`inline-flex items-center gap-2 pl-3.5 pr-3 py-2.5 rounded-xl border text-sm font-medium transition-all duration-150 ${filterGenero ? 'border-[var(--primary-300)] bg-[var(--primary-50)] text-[var(--primary-700)] shadow-sm' : 'border-[var(--border-primary)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--neutral-300)] hover:bg-[var(--bg-secondary)]'}`}
             >
               {(generos || []).find(g => String(g.id) === filterGenero)?.nombre || 'Género'}
               <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showGeneroMenu ? 'rotate-180' : ''}`} />
             </button>
             {showGeneroMenu && (
-              <div className="absolute z-40 mt-2 w-52 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 origin-top-left animate-scale">
-                <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Filtrar por género</p>
-                <button onClick={() => { setFilterGenero(''); setShowGeneroMenu(false); }} className="w-full px-4 py-2 text-sm text-left text-slate-700 hover:bg-slate-50 transition-colors">Todos</button>
+              <div className="absolute z-40 mt-2 w-52 bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl shadow-xl py-1.5 origin-top-left animate-scale">
+                <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Filtrar por género</p>
+                <button onClick={() => { setFilterGenero(''); setShowGeneroMenu(false); }} className="w-full px-4 py-2 text-sm text-left text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors">Todos</button>
                 {(generos || []).map(g => {
                   const active = filterGenero === String(g.id);
                   return (
                     <button key={g.id} onClick={() => { setFilterGenero(active ? '' : String(g.id)); setShowGeneroMenu(false); }}
-                      className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors ${active ? 'bg-[var(--primary-50)]' : 'hover:bg-slate-50'}`}>
-                      <span className={`flex-1 text-left ${active ? 'font-semibold text-[var(--primary-700)]' : 'text-slate-600'}`}>{g.nombre}</span>
+                      className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors ${active ? 'bg-[var(--primary-50)]' : 'hover:bg-[var(--bg-secondary)]'}`}>
+                      <span className={`flex-1 text-left ${active ? 'font-semibold text-[var(--primary-700)]' : 'text-[var(--text-secondary)]'}`}>{g.nombre}</span>
                       {active && <Check className="w-3.5 h-3.5 text-[var(--primary-600)]" />}
                     </button>
                   );
@@ -278,15 +278,15 @@ export default function PacientesPage() {
           {(filterEstado || filterGenero) && (
             <div className="flex flex-wrap items-center gap-2 ml-1">
               {filterEstado && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium bg-white border border-slate-200 rounded-full text-slate-600 shadow-sm">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-full text-[var(--text-secondary)] shadow-sm">
                   Estado: {ESTADOS.find(x => x.value === filterEstado)?.label}
-                  <button onClick={() => setFilterEstado('')} className="text-slate-400 hover:text-red-500 transition-colors"><X className="w-3 h-3" /></button>
+                  <button onClick={() => setFilterEstado('')} className="text-[var(--text-tertiary)] hover:text-[var(--danger-500)] transition-colors"><X className="w-3 h-3" /></button>
                 </span>
               )}
               {filterGenero && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium bg-white border border-slate-200 rounded-full text-slate-600 shadow-sm">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-full text-[var(--text-secondary)] shadow-sm">
                   Género: {(generos || []).find(g => String(g.id) === filterGenero)?.nombre}
-                  <button onClick={() => setFilterGenero('')} className="text-slate-400 hover:text-red-500 transition-colors"><X className="w-3 h-3" /></button>
+                  <button onClick={() => setFilterGenero('')} className="text-[var(--text-tertiary)] hover:text-[var(--danger-500)] transition-colors"><X className="w-3 h-3" /></button>
                 </span>
               )}
               <button onClick={() => { setFilterEstado(''); setFilterGenero(''); }} className="text-xs font-semibold text-[var(--primary-600)] hover:text-[var(--primary-700)] hover:underline transition-colors">
@@ -296,8 +296,8 @@ export default function PacientesPage() {
           )}
         </div>
 
-        <span className="text-sm text-slate-500 whitespace-nowrap">
-          <b className="text-slate-800 tabular-nums">{pacientesFiltrados.length}</b> de {pacientes.length} pacientes
+        <span className="text-sm text-[var(--text-secondary)] whitespace-nowrap">
+          <b className="text-[var(--text-primary)] tabular-nums">{pacientesFiltrados.length}</b> de {pacientes.length} pacientes
         </span>
       </div>
 
@@ -311,7 +311,7 @@ export default function PacientesPage() {
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
         title={editingPaciente ? 'Editar Paciente' : 'Nuevo Paciente'} size="lg">
-        {editingPaciente && <p className="text-sm text-gray-500 mb-4">Editando: {editingPaciente.nombre} {editingPaciente.apellido} ({editingPaciente.ci})</p>}
+        {editingPaciente && <p className="text-sm text-[var(--text-secondary)] mb-4">Editando: {editingPaciente.nombre} {editingPaciente.apellido} ({editingPaciente.ci})</p>}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <FormSection title="Información Personal" color="indigo">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -327,7 +327,7 @@ export default function PacientesPage() {
               <Select label="Grupo Sanguíneo" placeholder="Seleccionar..." options={(gruposSanguineos || []).map(g => ({ value: g.id, label: g.nombre }))} {...register('grupoSanguineoId')} />
             </div>
           </FormSection>
-          <div className="border-t border-gray-100 pt-5">
+          <div className="border-t border-[var(--border-secondary)] pt-5">
             <FormSection title="Información de Contacto" color="emerald">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input label="Teléfono" placeholder="77712345 (7-8 dígitos)" error={errors.telefono?.message as string} {...register('telefono', VALIDACIONES.telefono)} />
@@ -338,7 +338,7 @@ export default function PacientesPage() {
               </div>
             </FormSection>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-secondary)]">
             <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
             <Button type="submit" loading={formLoading}>{editingPaciente ? 'Actualizar Paciente' : 'Registrar Paciente'}</Button>
           </div>
@@ -349,12 +349,12 @@ export default function PacientesPage() {
         title="Cambiar Estado del Paciente" size="sm">
         {estadoTarget && (
           <div className="space-y-5">
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80">
-              <p className="text-sm font-semibold text-slate-800">{estadoTarget.nombre} {estadoTarget.apellido}</p>
-              <p className="text-xs text-slate-500 mt-0.5">CI: {estadoTarget.ci} · Estado actual: {estadoTarget.estado || 'activo'}</p>
+            <div className="p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-primary)]/80">
+              <p className="text-sm font-semibold text-[var(--text-primary)]">{estadoTarget.nombre} {estadoTarget.apellido}</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">CI: {estadoTarget.ci} · Estado actual: {estadoTarget.estado || 'activo'}</p>
             </div>
             <div className="space-y-3">
-              <p className="text-sm font-medium text-gray-700">Nuevo estado:</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">Nuevo estado:</p>
               <div className="grid grid-cols-1 gap-2">
                 {ESTADOS.map(e => {
                   const Icon = e.icon;
@@ -366,15 +366,15 @@ export default function PacientesPage() {
                       onClick={() => setNuevoEstado(e.value)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all ${
                         selected
-                          ? 'border-gray-900 bg-gray-50'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                          ? 'border-[var(--neutral-900)] bg-[var(--bg-secondary)]'
+                          : 'border-[var(--border-primary)] hover:border-[var(--neutral-300)] bg-[var(--bg-card)]'
                       }`}
                     >
-                      <div className={`p-1.5 rounded-lg ${selected ? 'bg-gray-100' : 'bg-gray-50'}`}>
-                        <Icon className={`w-4 h-4 ${selected ? 'text-gray-700' : 'text-gray-400'}`} />
+                      <div className={`p-1.5 rounded-lg ${selected ? 'bg-[var(--bg-tertiary)]' : 'bg-[var(--bg-secondary)]'}`}>
+                        <Icon className={`w-4 h-4 ${selected ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`} />
                       </div>
                       <div>
-                        <p className={`text-sm font-medium ${selected ? 'text-gray-900' : 'text-gray-700'}`}>{e.label}</p>
+                        <p className={`text-sm font-medium ${selected ? 'text-[var(--text-primary)]' : 'text-[var(--text-primary)]'}`}>{e.label}</p>
                       </div>
                     </button>
                   );
@@ -387,7 +387,7 @@ export default function PacientesPage() {
               onChange={e => setMotivoEstado(e.target.value)}
               placeholder="Opcional: explique la razón del cambio de estado"
             />
-            <p className="text-xs text-gray-500 italic">El paciente no podrá agendar nuevas citas si se marca como inactivo.</p>
+            <p className="text-xs text-[var(--text-secondary)] italic">El paciente no podrá agendar nuevas citas si se marca como inactivo.</p>
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="secondary" onClick={() => setIsEstadoModalOpen(false)}>Cancelar</Button>
               <Button onClick={handleChangeEstado} loading={formLoading}>

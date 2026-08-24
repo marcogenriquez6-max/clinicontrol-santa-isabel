@@ -51,7 +51,7 @@ api.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
           return api(originalRequest);
         }
-      } catch {}
+      } catch { /* el refresh falló: se procede al logout */ }
       isRefreshing = false;
       processQueue(new Error('Refresh failed'), null);
       clearAccessToken();

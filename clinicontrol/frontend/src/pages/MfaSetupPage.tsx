@@ -17,10 +17,13 @@ export default function MfaSetupPage() {
     try {
       const res = await api.post('/auth/mfa/status');
       setStatus(res.data);
-    } catch {}
+    } catch { /* el endpoint responde 403 si MFA no esta configurado aun */ }
   };
 
-  useEffect(() => { loadStatus(); }, []);
+  useEffect(() => {
+    const t = setTimeout(loadStatus, 0);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleSetup = async () => {
     setLoading(true);
@@ -53,7 +56,7 @@ export default function MfaSetupPage() {
       setCode('');
       setFormErrors({});
       loadStatus();
-    } catch (err: any) {
+    } catch {
       Swal.fire({ icon: 'error', title: 'Código inválido', text: 'Verifica el código e intenta de nuevo' });
     } finally {
       setLoading(false);
@@ -85,7 +88,7 @@ export default function MfaSetupPage() {
     <div className="space-y-6 animate-in-up max-w-2xl mx-auto">
       <PageHeader
         icon={Shield}
-        gradient="from-emerald-500 to-teal-600"
+        gradient="from-success-500 to-teal-600"
         title="Autenticación de Dos Factores (MFA)"
         subtitle="Protege tu cuenta con verificación adicional"
       />

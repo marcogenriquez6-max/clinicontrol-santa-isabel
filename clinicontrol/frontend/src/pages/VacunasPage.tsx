@@ -152,7 +152,7 @@ export default function VacunasPage() {
       <div className="animate-in-up">
         <PageHeader
           icon={Syringe}
-          gradient="from-emerald-500 to-teal-600"
+          gradient="from-success-500 to-teal-600"
           title="Vacunas"
           subtitle="Gestión de vacunas y calendarios"
         />

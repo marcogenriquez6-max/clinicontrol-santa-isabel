@@ -80,7 +80,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="mb-5 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-800/40 rounded-lg flex items-start gap-2 text-sm text-red-700 dark:text-red-300">
+              <div className="mb-5 p-3 bg-[var(--danger-50)] dark:bg-[var(--danger-500/10)]/10 border border-[var(--danger-200)] dark:border-red-800/40 rounded-lg flex items-start gap-2 text-sm text-[var(--danger-700)] dark:text-[var(--danger-200)]">
                 <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -88,12 +88,12 @@ export default function LoginPage() {
 
             {mfaToken ? (
               <div className="space-y-5">
-                <div className="p-4 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-800/30 rounded-lg">
+                <div className="p-4 bg-indigo-50 dark:bg-[var(--primary-500/10)]/10 border border-indigo-200 dark:border-indigo-800/30 rounded-lg">
                   <div className="flex items-center gap-2 mb-1">
-                    <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                    <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Verificación MFA</p>
+                    <ShieldCheck className="w-4 h-4 text-[var(--primary-600)] dark:text-indigo-400" />
+                    <p className="text-sm font-medium text-[var(--primary-700)] dark:text-indigo-300">Verificación MFA</p>
                   </div>
-                  <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70">
+                  <p className="text-xs text-[var(--primary-600/70)]/70 dark:text-indigo-400/70">
                     Abra su aplicación autenticadora e ingrese el código de 6 dígitos.
                   </p>
                 </div>
@@ -141,13 +141,13 @@ export default function LoginPage() {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 rounded border-[var(--border-primary)] text-indigo-600 focus:ring-indigo-300"
+                      className="w-4 h-4 rounded border-[var(--border-primary)] text-[var(--primary-600)] focus:ring-indigo-300"
                     />
                     <span className="text-[var(--text-secondary)]">
                       Recordar sesión
                     </span>
                   </label>
-                  <Link to="/forgot-password" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+                  <Link to="/forgot-password" className="text-[var(--primary-600)] dark:text-indigo-400 hover:underline">
                     ¿Olvidó su contraseña?
                   </Link>
                 </div>

@@ -39,7 +39,7 @@ function TurnoCard({ turno, modo, onAtender, onContinuar }: {
   const esAtencion = modo === 'atencion';
   return (
     <div
-      className="rounded-2xl border shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col overflow-hidden bg-white dark:bg-[var(--bg-card)]"
+      className="rounded-2xl border shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col overflow-hidden bg-[var(--bg-card)] dark:bg-[var(--bg-card)]"
       style={{ borderColor: esAtencion ? 'var(--success-300)' : 'var(--border-secondary)' }}
     >
       {/* Franja superior de color */}
@@ -120,8 +120,6 @@ export default function ConsultasPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => { loadQueue(); }, []);
-
   const loadQueue = async () => {
     setLoading(true);
     try {
@@ -135,6 +133,11 @@ export default function ConsultasPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const t = setTimeout(loadQueue, 0);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleAtender = async (turno: Turno) => {
     try {

@@ -375,7 +375,7 @@ export default function TurnosPage() {
 
       {/* SECCIÓN PANTALLA TV — vista kiosk */}
       {activeSection === 'pantalla' && (
-        <div className="rounded-xl overflow-hidden border border-[var(--border-primary)] bg-white">
+        <div className="rounded-xl overflow-hidden border border-[var(--border-primary)] bg-[var(--bg-card)]">
           <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 lg:px-10 py-6" style={{ backgroundColor: 'var(--primary-900)' }}>
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--primary-200)]">Clínica Santa Isabel</p>
@@ -406,7 +406,7 @@ export default function TurnosPage() {
                   <div key={t.id} className="flex items-center gap-5 rounded-lg border border-[var(--success-200)] bg-[var(--success-50)] px-6 py-5">
                     <span className="text-5xl font-bold tabular-nums text-[var(--success-700)] w-24 shrink-0">{String(t.numero).padStart(3, '0')}</span>
                     <div className="min-w-0">
-                      <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-white border border-[var(--success-300)] text-[var(--success-700)] mb-1.5">Consultorio {t.consultorio}</span>
+                      <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-[var(--bg-card)] border border-[var(--success-300)] text-[var(--success-700)] mb-1.5">Consultorio {t.consultorio}</span>
                       <p className="text-xl font-semibold text-[var(--text-primary)] truncate">{t.pacienteNombre}</p>
                       <p className="text-sm text-[var(--text-secondary)] truncate">{t.medicoNombre} · {t.especialidad}</p>
                     </div>

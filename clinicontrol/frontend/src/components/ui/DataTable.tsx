@@ -229,12 +229,12 @@ export default function DataTable<T extends object>({
                   <p className="px-4 py-1.5 text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">Exportar</p>
                   {onExportPdf && (
                     <button onClick={() => { onExportPdf(filtered); setShowExport(false); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors">
-                      <FileText className="w-4 h-4 text-red-500" />PDF
+                      <FileText className="w-4 h-4 text-[var(--danger-500)]" />PDF
                     </button>
                   )}
                   {onExportExcel && (
                     <button onClick={() => { onExportExcel(filtered); setShowExport(false); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors">
-                      <FileSpreadsheet className="w-4 h-4 text-emerald-500" />Excel
+                      <FileSpreadsheet className="w-4 h-4 text-[var(--success-500)]" />Excel
                     </button>
                   )}
                   <div className="border-t border-[var(--border-primary)] my-1" />

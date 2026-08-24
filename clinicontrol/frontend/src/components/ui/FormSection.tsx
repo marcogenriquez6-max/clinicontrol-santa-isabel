@@ -9,14 +9,14 @@ interface FormSectionProps {
 
 export default function FormSection({ title, children, color = 'indigo', className = '' }: FormSectionProps) {
   const barColors: Record<string, string> = {
-    indigo: 'bg-indigo-500',
-    emerald: 'bg-emerald-500',
+    indigo: 'bg-[var(--primary-500)]',
+    emerald: 'bg-[var(--success-500)]',
     violet: 'bg-violet-500',
     sky: 'bg-sky-500',
-    orange: 'bg-orange-500',
+    orange: 'bg-[var(--warning-500)]',
     purple: 'bg-purple-500',
-    red: 'bg-red-500',
-    blue: 'bg-blue-500',
+    red: 'bg-[var(--danger-500)]',
+    blue: 'bg-[var(--primary-500)]',
   };
   return (
     <div className={className}>

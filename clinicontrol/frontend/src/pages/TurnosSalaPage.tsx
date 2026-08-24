@@ -25,14 +25,14 @@ export default function TurnosSalaPage() {
       const res = await turnoService.getAll({ limit: 100 });
       const data = Array.isArray(res) ? res : (res as any)?.data ?? [];
       setTurnos(data);
-    } catch {}
+    } catch { /* sin conexion: se reintenta automaticamente */ }
   };
 
   useEffect(() => {
-    fetchTurnos();
+    const t = setTimeout(fetchTurnos, 0);
     if (tiempoReal) {
       const interval = setInterval(fetchTurnos, 5000);
-      return () => clearInterval(interval);
+      return () => { clearTimeout(t); clearInterval(interval); };
     }
   }, [tiempoReal]);
 
@@ -50,7 +50,7 @@ export default function TurnosSalaPage() {
         utterance.rate = 0.9;
         utterance.volume = 0.8;
         synth.speak(utterance);
-      } catch {}
+      } catch { /* sintesis de voz no disponible */ }
     } catch {
       toast('error', 'Error al llamar turno');
     }
@@ -67,7 +67,7 @@ export default function TurnosSalaPage() {
           sintomas: '',
           examenFisico: '',
         });
-      } catch {}
+      } catch { /* sin signos previos que limpiar */ }
       fetchTurnos();
       toast('success', `Atendiendo turno #${turno.numero}`);
     } catch {
@@ -124,14 +124,14 @@ export default function TurnosSalaPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+      <div className="flex items-center justify-between bg-[var(--bg-card)] rounded-lg border border-[var(--border-primary)] shadow-sm p-5">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg text-white flex items-center justify-center" style={{ backgroundColor: 'var(--primary-700)' }}>
             <Users className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-gray-900">Sala de Espera</h1>
-            <p className="text-sm text-gray-500">Control de pacientes en tiempo real</p>
+            <h1 className="text-lg font-semibold text-[var(--text-primary)]">Sala de Espera</h1>
+            <p className="text-sm text-[var(--text-secondary)]">Control de pacientes en tiempo real</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -143,7 +143,7 @@ export default function TurnosSalaPage() {
           <Badge variant="success">{turnos.filter(t => t.estado === 'completado').length} completados</Badge>
           <button
             onClick={() => setTiempoReal(!tiempoReal)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${tiempoReal ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${tiempoReal ? 'bg-[var(--success-50)] text-[var(--success-700)]' : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)]'}`}
           >
             {tiempoReal ? '● Tiempo Real' : 'Pausado'}
           </button>
@@ -192,18 +192,18 @@ export default function TurnosSalaPage() {
         ) : (
           <div className="space-y-2">
             {turnosFiltrados.map(t => (
-              <div key={t.id || t.numero} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all">
+              <div key={t.id || t.numero} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-[var(--bg-card)] rounded-lg border border-[var(--border-primary)] hover:border-[var(--primary-300)] hover:shadow-sm transition-all">
                 <div className="flex items-center gap-4">
                   {/* Número de turno */}
                   <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-bold text-white flex-shrink-0 ${
                     t.estado === 'atencion'
-                      ? 'bg-emerald-500 ring-2 ring-emerald-200'
+                      ? 'bg-[var(--success-500)] ring-2 ring-[var(--success-200)]'
                       : t.estado === 'llamado'
                       ? 'bg-[var(--primary-600)] ring-2 ring-[var(--primary-200)]'
                       : t.estado === 'completado'
-                      ? 'bg-gray-400'
+                      ? 'bg-[var(--neutral-400)]'
                       : t.estado === 'cancelado'
-                      ? 'bg-red-400'
+                      ? 'bg-[var(--danger-500)]'
                       : 'bg-amber-500'
                   }`}>
                     #{t.numero}
@@ -247,13 +247,13 @@ export default function TurnosSalaPage() {
                       <Button size="sm" variant="success" onClick={() => completarTurno(t)}>
                         <CheckCircle className="w-4 h-4" /> Completar
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => cancelarTurno(t)} className="hover:text-red-500">
+                      <Button size="sm" variant="ghost" onClick={() => cancelarTurno(t)} className="hover:text-[var(--danger-500)]">
                         <XCircle className="w-4 h-4" />
                       </Button>
                     </>
                   )}
                   {(t.estado === 'espera' || t.estado === 'llamado') && (
-                    <Button size="sm" variant="ghost" onClick={() => cancelarTurno(t)} className="hover:text-red-500">
+                    <Button size="sm" variant="ghost" onClick={() => cancelarTurno(t)} className="hover:text-[var(--danger-500)]">
                       <XCircle className="w-4 h-4" />
                     </Button>
                   )}

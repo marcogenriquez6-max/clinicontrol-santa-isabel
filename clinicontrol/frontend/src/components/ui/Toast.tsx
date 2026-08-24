@@ -19,10 +19,15 @@ export function toast(type: ToastType, title: string, message?: string) {
 export default function ToastContainer() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  addToastFn = useCallback((t: Omit<ToastMessage, 'id'>) => {
+  const addToast = useCallback((t: Omit<ToastMessage, 'id'>) => {
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
     setToasts(prev => [...prev, { ...t, id }]);
   }, []);
+
+  useEffect(() => {
+    addToastFn = addToast;
+    return () => { addToastFn = null; };
+  }, [addToast]);
 
   const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
@@ -51,10 +56,10 @@ function ToastItem({ toast: t, onRemove }: { toast: ToastMessage; onRemove: (id:
   }, [t.id, onRemove]);
 
   const config = {
-    success: { icon: CheckCircle, border: 'border-emerald-200', bg: 'bg-emerald-50', titleColor: 'text-emerald-800', iconColor: 'text-emerald-500' },
-    error: { icon: XCircle, border: 'border-red-200', bg: 'bg-red-50', titleColor: 'text-red-800', iconColor: 'text-red-500' },
+    success: { icon: CheckCircle, border: 'border-[var(--success-200)]', bg: 'bg-[var(--success-50)]', titleColor: 'text-emerald-800', iconColor: 'text-[var(--success-500)]' },
+    error: { icon: XCircle, border: 'border-[var(--danger-200)]', bg: 'bg-[var(--danger-50)]', titleColor: 'text-red-800', iconColor: 'text-[var(--danger-500)]' },
     warning: { icon: AlertTriangle, border: 'border-amber-200', bg: 'bg-amber-50', titleColor: 'text-amber-800', iconColor: 'text-amber-500' },
-    info: { icon: Info, border: 'border-blue-200', bg: 'bg-blue-50', titleColor: 'text-blue-800', iconColor: 'text-blue-500' },
+    info: { icon: Info, border: 'border-[var(--primary-200)]', bg: 'bg-[var(--primary-50)]', titleColor: 'text-blue-800', iconColor: 'text-[var(--primary-500)]' },
   };
 
   const c = config[t.type];

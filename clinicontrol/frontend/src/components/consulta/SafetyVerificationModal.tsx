@@ -21,13 +21,13 @@ const severityColors: Record<string, string> = {
 };
 
 const severityBadgeColors: Record<string, string> = {
-  anafilactica: 'bg-red-700',
-  absoluta: 'bg-red-700',
-  critica: 'bg-red-700',
-  contraindicada: 'bg-red-700',
-  severa: 'bg-red-500',
-  moderada: 'bg-orange-500',
-  leve: 'bg-yellow-500',
+  anafilactica: 'bg-[var(--danger-700)]',
+  absoluta: 'bg-[var(--danger-700)]',
+  critica: 'bg-[var(--danger-700)]',
+  contraindicada: 'bg-[var(--danger-700)]',
+  severa: 'bg-[var(--danger-500)]',
+  moderada: 'bg-[var(--warning-500)]',
+  leve: 'bg-[var(--warning-500)]',
 };
 
 export default function SafetyVerificationModal({ isOpen, onClose, pacienteId, medicamentoIds }: SafetyVerificationModalProps) {
@@ -46,8 +46,10 @@ export default function SafetyVerificationModal({ isOpen, onClose, pacienteId, m
 
   useEffect(() => {
     if (isOpen && medicamentoIds.length > 0) {
-      setLoading(true);
-      setResult(null);
+      requestAnimationFrame(() => {
+        setLoading(true);
+        setResult(null);
+      });
       // Seguridad Farmacológica (RF-11): alergias del paciente + interacciones + duplicidad.
       Promise.all([
         interaccionService
@@ -86,7 +88,7 @@ export default function SafetyVerificationModal({ isOpen, onClose, pacienteId, m
   }, [isOpen, pacienteId, medicamentoIds]);
 
   const severityBadge = (severidad: string) => {
-    const color = severityBadgeColors[severidad] || 'bg-gray-500';
+    const color = severityBadgeColors[severidad] || 'bg-[var(--neutral-500)]';
     return `${color} px-2 py-0.5 rounded text-xs font-bold text-white text-center min-w-[70px]`;
   };
 
@@ -132,17 +134,17 @@ export default function SafetyVerificationModal({ isOpen, onClose, pacienteId, m
     <Modal isOpen={isOpen} onClose={onClose} title="Verificación de Seguridad Médica" size="xl">
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--primary-600)]" />
           <span className="ml-3 text-[var(--text-secondary)]">Verificando seguridad...</span>
         </div>
       ) : result ? (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-3 mb-4">
             {[
-              { label: 'Alergias', count: result.alergias?.length || 0, color: result.alergias?.length ? 'bg-red-100 text-red-700 border-red-300' : 'bg-green-100 text-green-700 border-green-300' },
-              { label: 'Interacciones', count: result.interacciones?.length || 0, color: result.interacciones?.length ? 'bg-orange-100 text-orange-700 border-orange-300' : 'bg-green-100 text-green-700 border-green-300' },
-              { label: 'Duplicidades', count: result.duplicidad?.length || 0, color: result.duplicidad?.length ? 'bg-yellow-100 text-yellow-700 border-yellow-300' : 'bg-green-100 text-green-700 border-green-300' },
-              { label: 'Contraindicaciones', count: result.contraindicaciones?.length || 0, color: result.contraindicaciones?.length ? 'bg-red-100 text-red-700 border-red-300' : 'bg-green-100 text-green-700 border-green-300' },
+              { label: 'Alergias', count: result.alergias?.length || 0, color: result.alergias?.length ? 'bg-[var(--danger-100)] text-[var(--danger-700)] border-[var(--danger-200)]' : 'bg-[var(--success-100)] text-[var(--success-700)] border-[var(--success-200)]' },
+              { label: 'Interacciones', count: result.interacciones?.length || 0, color: result.interacciones?.length ? 'bg-[var(--warning-100)] text-orange-700 border-orange-300' : 'bg-[var(--success-100)] text-[var(--success-700)] border-[var(--success-200)]' },
+              { label: 'Duplicidades', count: result.duplicidad?.length || 0, color: result.duplicidad?.length ? 'bg-[var(--warning-100)] text-yellow-700 border-yellow-300' : 'bg-[var(--success-100)] text-[var(--success-700)] border-[var(--success-200)]' },
+              { label: 'Contraindicaciones', count: result.contraindicaciones?.length || 0, color: result.contraindicaciones?.length ? 'bg-[var(--danger-100)] text-[var(--danger-700)] border-[var(--danger-200)]' : 'bg-[var(--success-100)] text-[var(--success-700)] border-[var(--success-200)]' },
             ].map(s => (
               <span key={s.label} className={`px-3 py-1.5 rounded-full text-sm font-semibold border ${s.color}`}>
                 {s.count} {s.label}
@@ -150,11 +152,11 @@ export default function SafetyVerificationModal({ isOpen, onClose, pacienteId, m
             ))}
           </div>
 
-          {renderSection('alergias', 'Alergias del Paciente', 'text-red-600', 'bg-red-50', 'border-red-200', result.alergias,
+          {renderSection('alergias', 'Alergias del Paciente', 'text-[var(--danger-600)]', 'bg-[var(--danger-50)]', 'border-[var(--danger-200)]', result.alergias,
             (a: any, idx) => (
-              <div key={idx} className="flex items-center gap-3 p-2 bg-white rounded border border-red-100">
+              <div key={idx} className="flex items-center gap-3 p-2 bg-[var(--bg-card)] rounded border border-[var(--danger-100)]">
                 <span className={`${severityBadge(a.severidad)}`}>{a.severidad?.toUpperCase()}</span>
-                <span className="text-sm font-medium text-gray-800">{a.nombre}</span>
+                <span className="text-sm font-medium text-[var(--text-primary)]">{a.nombre}</span>
                 {a.descripcion && <span className="text-sm text-[var(--text-tertiary)] ml-1">({a.descripcion})</span>}
               </div>
             ), 'No se encontraron alergias registradas.'
@@ -162,9 +164,9 @@ export default function SafetyVerificationModal({ isOpen, onClose, pacienteId, m
 
           {renderSection('interacciones', 'Interacciones Medicamentosas', 'text-orange-600', 'bg-orange-50', 'border-orange-200', result.interacciones,
             (i: any, idx) => (
-              <div key={idx} className="p-3 bg-white rounded border" style={{ borderLeft: `4px solid ${severityColors[i.severidad] || '#6b7280'}` }}>
+              <div key={idx} className="p-3 bg-[var(--bg-card)] rounded border" style={{ borderLeft: `4px solid ${severityColors[i.severidad] || '#6b7280'}` }}>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`px-2 py-0.5 rounded text-xs font-bold text-white ${severityBadgeColors[i.severidad] || 'bg-gray-500'}`}>
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold text-white ${severityBadgeColors[i.severidad] || 'bg-[var(--neutral-500)]'}`}>
                     {i.severidad?.toUpperCase()}
                   </span>
                   <span className="text-sm font-medium">{i.medicamento1} ↔ {i.medicamento2}</span>
@@ -175,11 +177,11 @@ export default function SafetyVerificationModal({ isOpen, onClose, pacienteId, m
             ), 'No se encontraron interacciones entre los medicamentos.'
           )}
 
-          {renderSection('duplicidad', 'Duplicidad Terapéutica', 'text-yellow-600', 'bg-yellow-50', 'border-yellow-200', result.duplicidad,
+          {renderSection('duplicidad', 'Duplicidad Terapéutica', 'text-[var(--warning-600)]', 'bg-[var(--warning-50)]', 'border-[var(--warning-200)]', result.duplicidad,
             (d: any, idx) => (
-              <div key={idx} className="p-3 bg-white rounded border border-yellow-200" style={{ borderLeft: `4px solid ${severityColors[d.severidad] || '#6b7280'}` }}>
+              <div key={idx} className="p-3 bg-[var(--bg-card)] rounded border border-[var(--warning-200)]" style={{ borderLeft: `4px solid ${severityColors[d.severidad] || '#6b7280'}` }}>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`px-2 py-0.5 rounded text-xs font-bold text-white ${severityBadgeColors[d.severidad] || 'bg-gray-500'}`}>
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold text-white ${severityBadgeColors[d.severidad] || 'bg-[var(--neutral-500)]'}`}>
                     {d.severidad?.toUpperCase()}
                   </span>
                   <span className="text-sm font-medium text-yellow-800">{d.tipo}</span>
@@ -190,11 +192,11 @@ export default function SafetyVerificationModal({ isOpen, onClose, pacienteId, m
             ), 'No se detectó duplicidad terapéutica.'
           )}
 
-          {renderSection('contraindicaciones', 'Contraindicaciones', 'text-red-600', 'bg-red-50', 'border-red-200', result.contraindicaciones,
+          {renderSection('contraindicaciones', 'Contraindicaciones', 'text-[var(--danger-600)]', 'bg-[var(--danger-50)]', 'border-[var(--danger-200)]', result.contraindicaciones,
             (c: any, idx) => (
-              <div key={idx} className="p-3 bg-white rounded border border-red-100" style={{ borderLeft: `4px solid ${severityColors[c.severidad] || '#6b7280'}` }}>
+              <div key={idx} className="p-3 bg-[var(--bg-card)] rounded border border-[var(--danger-100)]" style={{ borderLeft: `4px solid ${severityColors[c.severidad] || '#6b7280'}` }}>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`px-2 py-0.5 rounded text-xs font-bold text-white ${severityBadgeColors[c.severidad] || 'bg-gray-500'}`}>
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold text-white ${severityBadgeColors[c.severidad] || 'bg-[var(--neutral-500)]'}`}>
                     {c.severidad?.toUpperCase()}
                   </span>
                   <span className="text-sm font-medium">{c.medicamento}</span>
@@ -207,8 +209,8 @@ export default function SafetyVerificationModal({ isOpen, onClose, pacienteId, m
 
           {result.alergias?.length === 0 && result.interacciones?.length === 0 && result.duplicidad?.length === 0 && result.contraindicaciones?.length === 0 && (
             <div className="text-center py-8">
-              <Shield className="w-16 h-16 text-green-400 mx-auto mb-3" />
-              <p className="text-lg font-semibold text-green-700">Verificación completada</p>
+              <Shield className="w-16 h-16 text-[var(--success-500)] mx-auto mb-3" />
+              <p className="text-lg font-semibold text-[var(--success-700)]">Verificación completada</p>
               <p className="text-sm text-[var(--text-tertiary)]">No se encontraron problemas de seguridad médica.</p>
             </div>
           )}

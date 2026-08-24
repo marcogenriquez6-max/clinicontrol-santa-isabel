@@ -95,7 +95,7 @@ export default function DiagnosticoList({ diagnosticos, onAdd, onRemove, onUpdat
               type="checkbox"
               checked={diag.esCronico}
               onChange={(e) => onUpdate(diag.key, 'esCronico', e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-[var(--neutral-300)] text-[var(--primary-600)] focus:ring-[var(--primary-500)]"
             />
             Es crónico
           </label>

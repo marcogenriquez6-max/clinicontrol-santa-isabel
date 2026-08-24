@@ -62,10 +62,10 @@ export default function MedicosPage() {
   const columns: Column<Medico>[] = [
     { key: 'nombreCompleto', header: 'Nombre', sortable: true, render: (m) => (
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold shrink-0">
+        <div className="w-8 h-8 rounded-full bg-[var(--bg-tertiary)] text-[var(--text-secondary)] flex items-center justify-center text-xs font-bold shrink-0">
           {m.nombre?.charAt(0)}{m.apellido?.charAt(0)}
         </div>
-        <span className="font-medium text-gray-900">Dr. {m.nombre} {m.apellido}</span>
+        <span className="font-medium text-[var(--text-primary)]">Dr. {m.nombre} {m.apellido}</span>
       </div>
     )},
     { key: 'especialidad', header: 'Especialidad', sortable: true, render: (m) => (<StatusBadge variant="info" size="sm">{m.especialidad?.nombre || ''}</StatusBadge>) },
@@ -73,8 +73,8 @@ export default function MedicosPage() {
     { key: 'email', header: 'Email' },
     { key: 'acciones', header: 'Acciones', align: 'right', render: (m) => (
       <div className="flex justify-end gap-1">
-        <button onClick={() => handleOpenModal(m)} className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"><Pencil className="w-3.5 h-3.5" /></button>
-        <button onClick={() => setDeleteTarget(m)} className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50"><Trash2 className="w-3.5 h-3.5" /></button>
+        <button onClick={() => handleOpenModal(m)} className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"><Pencil className="w-3.5 h-3.5" /></button>
+        <button onClick={() => setDeleteTarget(m)} className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--danger-500)] hover:bg-[var(--danger-50)]"><Trash2 className="w-3.5 h-3.5" /></button>
       </div>
     )},
   ];
@@ -102,7 +102,7 @@ export default function MedicosPage() {
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
         title={editingMedico ? 'Editar Médico' : 'Nuevo Médico'} size="md">
-        {editingMedico && <p className="text-sm text-gray-500 mb-4">Editando: {editingMedico.nombre} {editingMedico.apellido}</p>}
+        {editingMedico && <p className="text-sm text-[var(--text-secondary)] mb-4">Editando: {editingMedico.nombre} {editingMedico.apellido}</p>}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <FormSection title="Información Personal" color="emerald">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -113,7 +113,7 @@ export default function MedicosPage() {
               <Select label="Especialidad" placeholder="Seleccionar..." required options={(especialidades || []).map(e => ({ value: e.id, label: e.nombre }))} error={errors.especialidadId?.message as string} {...register('especialidadId', MEDICO_VALIDACIONES.especialidadId)} />
             </div>
           </FormSection>
-          <div className="border-t border-gray-100 pt-5">
+          <div className="border-t border-[var(--border-secondary)] pt-5">
             <FormSection title="Información de Contacto" color="emerald">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input label="Teléfono" placeholder="77712345 (7-8 dígitos)" error={errors.telefono?.message as string} {...register('telefono', MEDICO_VALIDACIONES.telefono)} />
@@ -121,7 +121,7 @@ export default function MedicosPage() {
               </div>
             </FormSection>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-secondary)]">
             <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
             <Button type="submit" loading={formLoading}>{editingMedico ? 'Actualizar Médico' : 'Registrar Médico'}</Button>
           </div>

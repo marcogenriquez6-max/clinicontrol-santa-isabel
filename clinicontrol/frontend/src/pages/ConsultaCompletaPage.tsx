@@ -360,21 +360,21 @@ export default function ConsultaCompletaPage() {
 
   return (
     <div className="space-y-6 animate-in-up max-w-5xl mx-auto">
-      <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+      <div className="flex items-center justify-between bg-[var(--bg-card)] rounded-lg border border-[var(--border-primary)] shadow-sm p-5">
         <div className="flex items-center gap-3">
           {turnoId && (
-            <button onClick={() => navigate('/consultas')} className="p-2 rounded-md hover:bg-gray-100 transition-colors">
-              <ArrowLeft className="w-5 h-5 text-gray-700" />
+            <button onClick={() => navigate('/consultas')} className="p-2 rounded-md hover:bg-[var(--bg-tertiary)] transition-colors">
+              <ArrowLeft className="w-5 h-5 text-[var(--text-primary)]" />
             </button>
           )}
-          <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-[var(--primary-600)] text-white flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-gray-900">
+            <h1 className="text-lg font-semibold text-[var(--text-primary)]">
               {turnoId ? `Atención Turno #${navState?.turnoNumero ?? ''}` : 'Nueva Consulta'}
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-[var(--text-secondary)]">
               {turnoId ? `Paciente: ${navState?.pacienteNombre ?? ''}` : 'Registro de consulta médica'}
             </p>
           </div>
@@ -386,7 +386,7 @@ export default function ConsultaCompletaPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Patient & Doctor Selection — compacto */}
-        <Card title="Paciente y Médico" subtitle="Seleccione los participantes de la consulta" className="bg-white dark:bg-[var(--bg-card)]">
+        <Card title="Paciente y Médico" subtitle="Seleccione los participantes de la consulta" className="bg-[var(--bg-card)] dark:bg-[var(--bg-card)]">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <Select
               label="Paciente"

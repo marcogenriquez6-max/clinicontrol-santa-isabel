@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             {error && (
-              <div className="mb-5 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-800/40 rounded-lg flex items-start gap-2 text-sm text-red-700 dark:text-red-300">
+              <div className="mb-5 p-3 bg-[var(--danger-50)] dark:bg-[var(--danger-500/10)]/10 border border-[var(--danger-200)] dark:border-red-800/40 rounded-lg flex items-start gap-2 text-sm text-[var(--danger-700)] dark:text-[var(--danger-200)]">
                 <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -64,8 +64,8 @@ export default function ForgotPasswordPage() {
 
             {sent ? (
               <div className="space-y-5">
-                <div className="p-4 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-800/30 rounded-lg">
-                  <p className="text-sm text-green-700 dark:text-green-300">
+                <div className="p-4 bg-[var(--success-50)] dark:bg-[var(--success-500/10)]/10 border border-[var(--success-200)] dark:border-green-800/30 rounded-lg">
+                  <p className="text-sm text-[var(--success-700)] dark:text-[var(--success-200)]">
                     Hemos enviado un enlace de recuperación a su correo electrónico si está registrado en el sistema.
                   </p>
                 </div>

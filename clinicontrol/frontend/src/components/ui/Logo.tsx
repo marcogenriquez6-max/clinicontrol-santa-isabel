@@ -32,7 +32,7 @@ export default function Logo({ showText = true, size = 'md', variant = 'dark', c
         <div className="leading-tight">
           <h1 className={`font-extrabold tracking-tight ${s.text} ${isLight ? 'text-white' : 'text-[var(--text-primary)]'}`}>
             Clínica{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-teal-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 via-purple-500 to-teal-500">
               Santa Isabel
             </span>
           </h1>

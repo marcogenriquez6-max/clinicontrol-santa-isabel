@@ -25,7 +25,7 @@ export default function TurnosTVPage() {
     try {
       const saved = localStorage.getItem('tv-config');
       if (saved) return { ...defaultConfig, ...JSON.parse(saved) };
-    } catch {}
+    } catch { /* config corrupta: se usan valores por defecto */ }
     return defaultConfig;
   });
   const [configForm, setConfigForm] = useState<TVConfig>({ ...config });
@@ -67,10 +67,10 @@ export default function TurnosTVPage() {
   // Configuration modal content
   const configPanel = (
     <div className="space-y-5">
-      <p className="text-sm text-gray-500">Configure la apariencia y comportamiento de la pantalla de TV.</p>
+      <p className="text-sm text-[var(--text-secondary)]">Configure la apariencia y comportamiento de la pantalla de TV.</p>
 
       <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Conexión</p>
+        <p className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Conexión</p>
         <div className="flex items-center gap-2 mb-3">
           {connected ? (
             <Badge variant="success"><Wifi className="w-3 h-3" /> Conectado</Badge>
@@ -79,7 +79,7 @@ export default function TurnosTVPage() {
           )}
           <button
             onClick={() => { setConnected(true); toast('info', 'Reconectando...'); }}
-            className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400"
+            className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)]"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
@@ -109,7 +109,7 @@ export default function TurnosTVPage() {
             type="checkbox"
             checked={configForm.sonidoHabilitado}
             onChange={e => setConfigForm(f => ({ ...f, sonidoHabilitado: e.target.checked }))}
-            className="w-4 h-4 rounded border-gray-300 text-[var(--primary-600)] focus:ring-[var(--primary-500)]"
+            className="w-4 h-4 rounded border-[var(--neutral-300)] text-[var(--primary-600)] focus:ring-[var(--primary-500)]"
           />
           <div>
             <p className="text-sm font-medium text-[var(--text-primary)]">Habilitar sonido al llamar paciente</p>
@@ -132,7 +132,7 @@ export default function TurnosTVPage() {
                 type="checkbox"
                 checked={configForm[item.key]}
                 onChange={e => setConfigForm(f => ({ ...f, [item.key]: e.target.checked }))}
-                className="w-4 h-4 rounded border-gray-300 text-[var(--primary-600)] focus:ring-[var(--primary-500)]"
+                className="w-4 h-4 rounded border-[var(--neutral-300)] text-[var(--primary-600)] focus:ring-[var(--primary-500)]"
               />
               <div>
                 <p className="text-sm font-medium text-[var(--text-primary)]">{item.label}</p>
@@ -352,31 +352,31 @@ export default function TurnosTVPage() {
       {/* Toolbar (not shown in fullscreen) */}
       {!fullscreen && (
         <div className="mb-6">
-          <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+          <div className="flex items-center justify-between bg-[var(--bg-card)] rounded-lg border border-[var(--border-primary)] shadow-sm p-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg text-white flex items-center justify-center" style={{ backgroundColor: 'var(--primary-700)' }}>
                 <Tv className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">TV Turnos</h1>
-                <p className="text-sm text-gray-500">Pantalla de turnos</p>
+                <h1 className="text-lg font-semibold text-[var(--text-primary)]">TV Turnos</h1>
+                <p className="text-sm text-[var(--text-secondary)]">Pantalla de turnos</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg text-sm text-gray-500">
-                {connected ? <Wifi className="w-4 h-4 text-emerald-500" /> : <WifiOff className="w-4 h-4 text-red-500" />}
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-secondary)] rounded-lg text-sm text-[var(--text-secondary)]">
+                {connected ? <Wifi className="w-4 h-4 text-[var(--success-500)]" /> : <WifiOff className="w-4 h-4 text-[var(--danger-500)]" />}
                 {connected ? 'Conectado' : 'Sin conexión'}
               </div>
               <button
                 onClick={() => { setConfigForm({ ...config }); setShowConfig(true); }}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors text-sm font-medium"
               >
                 <Settings className="w-4 h-4" />
                 Configurar
               </button>
               <button
                 onClick={toggleFullscreen}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--primary-600)] text-white rounded-lg hover:bg-[var(--neutral-800)] transition-colors text-sm font-medium"
               >
                 <Maximize2 className="w-4 h-4" />
                 Pantalla Completa

@@ -43,7 +43,7 @@ export default function ProfilePage() {
     <div className="space-y-6 animate-in-up max-w-4xl mx-auto">
       <PageHeader
         icon={User}
-        gradient="from-indigo-500 to-purple-600"
+        gradient="from-primary-500 to-purple-600"
         title="Mi Perfil"
         subtitle="Información personal y configuración de la cuenta"
       />

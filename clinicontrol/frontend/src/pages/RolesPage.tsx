@@ -13,7 +13,7 @@ const ROLE_COLORS: Record<string, string> = {
   medico: 'from-cyan-700 to-cyan-800',
   enfermeria: 'from-teal-600 to-teal-700',
   recepcionista: 'from-sky-700 to-sky-800',
-  secretaria: 'from-indigo-500 to-indigo-600',
+  secretaria: 'from-primary-500 to-primary-600',
 };
 
 function RolCard({ info }: { info: RolInfo }) {
@@ -75,7 +75,10 @@ export default function RolesPage() {
     } catch { /* catálogo no disponible: se muestra la matriz estática */ } finally { setLoading(false); }
   };
 
-  useEffect(() => { loadRoles(); }, []);
+  useEffect(() => {
+    const t = setTimeout(loadRoles, 0);
+    return () => clearTimeout(t);
+  }, []);
 
   const openCreate = () => {
     setEditingRol(null);

@@ -240,7 +240,10 @@ export default function DashboardPage() {
     }
   }, [userRole]);
 
-  useEffect(() => { loadAll(); }, [loadAll]);
+  useEffect(() => {
+    const t = setTimeout(loadAll, 0);
+    return () => clearTimeout(t);
+  }, [loadAll]);
 
   const visibleQuickActions = allQuickActions.filter(a => !a.roles || a.roles.includes(userRole));
   const pendientesPct = stats.citas > 0 ? Math.round((stats.citasPendientes / stats.citas) * 100) : 0;

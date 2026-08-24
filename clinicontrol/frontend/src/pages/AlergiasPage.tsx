@@ -33,12 +33,15 @@ const ALERGIA_VALIDACIONES = {
   alergiaId: { required: 'Seleccione una alergia' },
 };
 
-  const fetchAlergias = async () => { try { const res = await alergiaService.getAll(); setAlergias(Array.isArray(res.data) ? res.data : []); } catch {} };
-  const fetchTiposAlergia = async () => { try { const res = await api.get<TipoAlergia[]>('/tipos-alergia'); setTiposAlergia(Array.isArray(res.data) ? res.data : []); } catch {} };
-  const fetchPacientes = async () => { try { const res = await pacienteService.getAll(); setPacientes(Array.isArray(res.data) ? res.data : []); } catch {} };
-  const fetchPatientAlergias = async (pacienteId: number) => { try { const res = await alergiaService.getByPaciente(pacienteId); setPatientAlergias(Array.isArray(res.data) ? res.data : []); } catch {} };
+  const fetchAlergias = async () => { try { const res = await alergiaService.getAll(); setAlergias(Array.isArray(res.data) ? res.data : []); } catch { /* sin datos */ } };
+  const fetchTiposAlergia = async () => { try { const res = await api.get<TipoAlergia[]>('/tipos-alergia'); setTiposAlergia(Array.isArray(res.data) ? res.data : []); } catch { /* sin datos */ } };
+  const fetchPacientes = async () => { try { const res = await pacienteService.getAll(); setPacientes(Array.isArray(res.data) ? res.data : []); } catch { /* sin datos */ } };
+  const fetchPatientAlergias = async (pacienteId: number) => { try { const res = await alergiaService.getByPaciente(pacienteId); setPatientAlergias(Array.isArray(res.data) ? res.data : []); } catch { /* sin datos */ } };
 
-  useEffect(() => { fetchAlergias(); fetchTiposAlergia(); fetchPacientes(); }, []);
+  useEffect(() => {
+    const t = setTimeout(() => { fetchAlergias(); fetchTiposAlergia(); fetchPacientes(); }, 0);
+    return () => clearTimeout(t);
+  }, []);
 
   const filteredAlergias = (alergias || []).filter(a => a.nombre.toLowerCase().includes(searchCatalog.toLowerCase()));
   const filteredPacientes = (pacientes || []).filter(p => `${p.nombre} ${p.apellido} ${p.ci}`.toLowerCase().includes(searchPatient.toLowerCase()));
@@ -111,7 +114,7 @@ const ALERGIA_VALIDACIONES = {
 
   return (
     <div className="space-y-6 animate-in-up">
-      <PageHeader icon={AlertTriangle} gradient="from-orange-500 to-red-500"
+      <PageHeader icon={AlertTriangle} gradient="from-warning-500 to-danger-500"
         title="Alergias" subtitle="Gestión del catálogo de alergias" />
 
       <Card title="Catálogo de Alergias" subtitle={`${alergias.length} alergias registradas`}
@@ -151,7 +154,7 @@ const ALERGIA_VALIDACIONES = {
 
         {selectedPatient ? (
           <>
-            <div className="flex items-center justify-between mb-4 p-4 bg-[var(--primary-50)] dark:bg-indigo-500/10 rounded-lg">
+            <div className="flex items-center justify-between mb-4 p-4 bg-[var(--primary-50)] dark:bg-[var(--primary-500/10)]/10 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[var(--primary-600)] flex items-center justify-center shrink-0">
                   <User className="w-5 h-5 text-white" />
