@@ -117,7 +117,7 @@ export default function Cie10Autocomplete({
               key={r.id}
               type="button"
               onClick={() => pick(r)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-blue-50 dark:hover:bg-white/5"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[var(--primary-50)]"
               role="option"
               aria-selected={false}
             >

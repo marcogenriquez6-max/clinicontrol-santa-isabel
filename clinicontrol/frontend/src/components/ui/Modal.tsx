@@ -33,12 +33,14 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', s
 
   useEffect(() => {
     if (isOpen) {
-      setMounted(true);
-      requestAnimationFrame(() => setVisible(true));
+      requestAnimationFrame(() => {
+        setMounted(true);
+        requestAnimationFrame(() => setVisible(true));
+      });
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
     } else {
-      setVisible(false);
+      requestAnimationFrame(() => setVisible(false));
       const timer = setTimeout(() => setMounted(false), 200);
       document.body.style.overflow = 'unset';
       window.removeEventListener('keydown', handleKeyDown);

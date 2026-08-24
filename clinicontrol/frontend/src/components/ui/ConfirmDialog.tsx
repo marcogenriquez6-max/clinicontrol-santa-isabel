@@ -107,7 +107,7 @@ export default function ConfirmDialog({
             <p className="text-sm text-[var(--text-secondary)]">{message}</p>
             {detail && (
               <div className={`mt-3 p-3 rounded-xl ${style.bg} border ${style.border}`}>
-                <p className="text-xs text-gray-600 leading-relaxed">{detail}</p>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{detail}</p>
               </div>
             )}
           </div>

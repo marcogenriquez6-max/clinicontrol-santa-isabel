@@ -24,7 +24,7 @@ export default function KpiCard({ icon: Icon, label, value, color = 'blue', badg
   const c = colorMap[color] || colorMap.blue;
 
   return (
-    <div className="bg-white dark:bg-[#1a1a24] rounded-lg border border-gray-200 dark:border-gray-700 p-5 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-primary)] p-5 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-4">
         <div className={`p-2.5 rounded-lg ${c.bg} ${c.icon}`}>
           <Icon className="w-5 h-5" />
@@ -36,10 +36,10 @@ export default function KpiCard({ icon: Icon, label, value, color = 'blue', badg
         )}
       </div>
       <div>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{label}</p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+        <p className="text-sm text-[var(--text-secondary)] mb-1">{label}</p>
+        <p className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">
           {loading ? (
-            <span className="inline-block w-12 h-7 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            <span className="inline-block w-12 h-7 bg-[var(--bg-tertiary)] rounded animate-pulse" />
           ) : (
             typeof value === 'string' ? value : (value ?? 0).toLocaleString()
           )}
@@ -52,7 +52,7 @@ export default function KpiCard({ icon: Icon, label, value, color = 'blue', badg
           </div>
         )}
         {max != null && (
-          <div className="mt-3 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+          <div className="mt-3 h-1.5 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full bg-blue-500"
               style={{ width: `${Math.min(100, ((Number(value) || 0) / max) * 100)}%` }}

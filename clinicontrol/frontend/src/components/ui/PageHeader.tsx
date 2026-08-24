@@ -20,21 +20,21 @@ export default function PageHeader({ icon: Icon, title, subtitle, action, stats,
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight truncate">{title}</h1>
+              <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight truncate">{title}</h1>
               {badge && (
                 <span className="shrink-0 px-2.5 py-0.5 text-xs font-medium rounded-full bg-[var(--primary-50)] text-[var(--primary-700)] border border-[var(--primary-200)]">
                   {badge}
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{subtitle}</p>
+            <p className="text-sm text-[var(--text-secondary)] truncate">{subtitle}</p>
           </div>
         </div>
         {stats && (
           <div className="flex items-center gap-6 mt-3 ml-11">
             {stats.map((s) => (
-              <div key={s.label} className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <span className="font-semibold text-gray-900 dark:text-gray-100">{s.value}</span>
+              <div key={s.label} className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                <span className="font-semibold text-[var(--text-primary)]">{s.value}</span>
                 <span>{s.label}</span>
               </div>
             ))}

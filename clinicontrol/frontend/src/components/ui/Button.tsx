@@ -19,7 +19,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     };
     const variants = {
       primary: 'bg-[var(--primary-700)] text-white hover:bg-[var(--primary-800)] active:bg-[var(--primary-900)]',
-      secondary: 'bg-white text-[var(--text-primary)] border border-[var(--border-primary)] hover:bg-[var(--bg-secondary)] hover:border-[var(--neutral-300)]',
+      secondary: 'bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border-primary)] hover:bg-[var(--bg-secondary)] hover:border-[var(--neutral-300)]',
       danger: 'bg-[var(--danger-600)] text-white hover:bg-[var(--danger-700)]',
       success: 'bg-[var(--success-600)] text-white hover:bg-[var(--success-700)]',
       ghost: 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]',

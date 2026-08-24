@@ -25,21 +25,21 @@ export default function Card({ children, className = '', title, subtitle, action
   return (
     <div
       className={`
-        bg-white rounded-md border border-gray-200
-        ${hover ? 'hover:border-gray-300 transition-colors' : ''}
+        bg-[var(--bg-card)] rounded-md border border-[var(--border-primary)]
+        ${hover ? 'hover:border-[var(--neutral-300)] transition-colors' : ''}
         ${accent ? accentStyles[accent] || '' : ''}
         ${className}
       `}
     >
       {(title || action) && (
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-secondary)]">
           <div className="min-w-0 flex-1">
             {title && (
-              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
                 {title}
               </h3>
             )}
-            {subtitle && <p className="text-sm text-gray-500 mt-0.5 truncate">{subtitle}</p>}
+            {subtitle && <p className="text-sm text-[var(--text-secondary)] mt-0.5 truncate">{subtitle}</p>}
           </div>
           {action && <div className="flex-shrink-0 ml-4">{action}</div>}
         </div>

@@ -172,6 +172,14 @@ export class SeederService implements OnModuleInit {
       { nombre: 'Vacuna', monto: 150, activo: true },
       { nombre: 'Emergencia', monto: 0, activo: true },
       { nombre: 'Terapia Física', monto: 180, activo: true },
+      // Servicios base documentados
+      { nombre: 'Control Prenatal', monto: 200, activo: true },
+      { nombre: 'Papanicolaou', monto: 250, activo: true },
+      { nombre: 'Colposcopia / Biopsia', monto: 400, activo: true },
+      { nombre: 'Ecografía Obstétrica / Transvaginal', monto: 300, activo: true },
+      { nombre: 'Control de Niño Sano', monto: 150, activo: true },
+      { nombre: 'Inyectables', monto: 80, activo: true },
+      { nombre: 'Sueros', monto: 120, activo: true },
     ]);
 
     const cie10s = await this.cie10Repo.save([
