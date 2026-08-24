@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CitaRepositoryPort } from '../domain/ports/cita-repository.port';
 import { CitaDomainService } from '../domain/services/cita-domain.service';
 import { CitaDomain } from '../domain/cita.domain';
@@ -41,7 +41,20 @@ export class CitaService {
     };
   }
 
+  private validarFechaNoPasada(fecha: Date | string): void {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaCita = new Date(fecha);
+    fechaCita.setHours(0, 0, 0, 0);
+    if (fechaCita < hoy) {
+      throw new BadRequestException(
+        'No se puede agendar una cita en una fecha pasada',
+      );
+    }
+  }
+
   async create(dto: CreateCitaDto, usuarioId: number): Promise<CitaDomain> {
+    this.validarFechaNoPasada(dto.fecha);
     const domain = CitaDomain.create({
       pacienteId: dto.pacienteId,
       medicoId: dto.medicoId,
@@ -68,6 +81,8 @@ export class CitaService {
 
   async update(id: number, dto: UpdateCitaDto): Promise<CitaDomain> {
     const cita = await this.findOne(id);
+
+    if (dto.fecha) this.validarFechaNoPasada(dto.fecha);
 
     if (dto.horaInicio || dto.horaFin || dto.fecha) {
       const newHoraInicio = dto.horaInicio ?? cita.horaInicio;

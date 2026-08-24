@@ -8,17 +8,23 @@ import PageHeader from '../components/ui/PageHeader';
 import { toast } from '../components/ui/Toast';
 import { recetaService, alergiaService } from '../api/services';
 import { useStore } from '../store';
-import type { Receta, Medicamento, Alergia } from '../types';
+import type { Receta, RecetaMedicamento, Medicamento, Alergia } from '../types';
 
 const RECETAS_PRINT_STYLES = `
 @media print {
-  @page { margin: 0; size: 14cm 21cm; }
+  @page { size: A4 portrait; margin: 14mm 16mm; }
+  html, body { background: #fff !important; }
   body * { visibility: hidden; }
   #receta-print-area, #receta-print-area * { visibility: visible; }
   #receta-print-area {
-    position: absolute; left: 0; top: 0; background: white; padding: 0; margin: 0;
-    width: 14cm !important; min-height: 21cm !important;
+    position: absolute; left: 0; top: 0;
+    width: 100% !important; max-width: none !important;
+    min-height: auto !important; margin: 0 !important;
+    padding: 0 !important; box-shadow: none !important;
+    background: #fff !important; color: #000 !important;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
+  #receta-print-area img { max-width: 3cm; }
 }
 `;
 
@@ -45,11 +51,11 @@ function RecetaPrintView({ receta }: { receta: RecetaPrintData }) {
   const mes = fecha.toLocaleDateString('es-ES', { month: 'long' });
   const anio = fecha.getFullYear();
   return (
-    <div id="receta-print-area" style={{ fontFamily: "'Times New Roman', Times, serif", color: '#000', background: '#fff', position: 'relative', width: '100%', maxWidth: '14cm', minHeight: '21cm', margin: '0 auto', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>
+    <div id="receta-print-area" style={{ fontFamily: "'Times New Roman', Times, serif", color: '#000', background: '#fff', position: 'relative', width: '100%', maxWidth: '800px', minHeight: '24cm', margin: '0 auto', boxShadow: '0 1px 4px rgba(0,0,0,0.15)', padding: '40px 48px' }}>
       {/* Watermark */}
-      <img src="/receta-watermark.png" alt="" style={{ position: 'absolute', top: '5cm', left: '1.2cm', width: '11.6cm', height: 'auto', opacity: 0.1, zIndex: 0 }} />
+      <img src="/receta-watermark.png" alt="" style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translateX(-50%)', width: '70%', height: 'auto', opacity: 0.08, zIndex: 0 }} />
 
-      <div style={{ padding: '1cm 1.2cm', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', minHeight: '19cm' }}>
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', minHeight: '22cm' }}>
 
         {/* ===== SECCIÓN 1: ENCABEZADO ===== */}
         <div style={{ textAlign: 'center' }}>
@@ -219,10 +225,14 @@ export default function RecetasPage() {
     { value: 'cancelada', label: 'Canceladas', count: recetas.filter((r) => r.estado === 'cancelada').length, activeBg: 'var(--danger-100)', activeText: 'var(--danger-700)', activeBorder: 'var(--danger-300)' },
   ];
 
-  useEffect(() => { loadRecetas(); fetchMedicos(); fetchPacientes(); }, [fetchMedicos, fetchPacientes]);
+  useEffect(() => { fetchMedicos(); fetchPacientes(); }, [fetchMedicos, fetchPacientes]);
 
   useEffect(() => {
-    recetaService.searchMedicamentos('').then(res => setMedicamentosDisponibles(res.data || [])).catch(() => {});
+    let cancelado = false;
+    recetaService.searchMedicamentos('').then(res => {
+      if (!cancelado) setMedicamentosDisponibles(res.data || []);
+    }).catch(() => { /* sin catálogo disponible */ });
+    return () => { cancelado = true; };
   }, []);
 
   useEffect(() => {
@@ -238,7 +248,7 @@ export default function RecetasPage() {
   useEffect(() => {
     if (!medicoNombre && medicos.length > 0) {
       const m = medicos[0];
-      setMedicoNombre(`Dr. ${m.nombre} ${m.apellido}`);
+      queueMicrotask(() => setMedicoNombre(`Dr. ${m.nombre} ${m.apellido}`));
     }
   }, [medicos, medicoNombre]);
 
@@ -248,11 +258,27 @@ export default function RecetasPage() {
     try {
       const res = await recetaService.getAll();
       setRecetas(Array.isArray(res.data) ? res.data : []);
-    } catch (e: any) {
-      setError(e?.response?.data?.message || e?.message || 'Error al cargar recetas');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } }; message?: string };
+      setError(err?.response?.data?.message || err?.message || 'Error al cargar recetas');
       setRecetas([]);
     } finally { setLoading(false); }
   };
+
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      try {
+        const res = await recetaService.getAll();
+        if (!cancelado) setRecetas(Array.isArray(res.data) ? res.data : []);
+      } catch {
+        if (!cancelado) { setError('Error al cargar recetas'); setRecetas([]); }
+      } finally {
+        if (!cancelado) setLoading(false);
+      }
+    })();
+    return () => { cancelado = true; };
+  }, []);
 
   /* ── Dar de baja ── */
   const handleDarDeBaja = (r: Receta) => {
@@ -314,7 +340,7 @@ export default function RecetasPage() {
     try {
       const res = await alergiaService.getByPaciente(selectedPatientId!);
       alergias = res.data;
-    } catch {}
+    } catch { /* paciente sin alergias registradas */ }
 
     const conflictos = alergias.filter(a =>
       medNombres.some(mn => mn.toLowerCase().includes(a.nombre?.toLowerCase() || ''))
@@ -376,6 +402,8 @@ export default function RecetasPage() {
     return <Badge variant={e.variant}>{e.label}</Badge>;
   };
 
+  type RecetaRow = Receta & { pacienteNombre?: string; medicoNombre?: string };
+
   const columns: Column<Receta>[] = [
     { key: 'fecha', header: 'Fecha', sortable: true, render: (r) => (
       <span className="text-sm font-medium text-[var(--text-primary)] whitespace-nowrap">
@@ -383,7 +411,7 @@ export default function RecetasPage() {
       </span>
     )},
     { key: 'paciente', header: 'Paciente', sortable: true, render: (r) => {
-      const nombre = (r as any).pacienteNombre || (r.consulta?.paciente ? `${r.consulta.paciente.nombre} ${r.consulta.paciente.apellido}` : '');
+      const nombre = (r as RecetaRow).pacienteNombre || (r.consulta?.paciente ? `${r.consulta.paciente.nombre} ${r.consulta.paciente.apellido}` : '');
       const ini = nombre ? nombre.split(' ').slice(0, 2).map((s: string) => s.charAt(0)).join('') : '?';
       return (
         <div className="flex items-center gap-2">
@@ -393,7 +421,7 @@ export default function RecetasPage() {
       );
     }},
     { key: 'medico', header: 'Médico', render: (r) => {
-      const nombre = (r as any).medicoNombre || (r.consulta?.medico ? `${r.consulta.medico.nombre} ${r.consulta.medico.apellido}` : '');
+      const nombre = (r as RecetaRow).medicoNombre || (r.consulta?.medico ? `${r.consulta.medico.nombre} ${r.consulta.medico.apellido}` : '');
       return <span className="text-sm text-[var(--text-secondary)]">{nombre ? `Dr. ${nombre}` : '—'}</span>;
     }},
     { key: 'medicamentos', header: 'Medicamentos', render: (r) => (
@@ -402,8 +430,8 @@ export default function RecetasPage() {
           <span className="text-xs text-[var(--text-tertiary)]">Sin medicamentos</span>
         ) : (
           <>
-            {r.items.slice(0, 3).map((item: any, i: number) => (
-              <Badge key={item.id || i} variant="neutral" className="text-[10px]">{item.medicamento?.nombre || item.medicamentoNombre || item.medNombre || 'N/A'}</Badge>
+            {r.items.slice(0, 3).map((item: RecetaMedicamento, i: number) => (
+              <Badge key={item.id || i} variant="neutral" className="text-[10px]">{item.medicamento?.nombre || 'N/A'}</Badge>
             ))}
             {r.items.length > 3 && (
               <Badge variant="primary" className="text-[10px]">+{r.items.length - 3}</Badge>
