@@ -42,6 +42,8 @@ export class TurnoService {
       monto: dto.monto,
       pagado: dto.pagado,
       creadoPorId: 0,
+      fechaProgramada: dto.fechaProgramada,
+      horaProgramada: dto.horaProgramada,
     });
     return this.turnoRepo.save(domain);
   }

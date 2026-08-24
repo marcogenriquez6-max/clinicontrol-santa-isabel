@@ -25,6 +25,8 @@ export interface TurnoData {
   monto: number;
   pagado?: boolean;
   creadoPorId: number;
+  fechaProgramada?: string;
+  horaProgramada?: string;
 }
 
 export class TurnoDomain extends BaseEntity {
@@ -48,10 +50,15 @@ export class TurnoDomain extends BaseEntity {
     public consultorio?: string,
   ) {
     super(id);
+    this.fechaProgramada = undefined;
+    this.horaProgramada = undefined;
   }
 
+  public fechaProgramada?: string;
+  public horaProgramada?: string;
+
   static create(data: TurnoData): TurnoDomain {
-    return new TurnoDomain(
+    const turno = new TurnoDomain(
       data.numero,
       data.pacienteId,
       data.medicoId,
@@ -64,6 +71,9 @@ export class TurnoDomain extends BaseEntity {
       data.tipoAtencionId,
       data.tipo,
     );
+    turno.fechaProgramada = data.fechaProgramada;
+    turno.horaProgramada = data.horaProgramada;
+    return turno;
   }
 
   llamar(): void {

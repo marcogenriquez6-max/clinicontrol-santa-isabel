@@ -54,6 +54,12 @@ export class Turno {
   @Column({ type: 'varchar', length: 50, nullable: true })
   tipo: string;
 
+  @Column({ name: 'fecha_programada', type: 'date', nullable: true })
+  fechaProgramada?: string;
+
+  @Column({ name: 'hora_programada', type: 'varchar', length: 5, nullable: true })
+  horaProgramada?: string;
+
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   monto: number;
 

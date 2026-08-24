@@ -16,7 +16,7 @@ export class TurnoRepositoryAdapter implements TurnoRepositoryPort {
   ) {}
 
   private toDomain(orm: Turno): TurnoDomain {
-    return new TurnoDomain(
+    const d = new TurnoDomain(
       orm.numero,
       orm.pacienteId,
       orm.medicoId,
@@ -35,6 +35,9 @@ export class TurnoRepositoryAdapter implements TurnoRepositoryPort {
       orm.medico?.especialidad?.nombre,
       '',
     );
+    d.fechaProgramada = orm.fechaProgramada;
+    d.horaProgramada = orm.horaProgramada;
+    return d;
   }
 
   async findAll(query: TurnoQuery) {
@@ -108,6 +111,8 @@ export class TurnoRepositoryAdapter implements TurnoRepositoryPort {
       monto: turno.monto,
       pagado: turno.pagado,
       pagadoEn: turno.pagadoEn,
+      fechaProgramada: turno.fechaProgramada,
+      horaProgramada: turno.horaProgramada,
     });
     const saved = await this.repo.save(orm);
     return this.findById(saved.id) as Promise<TurnoDomain>;

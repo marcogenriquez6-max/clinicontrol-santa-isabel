@@ -167,19 +167,19 @@ export class SeederService implements OnModuleInit {
     ]);
 
     await this.tipoAtencionRepo.save([
-      { nombre: 'Consulta Médica', monto: 200, activo: true },
-      { nombre: 'Examen / Laboratorio', monto: 350, activo: true },
-      { nombre: 'Vacuna', monto: 150, activo: true },
-      { nombre: 'Emergencia', monto: 0, activo: true },
-      { nombre: 'Terapia Física', monto: 180, activo: true },
+      { nombre: 'Consulta Médica', monto: 200, activo: true, duracionMinutos: 30 },
+      { nombre: 'Examen / Laboratorio', monto: 350, activo: true, duracionMinutos: 20 },
+      { nombre: 'Vacuna', monto: 150, activo: true, duracionMinutos: 15 },
+      { nombre: 'Emergencia', monto: 0, activo: true, duracionMinutos: 30 },
+      { nombre: 'Terapia Física', monto: 180, activo: true, duracionMinutos: 45 },
       // Servicios base documentados
-      { nombre: 'Control Prenatal', monto: 200, activo: true },
-      { nombre: 'Papanicolaou', monto: 250, activo: true },
-      { nombre: 'Colposcopia / Biopsia', monto: 400, activo: true },
-      { nombre: 'Ecografía Obstétrica / Transvaginal', monto: 300, activo: true },
-      { nombre: 'Control de Niño Sano', monto: 150, activo: true },
-      { nombre: 'Inyectables', monto: 80, activo: true },
-      { nombre: 'Sueros', monto: 120, activo: true },
+      { nombre: 'Control Prenatal', monto: 200, activo: true, duracionMinutos: 20 },
+      { nombre: 'Papanicolaou', monto: 250, activo: true, duracionMinutos: 20 },
+      { nombre: 'Colposcopia / Biopsia', monto: 400, activo: true, duracionMinutos: 40 },
+      { nombre: 'Ecografía Obstétrica / Transvaginal', monto: 300, activo: true, duracionMinutos: 30 },
+      { nombre: 'Control de Niño Sano', monto: 150, activo: true, duracionMinutos: 20 },
+      { nombre: 'Inyectables', monto: 80, activo: true, duracionMinutos: 15 },
+      { nombre: 'Sueros', monto: 120, activo: true, duracionMinutos: 45 },
     ]);
 
     const cie10s = await this.cie10Repo.save([

@@ -12,6 +12,8 @@ export interface Turno {
   creadoEn: string;
   pagado: boolean;
   monto: number;
+  fechaProgramada?: string;
+  horaProgramada?: string;
   pacienteId: number;
   medicoId: number;
   citaId?: number;
@@ -21,5 +23,6 @@ export interface TipoAtencion {
   id: number;
   nombre: string;
   monto: number;
+  duracionMinutos?: number;
   activo?: boolean;
 }
