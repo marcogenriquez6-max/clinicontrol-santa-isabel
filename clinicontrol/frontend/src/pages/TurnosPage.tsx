@@ -91,7 +91,6 @@ export default function TurnosPage() {
   const [modalTurno, setModalTurno] = useState<Turno | null>(null);
   const [formData, setFormData] = useState({ nombre: '', ci: '', telefono: '' });
   const [activeSection, setActiveSection] = useState<'caja' | 'sala' | 'pantalla'>('caja');
-  const [cajaTab, setCajaTab] = useState<'nuevo' | 'cobros'>('nuevo');
   const printRef = useRef<HTMLDivElement>(null);
   const [horaActual, setHoraActual] = useState(new Date());
 
@@ -262,20 +261,9 @@ export default function TurnosPage() {
 
       {/* SECCIÓN CAJA — pestañas internas */}
       {activeSection === 'caja' && (
-        <div className="max-w-3xl mx-auto w-full space-y-5">
-          <div className="flex justify-center gap-8 border-b border-[var(--border-primary)]">
-            {([
-              { id: 'nuevo' as const, label: 'Nuevo Turno' },
-              { id: 'cobros' as const, label: `Cobros y Cola${turnosPendientesPago.length > 0 ? ` · ${turnosPendientesPago.length}` : ''}` },
-            ]).map(tab => (
-              <button key={tab.id} onClick={() => setCajaTab(tab.id)}
-                className={`pb-2.5 text-sm font-medium text-center border-b-2 -mb-px transition-colors ${cajaTab === tab.id ? 'border-[var(--primary-600)] text-[var(--primary-700)]' : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {cajaTab === 'nuevo' && (() => {
+        <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
+          <div className="lg:col-span-3 min-w-0">
+          {(() => {
             const servicioSel = servicios.find(s => s.id === selectedTipoId) ?? null;
             const medicoSel = selectedMedico >= 0 ? medicos[selectedMedico] : null;
             const pasos = [
@@ -411,9 +399,9 @@ export default function TurnosPage() {
               </Card>
             );
           })()}
+          </div>
 
-          {cajaTab === 'cobros' && (
-            <div className="space-y-5">
+          <div className="lg:col-span-2 space-y-5 min-w-0">
               <Card title={`Pendientes de cobro (${turnosPendientesPago.length})`} accent="warning">
                 {turnosPendientesPago.length === 0 ? (
                   <p className="py-8 text-center text-sm text-[var(--text-tertiary)]">Sin pendientes de cobro</p>
@@ -462,8 +450,7 @@ export default function TurnosPage() {
                   </ul>
                 )}
               </Card>
-            </div>
-          )}
+          </div>
         </div>
       )}
 
