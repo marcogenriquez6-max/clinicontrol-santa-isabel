@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { ClipboardList, Ticket, Printer, Users, Eye, Play, CheckCircle, XCircle, Monitor, DollarSign, Stethoscope, FlaskConical, Syringe, Check, ChevronLeft, ChevronRight, HeartPulse, Microscope, Waves, Baby, ShieldPlus, Droplets, Siren, Activity } from 'lucide-react';
+import { ClipboardList, Ticket, Printer, Users, Eye, Play, CheckCircle, XCircle, Monitor, DollarSign, Stethoscope, FlaskConical, Syringe, HeartPulse, Microscope, Waves, Baby, ShieldPlus, Droplets, Siren, Activity } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Button, Card, Modal, Input, Select, Badge } from '../components/ui';
+import { Button, Card, Modal, Input, Select } from '../components/ui';
 import { toast } from '../components/ui/Toast';
 import PageHeader from '../components/ui/PageHeader';
 import { turnoService, medicoService, pacienteService, tipoAtencionService } from '../api/services';
@@ -83,7 +83,6 @@ export default function TurnosPage() {
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [servicios, setServicios] = useState<(TipoAtencion & { Icono: LucideIcon })[]>([]);
   const [selectedTipoId, setSelectedTipoId] = useState<number | null>(null);
-  const [paso, setPaso] = useState(1);
   const [, setShowRegistro] = useState(false);
   const [selectedMedico, setSelectedMedico] = useState(0);
   const [turnoActual, setTurnoActual] = useState<Turno | null>(null);
@@ -141,7 +140,6 @@ export default function TurnosPage() {
     if (!existente) {
       toast('warning', 'Paciente no registrado',
         `${formData.nombre} no está en el Padrón. Regístrelo primero en Pacientes e intente de nuevo.`);
-      setPaso(2);
       return;
     }
     try {
@@ -172,7 +170,6 @@ export default function TurnosPage() {
       setShowRegistro(false);
       setFormData({ nombre: '', ci: '', telefono: '' });
       setSelectedTipoId(null);
-      setPaso(1);
       toast('success', 'Pago registrado', 'Ticket generado - puede imprimirlo');
       setTimeout(() => window.print(), 500);
     } catch {
@@ -223,18 +220,6 @@ export default function TurnosPage() {
   const turnosEnEspera = turnos.filter(t => t.estado === 'espera' && t.pagado);
   const turnosLlamados = turnos.filter(t => t.estado === 'llamado');
   const turnosAtencion = turnos.filter(t => t.estado === 'atencion');
-  const turnosPendientesPago = turnos.filter(t => !t.pagado);
-
-  const estadoBadge = (estado: Turno['estado']) => {
-    const map = {
-      espera: { variant: 'warning' as const, label: 'En Espera' },
-      llamado: { variant: 'info' as const, label: 'Llamado' },
-      atencion: { variant: 'primary' as const, label: 'En Atención' },
-      completado: { variant: 'success' as const, label: 'Completado' },
-      cancelado: { variant: 'danger' as const, label: 'Cancelado' },
-    };
-    return <Badge variant={map[estado].variant}>{map[estado].label}</Badge>;
-  };
 
   return (
     <div className="space-y-6 animate-in-up">
@@ -261,196 +246,65 @@ export default function TurnosPage() {
 
       {/* SECCIÓN CAJA — pestañas internas */}
       {activeSection === 'caja' && (
-        <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
-          <div className="lg:col-span-3 min-w-0">
+        <div className="max-w-4xl mx-auto w-full">
           {(() => {
             const servicioSel = servicios.find(s => s.id === selectedTipoId) ?? null;
-            const medicoSel = selectedMedico >= 0 ? medicos[selectedMedico] : null;
-            const pasos = [
-              { n: 1, label: 'Servicio' },
-              { n: 2, label: 'Datos del paciente' },
-              { n: 3, label: 'Confirmar y cobrar' },
-            ];
             return (
               <Card title="Emitir turno nuevo" subtitle="El paciente debe estar registrado previamente en el Padrón de Pacientes">
-                {/* Stepper */}
-                <div className="flex items-center mb-6">
-                  {pasos.map((p, i) => {
-                    const completado = paso > p.n;
-                    const activo = paso === p.n;
+                <p className="text-sm font-medium text-[var(--text-primary)] mb-3">Servicio *</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {servicios.map(sv => {
+                    const SIcon = sv.Icono;
+                    const activo = selectedTipoId === sv.id;
                     return (
-                      <div key={p.n} className={`flex items-center ${i < pasos.length - 1 ? 'flex-1' : ''}`}>
-                        <button type="button" onClick={() => { if (p.n < paso) setPaso(p.n); }}
-                          disabled={p.n > paso}
-                          className={`flex items-center gap-2 shrink-0 ${p.n < paso ? 'cursor-pointer' : 'cursor-default'}`}>
-                          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-colors ${
-                            completado ? 'border-[var(--primary-600)] bg-[var(--primary-600)] text-white'
-                            : activo ? 'border-[var(--primary-600)] text-[var(--primary-700)] bg-[var(--primary-50)]'
-                            : 'border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--text-tertiary)]'}`}>
-                            {completado ? <Check className="w-4 h-4" /> : p.n}
-                          </span>
-                          <span className={`text-xs sm:text-sm font-medium hidden sm:block ${activo ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`}>
-                            {p.label}
-                          </span>
-                        </button>
-                        {i < pasos.length - 1 && (
-                          <span className={`flex-1 h-0.5 mx-2 sm:mx-3 rounded-full ${paso > p.n ? 'bg-[var(--primary-600)]' : 'bg-[var(--border-primary)]'}`} />
-                        )}
-                      </div>
+                      <button key={sv.id} type="button" onClick={() => setSelectedTipoId(sv.id)}
+                        aria-pressed={activo}
+                        className={`flex flex-col items-center gap-1.5 px-2 py-3.5 rounded-xl border-2 transition-all ${activo
+                          ? 'border-[var(--primary-600)] bg-[var(--primary-50)]'
+                          : 'border-[var(--border-primary)] bg-[var(--bg-secondary)] hover:border-[var(--neutral-300)]'}`}>
+                        <SIcon className="w-5 h-5 shrink-0" style={{ color: activo ? 'var(--primary-600)' : 'var(--text-tertiary)' }} />
+                        <span className={`text-xs font-semibold text-center leading-tight line-clamp-2 ${activo ? 'text-[var(--primary-700)]' : 'text-[var(--text-secondary)]'}`}>{sv.nombre}</span>
+                        <span className="text-xs tabular-nums text-[var(--text-tertiary)]">Bs. {sv.monto}</span>
+                      </button>
                     );
                   })}
+                  {servicios.length === 0 && (
+                    <p className="col-span-full py-8 text-center text-sm text-[var(--text-tertiary)]">
+                      No hay servicios disponibles. Verifique la conexión con el servidor.
+                    </p>
+                  )}
                 </div>
 
-                {paso === 1 && (
-                  <div>
-                    <p className="text-sm font-medium text-[var(--text-primary)] mb-3">Seleccione el servicio *</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                      {servicios.map(sv => {
-                        const SIcon = sv.Icono;
-                        const activo = selectedTipoId === sv.id;
-                        return (
-                          <button key={sv.id} type="button" onClick={() => setSelectedTipoId(sv.id)}
-                            aria-pressed={activo}
-                            className={`flex flex-col items-center gap-1.5 px-2 py-3.5 rounded-xl border-2 transition-all ${activo
-                              ? 'border-[var(--primary-600)] bg-[var(--primary-50)]'
-                              : 'border-[var(--border-primary)] bg-[var(--bg-secondary)] hover:border-[var(--neutral-300)]'}`}>
-                            <SIcon className="w-5 h-5 shrink-0" style={{ color: activo ? 'var(--primary-600)' : 'var(--text-tertiary)' }} />
-                            <span className={`text-xs font-semibold text-center leading-tight line-clamp-2 ${activo ? 'text-[var(--primary-700)]' : 'text-[var(--text-secondary)]'}`}>{sv.nombre}</span>
-                            <span className="text-xs tabular-nums text-[var(--text-tertiary)]">Bs. {sv.monto}</span>
-                          </button>
-                        );
-                      })}
-                      {servicios.length === 0 && (
-                        <p className="col-span-full py-8 text-center text-sm text-[var(--text-tertiary)]">
-                          No hay servicios disponibles. Verifique la conexión con el servidor.
-                        </p>
-                      )}
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4 mt-5">
+                  <div className="sm:col-span-2">
+                    <Input label="Nombre del paciente *" placeholder="Nombre completo" value={formData.nombre} onChange={e => setFormData(f => ({ ...f, nombre: e.target.value }))} />
                   </div>
-                )}
-
-                {paso === 2 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
-                    <div className="sm:col-span-2">
-                      <Input label="Nombre del paciente *" placeholder="Nombre completo" value={formData.nombre} onChange={e => setFormData(f => ({ ...f, nombre: e.target.value }))} />
-                    </div>
-                    <Input label="Cédula *" placeholder="1234567" value={formData.ci} onChange={e => setFormData(f => ({ ...f, ci: e.target.value }))} />
-                    <Input label="Teléfono" placeholder="77712345" value={formData.telefono} onChange={e => setFormData(f => ({ ...f, telefono: e.target.value }))} />
-                    <div className="sm:col-span-2">
-                      <Select label="Médico asignado *" value={selectedMedico} onChange={e => setSelectedMedico(Number(e.target.value))}
-                        options={[
-                          { value: -1, label: 'Seleccionar médico...' },
-                          ...medicos.map((m, i) => ({ value: i, label: `${m.nombre} ${m.apellido}${m.especialidad?.nombre ? ` · ${m.especialidad.nombre}` : ''}` })),
-                        ]}
-                      />
-                    </div>
+                  <Input label="Cédula *" placeholder="1234567" value={formData.ci} onChange={e => setFormData(f => ({ ...f, ci: e.target.value }))} />
+                  <Input label="Teléfono" placeholder="77712345" value={formData.telefono} onChange={e => setFormData(f => ({ ...f, telefono: e.target.value }))} />
+                  <div className="sm:col-span-2">
+                    <Select label="Médico asignado *" value={selectedMedico} onChange={e => setSelectedMedico(Number(e.target.value))}
+                      options={[
+                        { value: -1, label: 'Seleccionar médico...' },
+                        ...medicos.map((m, i) => ({ value: i, label: `${m.nombre} ${m.apellido}${m.especialidad?.nombre ? ` · ${m.especialidad.nombre}` : ''}` })),
+                      ]}
+                    />
                   </div>
-                )}
+                </div>
 
-                {paso === 3 && servicioSel && (
-                  <div>
-                    <ul className="divide-y divide-[var(--border-secondary)] rounded-lg border border-[var(--border-primary)] overflow-hidden">
-                      <li className="flex items-center gap-3 px-4 py-3 bg-[var(--bg-secondary)]">
-                        {(() => { const SIcon = servicioSel.Icono; return <SIcon className="w-5 h-5 text-[var(--primary-600)] shrink-0" />; })()}
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-[var(--text-primary)] truncate">{servicioSel.nombre}</p>
-                          <p className="text-xs text-[var(--text-tertiary)]">Servicio solicitado</p>
-                        </div>
-                        <span className="font-bold tabular-nums text-[var(--primary-700)]">Bs. {servicioSel.monto.toFixed(2)}</span>
-                      </li>
-                      <li className="px-4 py-3">
-                        <p className="font-medium text-[var(--text-primary)] truncate">{formData.nombre}</p>
-                        <p className="text-xs text-[var(--text-tertiary)]">CI {formData.ci}{formData.telefono ? ` · Tel. ${formData.telefono}` : ''}</p>
-                      </li>
-                      <li className="px-4 py-3">
-                        <p className="font-medium text-[var(--text-primary)] truncate">
-                          {medicoSel ? `${medicoSel.nombre} ${medicoSel.apellido}` : '—'}
-                        </p>
-                        <p className="text-xs text-[var(--text-tertiary)]">{medicoSel?.especialidad?.nombre ?? 'Médico asignado'}</p>
-                      </li>
-                    </ul>
-                    <div className="flex items-center justify-between mt-4 px-4 py-3 rounded-lg border border-[var(--primary-200)] bg-[var(--primary-50)]">
-                      <span className="text-sm font-medium text-[var(--text-secondary)]">Total a cobrar</span>
-                      <span className="text-xl font-bold tabular-nums text-[var(--primary-800)]">Bs. {servicioSel.monto.toFixed(2)}</span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between gap-3 mt-6 pt-4 border-t border-[var(--border-primary)]">
-                  {paso > 1 ? (
-                    <Button variant="secondary" onClick={() => setPaso(paso - 1)}>
-                      <ChevronLeft className="w-4 h-4" />Atrás
-                    </Button>
-                  ) : <span />}
-                  {paso < 3 && (
-                    <Button
-                      disabled={paso === 1 && !selectedTipoId}
-                      onClick={() => { if (paso === 2 && !validarDatos()) return; setPaso(paso + 1); }}
-                    >
-                      Continuar<ChevronRight className="w-4 h-4" />
-                    </Button>
-                  )}
-                  {paso === 3 && (
-                    <Button onClick={generarTurno}>
-                      <Ticket className="w-4 h-4" />Generar y cobrar
-                    </Button>
-                  )}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-6 pt-4 border-t border-[var(--border-primary)]">
+                  <span className="text-sm text-[var(--text-secondary)]">
+                    Total a cobrar{' '}
+                    <span className="ml-1 text-lg font-bold tabular-nums text-[var(--primary-800)]">
+                      Bs. {servicioSel ? servicioSel.monto.toFixed(2) : '0.00'}
+                    </span>
+                  </span>
+                  <Button onClick={generarTurno} disabled={!selectedTipoId} className="w-full sm:w-auto">
+                    <Ticket className="w-4 h-4" />Generar y cobrar
+                  </Button>
                 </div>
               </Card>
             );
           })()}
-          </div>
-
-          <div className="lg:col-span-2 space-y-5 min-w-0">
-              <Card title={`Pendientes de cobro (${turnosPendientesPago.length})`} accent="warning">
-                {turnosPendientesPago.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-[var(--text-tertiary)]">Sin pendientes de cobro</p>
-                ) : (
-                  <ul className="divide-y divide-[var(--border-secondary)]">
-                    {turnosPendientesPago.map(t => (
-                      <li key={t.id} className="flex items-center gap-3 py-2.5">
-                        <span className="w-9 h-9 rounded-md flex items-center justify-center text-xs font-bold tabular-nums shrink-0" style={{ backgroundColor: 'var(--warning-100)', color: 'var(--warning-700)' }}>
-                          {String(t.numero).padStart(3, '0')}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-[var(--text-primary)] truncate">{t.pacienteNombre}</p>
-                          <p className="text-xs text-[var(--text-tertiary)] truncate">{t.medicoNombre}</p>
-                        </div>
-                        <span className="font-semibold tabular-nums text-sm shrink-0">Bs. {Number(t.monto).toFixed(2)}</span>
-                        <Button size="sm" variant="outline" onClick={() => { setTurnoActual(t); setShowConfirmPago(true); }} className="shrink-0">
-                          Cobrar
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </Card>
-
-              <Card title="Últimos turnos" accent="primary">
-                {[...turnos].length === 0 ? (
-                  <p className="py-8 text-center text-sm text-[var(--text-tertiary)]">Aún no hay turnos hoy</p>
-                ) : (
-                  <ul className="divide-y divide-[var(--border-secondary)]">
-                    {[...turnos].reverse().slice(0, 4).map(t => (
-                      <li key={t.id} className="flex items-center gap-3 py-2.5">
-                        <span className="w-9 h-9 rounded-md flex items-center justify-center text-xs font-bold text-white tabular-nums shrink-0" style={{ backgroundColor: 'var(--primary-700)' }}>
-                          {String(t.numero).padStart(3, '0')}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-[var(--text-primary)] truncate">{t.pacienteNombre}</p>
-                          <p className="text-xs text-[var(--text-tertiary)] truncate">{t.medicoNombre}</p>
-                        </div>
-                        {estadoBadge(t.estado)}
-                        <Badge variant={t.pagado ? 'success' : 'danger'}>{t.pagado ? 'Pagado' : 'Pendiente'}</Badge>
-                        <Button variant="ghost" size="sm" icon onClick={() => setModalTurno(t)} aria-label="Ver ticket">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </Card>
-          </div>
         </div>
       )}
 
