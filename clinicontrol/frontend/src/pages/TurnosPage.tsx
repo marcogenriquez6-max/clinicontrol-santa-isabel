@@ -213,17 +213,22 @@ export default function TurnosPage() {
       <PageHeader icon={ClipboardList} title="Turnos" subtitle="Gestión de turnos y emisión de tickets" stats={[{ label: 'En espera', value: turnosEnEspera.length }, { label: 'En atención', value: turnosAtencion.length }]} />
 
       {/* Secciones */}
-      <div className="flex gap-1 p-1 bg-[var(--bg-tertiary)] rounded-xl">
-        {[
+      <div className="grid grid-cols-3 gap-1 p-1 bg-[var(--bg-tertiary)] rounded-xl">
+        {([
           { id: 'caja' as const, label: 'Caja y Admisión', icon: DollarSign },
           { id: 'sala' as const, label: 'Sala de Espera', icon: Users },
           { id: 'pantalla' as const, label: 'Pantalla TV', icon: Monitor },
-        ].map(sec => (
-          <button key={sec.id} onClick={() => setActiveSection(sec.id)}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeSection === sec.id ? 'bg-[var(--bg-primary)] text-[var(--primary-600)] shadow-sm' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
-            {sec.label}
-          </button>
-        ))}
+        ]).map(sec => {
+          const SecIcon = sec.icon;
+          return (
+            <button key={sec.id} onClick={() => setActiveSection(sec.id)}
+              aria-current={activeSection === sec.id ? 'page' : undefined}
+              className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${activeSection === sec.id ? 'bg-[var(--bg-primary)] text-[var(--primary-700)] shadow-sm' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
+              <SecIcon className="w-4 h-4 shrink-0" />
+              <span className="truncate">{sec.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* SECCIÓN CAJA — pestañas internas */}
@@ -242,14 +247,34 @@ export default function TurnosPage() {
           </div>
 
           {cajaTab === 'nuevo' && (
-            <div className="max-w-xl">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                <div className="col-span-2">
+            <Card title="Emitir turno nuevo" subtitle="El paciente debe estar registrado en el Padrón de Pacientes" className="max-w-2xl">
+              {/* Tipo de atención — tarjetas seleccionables */}
+              <p className="text-sm font-medium text-[var(--text-primary)] mb-2">Tipo de atención *</p>
+              <div className="grid grid-cols-3 gap-2 mb-5">
+                {TIPOS_ATENCION.map(tp => {
+                  const TpIcon = tp.Icono;
+                  const activo = formData.tipo === tp.id;
+                  return (
+                    <button key={tp.id} type="button" onClick={() => setFormData(f => ({ ...f, tipo: tp.id }))}
+                      aria-pressed={activo}
+                      className={`flex flex-col items-center gap-1.5 px-2 py-3.5 rounded-xl border-2 transition-all ${activo
+                        ? 'border-[var(--primary-600)] bg-[var(--primary-50)]'
+                        : 'border-[var(--border-primary)] bg-[var(--bg-secondary)] hover:border-[var(--neutral-300)]'}`}>
+                      <TpIcon className="w-5 h-5" style={{ color: activo ? 'var(--primary-600)' : 'var(--text-tertiary)' }} />
+                      <span className={`text-sm font-semibold ${activo ? 'text-[var(--primary-700)]' : 'text-[var(--text-secondary)]'}`}>{tp.label}</span>
+                      <span className="text-xs tabular-nums text-[var(--text-tertiary)]">Bs. {tp.precio}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
+                <div className="sm:col-span-2">
                   <Input label="Nombre del paciente *" placeholder="Nombre completo" value={formData.nombre} onChange={e => setFormData(f => ({ ...f, nombre: e.target.value }))} />
                 </div>
                 <Input label="Cédula *" placeholder="1234567" value={formData.ci} onChange={e => setFormData(f => ({ ...f, ci: e.target.value }))} />
                 <Input label="Teléfono" placeholder="77712345" value={formData.telefono} onChange={e => setFormData(f => ({ ...f, telefono: e.target.value }))} />
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <Select label="Médico asignado *" value={selectedMedico} onChange={e => setSelectedMedico(Number(e.target.value))}
                     options={[
                       { value: -1, label: 'Seleccionar médico...' },
@@ -257,44 +282,27 @@ export default function TurnosPage() {
                     ]}
                   />
                 </div>
-                <div className="col-span-2">
-                  <p className="text-sm font-medium text-[var(--text-primary)]">Tipo de atención *</p>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {TIPOS_ATENCION.map(tp => {
-                      const activo = formData.tipo === tp.id;
-                      return (
-                        <button key={tp.id} type="button" onClick={() => setFormData(f => ({ ...f, tipo: tp.id }))}
-                          className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${activo ? 'border-[var(--primary-700)] bg-[var(--primary-700)] text-white' : 'border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-[var(--neutral-300)]'}`}>
-                          {tp.label} · Bs. {tp.precio}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
               </div>
 
-              <div className="flex items-center justify-between mt-6 pt-4 border-t border-[var(--border-primary)]">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-6 pt-4 border-t border-[var(--border-primary)]">
                 <span className="text-sm text-[var(--text-secondary)]">
                   Total a cobrar{' '}
                   <span className="ml-1 text-lg font-bold tabular-nums text-[var(--primary-800)]">
                     Bs. {TIPOS_ATENCION.find(t => t.id === formData.tipo)?.precio ?? 0}
                   </span>
                 </span>
-                <Button onClick={generarTurno}>
+                <Button onClick={generarTurno} className="w-full sm:w-auto">
                   <Ticket className="w-4 h-4" />Generar y cobrar
                 </Button>
               </div>
-            </div>
+            </Card>
           )}
 
           {cajaTab === 'cobros' && (
-            <div className="max-w-3xl space-y-7">
-              <section aria-label="Pendientes de cobro">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">
-                  Pendientes de cobro ({turnosPendientesPago.length})
-                </h3>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
+              <Card title={`Pendientes de cobro (${turnosPendientesPago.length})`} accent="warning">
                 {turnosPendientesPago.length === 0 ? (
-                  <p className="py-6 text-sm text-[var(--text-quaternary)]">Sin pendientes de cobro</p>
+                  <p className="py-8 text-center text-sm text-[var(--text-tertiary)]">Sin pendientes de cobro</p>
                 ) : (
                   <ul className="divide-y divide-[var(--border-secondary)]">
                     {turnosPendientesPago.map(t => (
@@ -314,12 +322,11 @@ export default function TurnosPage() {
                     ))}
                   </ul>
                 )}
-              </section>
+              </Card>
 
-              <section aria-label="Últimos turnos">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">Últimos turnos</h3>
+              <Card title="Últimos turnos" accent="primary">
                 {[...turnos].length === 0 ? (
-                  <p className="py-6 text-sm text-[var(--text-quaternary)]">Aún no hay turnos hoy</p>
+                  <p className="py-8 text-center text-sm text-[var(--text-tertiary)]">Aún no hay turnos hoy</p>
                 ) : (
                   <ul className="divide-y divide-[var(--border-secondary)]">
                     {[...turnos].reverse().slice(0, 4).map(t => (
@@ -340,7 +347,7 @@ export default function TurnosPage() {
                     ))}
                   </ul>
                 )}
-              </section>
+              </Card>
             </div>
           )}
         </div>
