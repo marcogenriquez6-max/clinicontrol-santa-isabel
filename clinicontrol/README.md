@@ -93,11 +93,15 @@ curl http://localhost:8080
 | Email | Contraseña | Rol |
 |-------|-----------|-----|
 | admin@clinica.com | Admin123! | Administrador |
-| gerente@clinica.com | Gerente123! | Gerente |
-| secretaria@clinica.com | Secretaria123! | Secretaria |
-| medico@clinica.com | Medico123! | Médico |
-| enfermera@clinica.com | Enfermera123! | Enfermería |
-| recepcionista@clinica.com | Recepcion123! | Recepcionista |
+| gerente@clinica.com | Demo2026! | Gerente |
+| secretaria@clinica.com | Demo2026! | Secretaria |
+| medico@clinica.com | Demo2026! | Médico |
+| enfermeria@clinica.com | Demo2026! | Enfermería |
+| recepcion@clinica.com | Demo2026! | Recepcionista |
+
+> Las cuentas demo (todas menos `admin`) solo se siembran cuando `NODE_ENV` no es `production`.
+> La contraseña de `admin` se toma de la variable `ADMIN_PASSWORD` (`Admin123!` en `backend/.env.example`);
+> si no se define, el seeder genera una aleatoria y la muestra en la consola en el primer arranque.
 
 ## Desarrollo Local
 
