@@ -13,6 +13,7 @@ import { getPermissionsForRole } from '../../../../common/constants/permissions'
 export class JwtTokenAdapter implements TokenServicePort {
   private readonly accessExpiresIn = '15m';
   private readonly refreshExpiresIn = '7d';
+  private readonly refreshExpiresInRemember = '30d';
   private readonly refreshSecret: string;
 
   constructor(private readonly jwtService: JwtService) {
@@ -30,7 +31,7 @@ export class JwtTokenAdapter implements TokenServicePort {
     return getPermissionsForRole(rol);
   }
 
-  generateTokenPair(user: UserDomain): TokenPair {
+  generateTokenPair(user: UserDomain, remember = false): TokenPair {
     const tokenId = this.generateTokenId();
     const permissions = this.getPermissions(user.rolNombre);
 
@@ -46,8 +47,13 @@ export class JwtTokenAdapter implements TokenServicePort {
       expiresIn: this.accessExpiresIn,
     });
     const refreshToken = this.jwtService.sign(
-      { sub: user.id, type: 'refresh', tokenId },
-      { secret: this.refreshSecret, expiresIn: this.refreshExpiresIn },
+      { sub: user.id, type: 'refresh', tokenId, remember },
+      {
+        secret: this.refreshSecret,
+        expiresIn: remember
+          ? this.refreshExpiresInRemember
+          : this.refreshExpiresIn,
+      },
     );
 
     return { accessToken, refreshToken };

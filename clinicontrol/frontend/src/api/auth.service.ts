@@ -2,8 +2,8 @@ import api from './axios';
 import type { AuthResponse } from '../types';
 
 export const authService = {
-  login: (email: string, password: string) => api.post<AuthResponse>('/auth/login', { email, password }),
-  loginMfa: (mfaToken: string, code: string) => api.post<AuthResponse>('/auth/login/mfa', { mfaToken, code }),
+  login: (email: string, password: string, rememberMe = false) =>
+    api.post<AuthResponse>('/auth/login', { email, password, rememberMe }),
   register: (data: { nombre: string; apellido: string; email: string; password: string; ci?: string; rolId?: number }) => api.post<AuthResponse>('/auth/register', data),
   logout: () => api.post('/auth/logout'),
   refresh: () => api.post<AuthResponse>('/auth/refresh'),

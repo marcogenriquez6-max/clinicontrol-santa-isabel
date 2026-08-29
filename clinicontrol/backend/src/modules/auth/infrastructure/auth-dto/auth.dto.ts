@@ -5,6 +5,7 @@ import {
   MaxLength,
   IsOptional,
   IsInt,
+  IsBoolean,
   Validate,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -21,8 +22,13 @@ export class LoginDto {
   @MinLength(6)
   password: string;
 
-  @ApiProperty({ example: false, required: false })
+  @ApiProperty({
+    example: false,
+    required: false,
+    description: 'Extiende la vigencia del refresh token (30 días en vez de 7).',
+  })
   @IsOptional()
+  @IsBoolean()
   rememberMe?: boolean;
 }
 

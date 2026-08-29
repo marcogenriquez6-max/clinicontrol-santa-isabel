@@ -60,19 +60,19 @@ export class AuthController {
     @Headers('user-agent') userAgent?: string,
   ) {
     const authResult = await this.authService.login(
-      { email: dto.email, password: dto.password },
+      { email: dto.email, password: dto.password, rememberMe: dto.rememberMe },
       ipAddress,
       userAgent,
     );
     if ('mfaRequired' in authResult) return authResult;
 
-    const { refresh_token, ...result } = authResult;
+    const { refresh_token, refreshMaxAgeMs, ...result } = authResult;
     res.cookie('refresh_token', refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/auth/refresh',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: refreshMaxAgeMs,
     });
     return result;
   }
@@ -131,14 +131,17 @@ export class AuthController {
     if (!refreshToken)
       throw new UnauthorizedException('Refresh token no proporcionado');
 
-    const { refresh_token: newRefreshToken, ...result } =
-      await this.authService.refreshAccessToken(refreshToken, ipAddress);
+    const {
+      refresh_token: newRefreshToken,
+      refreshMaxAgeMs,
+      ...result
+    } = await this.authService.refreshAccessToken(refreshToken, ipAddress);
     res.cookie('refresh_token', newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/auth/refresh',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: refreshMaxAgeMs,
     });
     return result;
   }

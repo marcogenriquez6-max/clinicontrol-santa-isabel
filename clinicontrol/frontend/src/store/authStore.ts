@@ -9,8 +9,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isInitializing: boolean;
   initialize: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
-  loginMfa: (mfaToken: string, code: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   register: (data: Partial<Usuario>) => Promise<void>;
   logout: () => void;
   setSession: (accessToken: string, user: AuthResponse['user']) => void;
@@ -45,21 +44,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     return initPromise;
   },
 
-  login: async (email, password) => {
-    const response = await authService.login(email, password);
-    const data = response.data;
-    if ((data as any).mfaRequired) {
+  login: async (email, password, rememberMe = false) => {
+    const response = await authService.login(email, password, rememberMe);
+    const data = response.data as AuthResponse & { mfaRequired?: boolean };
+    if (data.mfaRequired) {
+      // La verificación en dos pasos fue retirada del alcance; si el backend
+      // aún la exige para esta cuenta, no hay flujo de UI para resolverla.
       set({ user: null, token: null, isAuthenticated: false });
-      throw { mfaRequired: true, mfaToken: (data as any).mfaToken };
+      throw new Error(
+        'Esta cuenta tiene verificación en dos pasos activa, que ya no es compatible. Contacte al administrador.',
+      );
     }
-    const { access_token, user } = data as AuthResponse;
-    setAccessToken(access_token);
-    set({ user, token: access_token, isAuthenticated: true });
-  },
-
-  loginMfa: async (mfaToken, code) => {
-    const response = await authService.loginMfa(mfaToken, code);
-    const { access_token, user } = response.data;
+    const { access_token, user } = data;
     setAccessToken(access_token);
     set({ user, token: access_token, isAuthenticated: true });
   },

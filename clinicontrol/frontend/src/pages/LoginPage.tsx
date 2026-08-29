@@ -3,50 +3,48 @@ import { useForm } from 'react-hook-form';
 import { Button, Input, Logo, toast } from '../components/ui';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate, Link } from 'react-router-dom';
-import { AlertCircle, ShieldCheck, HeartPulse } from 'lucide-react';
+import { AlertCircle, HeartPulse } from 'lucide-react';
+import { errMsg } from '../api/errMsg';
+import { isAxiosError } from 'axios';
+
+interface LoginForm {
+  email: string;
+  password: string;
+  remember: boolean;
+}
+
+const CREDENCIALES_INVALIDAS =
+  'Credenciales inválidas. Verifique su email y contraseña.';
 
 export default function LoginPage() {
-  const { login, loginMfa } = useAuthStore();
+  const { login } = useAuthStore();
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginForm>({ defaultValues: { remember: false } });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [mfaToken, setMfaToken] = useState<string | null>(null);
-  const [mfaCode, setMfaCode] = useState('');
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: LoginForm) => {
     setLoading(true);
     setError('');
     try {
-      await login(data.email, data.password);
-      toast('success', 'Inicio de sesión exitoso', 'Bienvenido al sistema de gestión hospitalaria');
+      await login(data.email, data.password, data.remember);
+      toast('success', 'Bienvenido');
       navigate('/dashboard');
-    } catch (err: any) {
-      if (err?.mfaRequired) {
-        setMfaToken(err.mfaToken);
-        setLoading(false);
-        return;
-      }
+    } catch (err) {
       setLoading(false);
-      const msg = 'Credenciales inválidas. Verifique su email y contraseña.';
+      // El backend responde 401 ante credenciales incorrectas; para ese caso
+      // el mensaje es el fijado por la especificación. Cualquier otro fallo
+      // (red, 5xx) muestra el mensaje que devuelva el backend vía errMsg.
+      const msg =
+        isAxiosError(err) && err.response?.status === 401
+          ? CREDENCIALES_INVALIDAS
+          : errMsg(err, CREDENCIALES_INVALIDAS);
       setError(msg);
-      toast('error', 'Error de autenticación', msg);
-    }
-  };
-
-  const onSubmitMfa = async () => {
-    if (!mfaToken) return;
-    setLoading(true);
-    setError('');
-    try {
-      await loginMfa(mfaToken, mfaCode);
-      toast('success', 'Verificación exitosa', 'Bienvenido al sistema de gestión hospitalaria');
-      navigate('/dashboard');
-    } catch {
-      setLoading(false);
-      const msg = 'Código MFA inválido. Intente nuevamente.';
-      setError(msg);
-      toast('error', 'Error de verificación', msg);
+      toast('error', 'No se pudo iniciar sesión', msg);
     }
   };
 
@@ -69,95 +67,79 @@ export default function LoginPage() {
           <div className="bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl p-8 shadow-md">
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-                {mfaToken ? 'Verificación en dos pasos' : 'Iniciar Sesión'}
+                Iniciar sesión
               </h2>
               <p className="text-sm text-[var(--text-secondary)] mt-1">
-                {mfaToken
-                  ? 'Ingrese el código de 6 dígitos de su aplicación autenticadora'
-                  : 'Ingrese sus credenciales para acceder al sistema'
-                }
+                Ingrese sus credenciales para acceder al sistema
               </p>
             </div>
 
             {error && (
-              <div className="mb-5 p-3 bg-[var(--danger-50)] dark:bg-[var(--danger-500/10)]/10 border border-[var(--danger-200)] dark:border-red-800/40 rounded-lg flex items-start gap-2 text-sm text-[var(--danger-700)] dark:text-[var(--danger-200)]">
+              <div
+                role="alert"
+                className="mb-5 p-3 bg-[var(--danger-50)] border border-[var(--danger-200)] rounded-lg flex items-start gap-2 text-sm text-[var(--danger-700)]"
+              >
                 <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
-            {mfaToken ? (
-              <div className="space-y-5">
-                <div className="p-4 bg-indigo-50 dark:bg-[var(--primary-500/10)]/10 border border-indigo-200 dark:border-indigo-800/30 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <ShieldCheck className="w-4 h-4 text-[var(--primary-600)] dark:text-indigo-400" />
-                    <p className="text-sm font-medium text-[var(--primary-700)] dark:text-indigo-300">Verificación MFA</p>
-                  </div>
-                  <p className="text-xs text-[var(--primary-600/70)]/70 dark:text-indigo-400/70">
-                    Abra su aplicación autenticadora e ingrese el código de 6 dígitos.
-                  </p>
-                </div>
-                <Input
-                  label="Código de verificación"
-                  type="text"
-                  placeholder="000 000"
-                  maxLength={6}
-                  value={mfaCode}
-                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                />
-                <Button type="button" className="w-full" variant="primary" size="lg" loading={loading} onClick={onSubmitMfa}>
-                  <ShieldCheck className="w-4 h-4" />
-                  Verificar e Ingresar
-                </Button>
-                <button
-                  type="button"
-                  onClick={() => { setMfaToken(null); setMfaCode(''); setError(''); }}
-                  className="w-full text-sm text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors text-center"
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+              <Input
+                label="Correo electrónico"
+                type="email"
+                autoComplete="email"
+                required
+                error={errors.email?.message}
+                {...register('email', {
+                  required: 'Ingrese un email válido',
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: 'Ingrese un email válido',
+                  },
+                })}
+              />
+
+              <Input
+                label="Contraseña"
+                type="password"
+                autoComplete="current-password"
+                required
+                error={errors.password?.message}
+                {...register('password', {
+                  required: 'Mínimo 6 caracteres',
+                  minLength: { value: 6, message: 'Mínimo 6 caracteres' },
+                })}
+              />
+
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-[var(--border-primary)] text-[var(--primary-600)] focus:ring-2 focus:ring-[var(--primary-100)]"
+                    {...register('remember')}
+                  />
+                  <span className="text-[var(--text-secondary)]">Recordar sesión</span>
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-[var(--primary-600)] hover:underline"
                 >
-                  ← Volver al inicio de sesión
-                </button>
+                  ¿Olvidó su contraseña?
+                </Link>
               </div>
-            ) : (
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <Input
-                  label="Correo electrónico"
-                  type="email"
-                  placeholder=""
-                  required
-                  error={errors.email?.message as string}
-                  {...register('email', { required: 'El email es requerido', pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Ingrese un email válido' } })}
-                />
 
-                <Input
-                  label="Contraseña"
-                  type="password"
-                  placeholder=""
-                  required
-                  error={errors.password?.message as string}
-                  {...register('password', { required: 'La contraseña es requerida', minLength: { value: 6, message: 'Mínimo 6 caracteres' } })}
-                />
-
-                <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 rounded border-[var(--border-primary)] text-[var(--primary-600)] focus:ring-indigo-300"
-                    />
-                    <span className="text-[var(--text-secondary)]">
-                      Recordar sesión
-                    </span>
-                  </label>
-                  <Link to="/forgot-password" className="text-[var(--primary-600)] dark:text-indigo-400 hover:underline">
-                    ¿Olvidó su contraseña?
-                  </Link>
-                </div>
-
-                <Button type="submit" className="w-full" variant="primary" size="lg" loading={loading}>
-                  <HeartPulse className="w-4 h-4" />
-                  Ingresar al Sistema
-                </Button>
-              </form>
-            )}
+              <Button
+                type="submit"
+                className="w-full"
+                variant="primary"
+                size="lg"
+                loading={loading}
+              >
+                <HeartPulse className="w-4 h-4" />
+                Ingresar al sistema
+              </Button>
+            </form>
           </div>
 
           <p className="mt-6 text-center text-xs text-[var(--text-tertiary)]">

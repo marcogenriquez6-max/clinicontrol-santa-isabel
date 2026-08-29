@@ -10,7 +10,10 @@ import * as crypto from 'crypto';
 import * as speakeasy from 'speakeasy';
 import { UserDomain } from '../domain/user.domain';
 import { AuthRepositoryPort } from '../domain/ports/auth-repository.port';
-import { TokenServicePort } from '../domain/ports/token-service.port';
+import {
+  TokenServicePort,
+  refreshTtlMs,
+} from '../domain/ports/token-service.port';
 import { AuthDomainService } from '../domain/services/auth-domain.service';
 import { TokenBlacklistService } from '../../../common/services/token-blacklist.service';
 import { RedisSessionService } from '../../../common/services/redis-session.service';
@@ -20,6 +23,7 @@ import { RedisService } from '../../../common/services/redis.service';
 export interface LoginDto {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface RegisterDto {
@@ -33,6 +37,8 @@ export interface RegisterDto {
 export interface AuthResponse {
   access_token: string;
   refresh_token: string;
+  /** Vigencia de la cookie de refresh (ms). El controlador la usa y no la expone. */
+  refreshMaxAgeMs: number;
   user: {
     id: number;
     nombre: string;
@@ -108,7 +114,12 @@ export class AuthService {
       return { mfaRequired: true, mfaToken };
     }
 
-    return this.buildAuthResponse(user, ipAddress, userAgent);
+    return this.buildAuthResponse(
+      user,
+      ipAddress,
+      userAgent,
+      dto.rememberMe ?? false,
+    );
   }
 
   async loginMfa(
@@ -189,13 +200,15 @@ export class AuthService {
         throw new UnauthorizedException('Refresh token ya utilizado');
       }
 
-      await this.tokenBlacklist.add(token, 7 * 24 * 60 * 60 * 1000);
+      const remember = payload.remember ?? false;
+      // El token queda en la lista negra durante toda su vigencia restante.
+      await this.tokenBlacklist.add(token, refreshTtlMs(remember));
 
       const user = await this.authRepository.findById(payload.sub);
       if (!user || user.bloqueado)
         throw new UnauthorizedException('Usuario no encontrado o bloqueado');
 
-      return this.buildAuthResponse(user);
+      return this.buildAuthResponse(user, ipAddress, undefined, remember);
     } catch (err) {
       if (err instanceof UnauthorizedException) throw err;
       throw new UnauthorizedException('Refresh token inválido o expirado');
@@ -353,9 +366,12 @@ export class AuthService {
     user: UserDomain,
     ipAddress?: string,
     userAgent?: string,
+    remember = false,
   ): Promise<AuthResponse> {
-    const { accessToken, refreshToken } =
-      this.tokenService.generateTokenPair(user);
+    const { accessToken, refreshToken } = this.tokenService.generateTokenPair(
+      user,
+      remember,
+    );
 
     try {
       const tokenId = crypto
@@ -396,6 +412,7 @@ export class AuthService {
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
+      refreshMaxAgeMs: refreshTtlMs(remember),
       user: {
         id: user.id,
         nombre: user.nombre,
