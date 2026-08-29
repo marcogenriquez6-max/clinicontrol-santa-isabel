@@ -200,7 +200,7 @@ export default function ConsultasPage() {
           placeholder="Buscar por nombre, CI o turno..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all"
+          className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all"
           style={{
             backgroundColor: 'var(--bg-primary)',
             border: '1px solid var(--border-primary)',

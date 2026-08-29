@@ -98,7 +98,7 @@ export default function TopNav({ collapsed }: TopNavProps) {
                   setShowResults(false);
                 }
               }}
-              className="w-full pl-9 pr-9 py-2 text-sm rounded-lg transition-colors outline-none"
+              className="w-full pl-9 pr-9 py-2 text-sm rounded-lg transition-colors focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)]"
               style={{
                 backgroundColor: 'var(--bg-secondary)',
                 border: '1px solid var(--border-primary)',

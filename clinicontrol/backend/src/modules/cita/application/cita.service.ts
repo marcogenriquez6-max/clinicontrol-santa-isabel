@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { CitaRepositoryPort } from '../domain/ports/cita-repository.port';
 import { CitaDomainService } from '../domain/services/cita-domain.service';
 import { CitaDomain } from '../domain/cita.domain';
@@ -7,12 +7,14 @@ import {
   UpdateCitaDto,
   CitaQueryDto,
 } from '../infrastructure/dto/create-cita.dto';
+import { TurnoService } from '../../turno/application/turno.service';
 
 @Injectable()
 export class CitaService {
   constructor(
     private readonly citaRepo: CitaRepositoryPort,
     private readonly citaDomainService: CitaDomainService,
+    private readonly turnoService: TurnoService,
   ) {}
 
   async findAll(query: CitaQueryDto) {
@@ -139,5 +141,52 @@ export class CitaService {
   async remove(id: number): Promise<void> {
     await this.findOne(id);
     await this.citaRepo.remove(id);
+  }
+
+  async llegada(id: number, usuarioId: number): Promise<{ cita: CitaDomain; turno: any }> {
+    const cita = await this.findOne(id);
+    
+    // Validar que la cita esté en estado pendiente o confirmada
+    const esPendienteOConfirmada = cita.estado === 'pendiente' || cita.estado === 'confirmada';
+    if (!esPendienteOConfirmada) {
+      throw new BadRequestException(
+        'La cita no está en estado pendiente o confirmada',
+      );
+    }
+    
+    // Verificar que no tenga turno previo (llegada doble)
+    // Buscar si ya existe un turno para esta cita ese día, por paciente y fecha
+    const { data: turnosDelDia } = await this.turnoService.findAll({
+      pacienteId: cita.pacienteId,
+      fecha: cita.fecha.toISOString().split('T')[0],
+    });
+    
+    const fechaCitaStr = cita.fecha.toISOString().split('T')[0];
+    const tieneTurnoPrevio = turnosDelDia.some(
+      (t: any) => 
+        String(t.fechaProgramada)?.substring(0, 10) === fechaCitaStr && t.estado !== 'cancelado'
+    );
+    
+    if (tieneTurnoPrevio) {
+      throw new ConflictException(
+        `La cita ya tiene un turno emitido`,
+      );
+    }
+    
+    // Crear el turno usando el servicio de turno
+    const turnoRes = await this.turnoService.create({
+      pacienteId: cita.pacienteId,
+      medicoId: cita.medicoId,
+      monto: 0, // Se calculará según el servicio
+      pagado: false,
+      fechaProgramada: cita.fecha.toISOString().split('T')[0],
+      horaProgramada: cita.horaInicio,
+    });
+    
+    // Marcar la cita como en_curso (atendida)
+    cita.estado = 'en_curso';
+    await this.citaRepo.save(cita);
+    
+    return { cita, turno: turnoRes };
   }
 }

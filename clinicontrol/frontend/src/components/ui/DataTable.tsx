@@ -195,7 +195,7 @@ export default function DataTable<T extends object>({
                 key={fdef.key}
                 value={filterValues[fdef.key] ?? ''}
                 onChange={e => { setFilterValues(prev => ({ ...prev, [fdef.key]: e.target.value })); setPage(1); }}
-                className="h-10 px-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary-400)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all cursor-pointer"
+                className="h-10 px-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl text-sm text-[var(--text-primary)] focus:focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] focus:border-[var(--primary-400)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all cursor-pointer"
                 aria-label={fdef.label}
               >
                 <option value="">{fdef.label}: Todos</option>
@@ -211,7 +211,7 @@ export default function DataTable<T extends object>({
                   value={search}
                   onChange={e => { setSearch(e.target.value); setPage(1); }}
                   placeholder={searchPlaceholder}
-                  className="w-56 pl-10 pr-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--primary-400)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all"
+                  className="w-56 pl-10 pr-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] focus:border-[var(--primary-400)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all"
                 />
                 {search && (
                   <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors">

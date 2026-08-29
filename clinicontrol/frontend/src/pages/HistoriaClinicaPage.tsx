@@ -244,7 +244,7 @@ export default function HistoriaClinicaPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onFocus={() => setShowResults(true)}
-            className="w-full pl-11 pr-4 py-3.5 bg-[var(--bg-card)] dark:bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl shadow-sm text-sm text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] outline-none focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all"
+            className="w-full pl-11 pr-4 py-3.5 bg-[var(--bg-card)] dark:bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl shadow-sm text-sm text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all"
           />
           {searchLoading && <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[var(--primary-600)] border-t-transparent rounded-full animate-spin" />}
 
@@ -343,7 +343,7 @@ export default function HistoriaClinicaPage() {
               placeholder="Cambiar paciente..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); if (e.target.value.length < 2) setShowResults(false); }}
-              className="w-full pl-9 pr-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md text-sm text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] outline-none focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all"
+              className="w-full pl-9 pr-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md text-sm text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all"
             />
             {showResults && (
               <div className="absolute z-50 mt-1 w-full bg-[var(--bg-card)] dark:bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-md shadow-lg max-h-60 overflow-y-auto divide-y divide-[var(--border-secondary)]">
@@ -471,12 +471,12 @@ export default function HistoriaClinicaPage() {
                   type="date"
                   value={filtroFecha}
                   onChange={(e) => setFiltroFecha(e.target.value)}
-                  className="text-xs bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-2 py-1.5 text-[var(--text-secondary)] outline-none focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all"
+                  className="text-xs bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-2 py-1.5 text-[var(--text-secondary)] focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all"
                 />
                 <select
                   value={filtroDiagnostico}
                   onChange={(e) => setFiltroDiagnostico(e.target.value)}
-                  className="text-xs bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-2 py-1.5 text-[var(--text-secondary)] outline-none focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all"
+                  className="text-xs bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-2 py-1.5 text-[var(--text-secondary)] focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all"
                 >
                   {DIAGNOSTICOS_FILTER.map(d => (
                     <option key={d} value={d}>{d}</option>

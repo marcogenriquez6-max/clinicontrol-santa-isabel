@@ -135,7 +135,7 @@ const ALERGIA_VALIDACIONES = {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
             <input type="text" placeholder="Buscar paciente por nombre o CI..." value={searchPatient}
               onChange={(e) => setSearchPatient(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-[var(--bg-primary)] border-2 border-[var(--border-primary)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--primary-500)]" />
+              className="w-full pl-10 pr-4 py-2 bg-[var(--bg-primary)] border-2 border-[var(--border-primary)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] focus:border-[var(--primary-500)]" />
           </div>
           {searchPatient && (
             <div className="absolute z-10 mt-1 w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-lg shadow-dropdown max-h-60 overflow-y-auto">

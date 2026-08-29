@@ -99,6 +99,19 @@ export class CitaController {
     return this.citaService.cancelar(id, motivo, user.id);
   }
 
+  @Post(':id/llegada')
+  @Ownership('appointment')
+  @UseGuards(OwnershipGuard)
+  @ApiOperation({ summary: 'Registrar llegada a cita' })
+  @ApiResponse({ status: 201, description: 'Llegada registrada y turno emitido' })
+  @ApiResponse({ status: 409, description: 'La cita ya tiene turno o no puede ser atendida' })
+  async llegada(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: { id: number },
+  ) {
+    return this.citaService.llegada(id, user.id);
+  }
+
   @Delete(':id')
   @Ownership('appointment')
   @UseGuards(OwnershipGuard)

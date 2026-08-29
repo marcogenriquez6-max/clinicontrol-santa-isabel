@@ -331,7 +331,7 @@ export default function CajaPage() {
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
                         placeholder="Buscar por paciente, CI o número..."
-                        className="w-full pl-9 pr-3 py-2 rounded-lg text-sm bg-[var(--bg-secondary)] border border-[var(--border-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] dark:focus:ring-blue-900/40 transition-colors"
+                        className="w-full pl-9 pr-3 py-2 rounded-lg text-sm bg-[var(--bg-secondary)] border border-[var(--border-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] dark:focus:ring-blue-900/40 transition-colors"
                       />
                     </div>
                     <div className="overflow-x-auto max-h-[420px] overflow-y-auto">

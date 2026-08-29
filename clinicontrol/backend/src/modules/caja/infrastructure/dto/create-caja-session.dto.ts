@@ -23,3 +23,10 @@ export class CerrarSesionDto {
   @IsString()
   observaciones?: string;
 }
+
+export class CobrarDto {
+  @ApiProperty({ example: 50 })
+  @IsNumber()
+  @Min(0)
+  montoRecibido: number;
+}

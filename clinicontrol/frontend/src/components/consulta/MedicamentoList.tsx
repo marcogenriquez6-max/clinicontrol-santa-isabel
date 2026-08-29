@@ -83,7 +83,7 @@ export default function MedicamentoList({ medicamentos, onAdd, onRemove, onUpdat
                   value={med.search}
                   onChange={(e) => onMedSearch(med.key, e.target.value)}
                   placeholder="Buscar medicamento..."
-                  className="w-full pl-10 text-sm px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] outline-none transition-all duration-200"
+                  className="w-full pl-10 text-sm px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] transition-all duration-200"
                 />
               </div>
               {medSearchResults[med.key]?.length > 0 && (

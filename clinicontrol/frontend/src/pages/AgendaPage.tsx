@@ -171,7 +171,7 @@ export default function AgendaPage() {
               const h = getHorarioForDay(idx);
               const activo = h?.activo ?? false;
               const conTarde = !!(h?.horaInicioTarde || h?.horaFinTarde);
-              const inputCls = "px-2.5 py-1.5 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-md text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all w-[104px]";
+              const inputCls = "px-2.5 py-1.5 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-md text-sm text-[var(--text-primary)] focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] transition-all w-[104px]";
               return (
                 <div key={idx} className={`flex flex-col xl:flex-row xl:items-center gap-3 py-3 ${activo ? '' : 'opacity-45'}`}>
                   <label className="flex items-center gap-2.5 w-full xl:w-40 shrink-0 cursor-pointer select-none">
@@ -212,7 +212,7 @@ export default function AgendaPage() {
 
                   {activo && (
                     <select value={h?.duracionSlotMinutos || 30} onChange={(e) => updateHorarioField(idx, 'duracionSlotMinutos', Number(e.target.value))}
-                      className="xl:ml-auto px-2.5 py-1.5 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-md text-sm outline-none focus:border-[var(--primary-500)] w-[110px] shrink-0"
+                      className="xl:ml-auto px-2.5 py-1.5 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-md text-sm focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] focus:border-[var(--primary-500)] w-[110px] shrink-0"
                       aria-label={`Duración de cita ${dia}`}>
                       {[15, 20, 30, 45, 60].map(d => <option key={d} value={d}>{d} min</option>)}
                     </select>

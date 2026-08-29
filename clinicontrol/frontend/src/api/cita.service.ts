@@ -10,5 +10,6 @@ export const citaService = {
   create: (data: Partial<Cita>) => api.post<Cita>('/citas', data),
   update: (id: number, data: Partial<Cita>) => api.put<Cita>(`/citas/${id}`, data),
   cancel: (id: number, motivo: string) => api.put(`/citas/${id}/cancelar`, { motivo }),
+  llegada: (id: number) => api.post(`/citas/${id}/llegada`, {}),
   delete: (id: number) => api.delete(`/citas/${id}`),
 };

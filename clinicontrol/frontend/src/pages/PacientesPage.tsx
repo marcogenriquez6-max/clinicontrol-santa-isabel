@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Power, X, Circle, AlertTriangle, Ban, Skull, Archive, ChevronDown, Check, FolderOpen, type LucideIcon } from 'lucide-react';
-import { Button, Modal, Input, Select, FormSection } from '../components/ui';
+import { Button, Modal, Input, Select, FormSection, ConfirmDialog } from '../components/ui';
 import DataTable from '../components/ui/DataTable';
 import type { Column } from '../components/ui/DataTable';
 import { toast } from '../components/ui/Toast';
@@ -31,6 +31,9 @@ export default function PacientesPage() {
   const [filterGenero, setFilterGenero] = useState<string>('');
   const [showEstadoMenu, setShowEstadoMenu] = useState(false);
   const [showGeneroMenu, setShowGeneroMenu] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmChangeState, setConfirmChangeState] = useState<number | null>(null);
+  const [pacienteConfirmId, setPacienteConfirmId] = useState<number | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm();
 
@@ -121,6 +124,14 @@ export default function PacientesPage() {
     setIsEstadoModalOpen(true);
   };
 
+  const openEstadoModalById = (id: number) => {
+    const paciente = pacientes.find((p) => p.id === id);
+    if (paciente) {
+      openEstadoModal(paciente);
+    }
+    setIsEstadoModalOpen(true);
+  };
+
   const handleChangeEstado = async () => {
     if (!estadoTarget?.id) return;
     setFormLoading(true);
@@ -199,7 +210,7 @@ export default function PacientesPage() {
     { key: 'acciones', header: 'Acciones', align: 'right', render: (p) => (
       <div className="flex justify-end gap-1">
         <button title="Editar paciente" onClick={() => handleOpenModal(p)} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--primary-600)] hover:bg-[var(--primary-50)] active:scale-95 transition-all"><Pencil className="w-4 h-4" /></button>
-        <button title="Cambiar estado" onClick={() => openEstadoModal(p)} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-amber-600 hover:bg-amber-50 active:scale-95 transition-all"><Power className="w-4 h-4" /></button>
+        <button title="Cambiar estado" onClick={() => { setConfirmChangeState(p.id); setPacienteConfirmId(p.id); setShowConfirm(true); }} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-amber-600 hover:bg-[var(--amber-50)] active:scale-95 transition-all"><Power className="w-4 h-4" /></button>
       </div>
     )},
   ];
@@ -379,6 +390,27 @@ export default function PacientesPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        title="Cambiar estado de paciente"
+        confirmLabel="Cambiar"
+        cancelLabel="Cancelar"
+        onConfirm={() => {
+          setShowConfirm(false);
+          if (confirmChangeState?.id && pacienteConfirmId) {
+            openEstadoModalById(pacienteConfirmId);
+          }
+        }}
+      >
+        <p className="text-sm text-[var(--text-primary)]">
+          ¿Estás seguro de cambiar el estado del paciente <strong>{pacienteConfirmId ? (pacientes.find(p => p.id === pacienteConfirmId)?.nombre + ' ' + pacientes.find(p => p.id === pacienteConfirmId)?.apellido || '') : ''}</strong>?
+        </p>
+        <p className="text-xs text-[var(--text-secondary)] mt-2">
+          Esta acción es irreversible y activará/desactivará el expediente.
+        </p>
+      </ConfirmDialog>
 
       <Modal isOpen={isEstadoModalOpen} onClose={() => setIsEstadoModalOpen(false)}
         title="Cambiar Estado del Paciente" size="sm">

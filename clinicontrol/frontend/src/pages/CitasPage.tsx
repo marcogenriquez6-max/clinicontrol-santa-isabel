@@ -10,7 +10,7 @@ import { citaService } from '../api/cita.service';
 import { useForm } from 'react-hook-form';
 import type { Cita } from '../types';
 
-const campoBase = 'w-full border border-[var(--border-primary)] rounded-xl px-4 py-3 bg-[var(--bg-secondary)]/50 focus:bg-[var(--bg-card)] focus:ring-2 focus:ring-[var(--primary-500)] focus:border-[var(--primary-600)] outline-none transition-all duration-200 text-[var(--text-primary)] text-sm';
+const campoBase = 'w-full border border-[var(--border-primary)] rounded-xl px-4 py-3 bg-[var(--bg-secondary)]/50 focus:bg-[var(--bg-card)] focus:ring-2 focus:ring-[var(--primary-500)] focus:border-[var(--primary-600)] focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] transition-all duration-200 text-[var(--text-primary)] text-sm';
 
 function FieldLabel({ icon: Icon, text, required }: { icon: LucideIcon; text: string; required?: boolean }) {
   return (
@@ -104,6 +104,33 @@ const CITA_VALIDACIONES = {
     } catch { toast('error', 'Error al cancelar'); } finally { setFormLoading(false); }
   };
 
+  const registrarLlegada = async (cita: Cita) => {
+    // Validar que la cita sea de hoy y esté en estado pendiente o confirmada
+    const esHoy = new Date(cita.fecha).toDateString() === new Date().toDateString();
+    const esPendienteOConfirmada = cita.estado?.nombre === 'pendiente' || cita.estado?.nombre === 'confirmada';
+    if (!esHoy) {
+      toast('error', 'No se puede registrar llegada', 'Solo se puede registrar la llegada de citas de hoy');
+      return;
+    }
+    if (!esPendienteOConfirmada) {
+      toast('error', 'No se puede registrar llegada', 'La cita no está en estado pendiente o confirmada');
+      return;
+    }
+    try {
+      await citaService.llegada(cita.id);
+      toast('success', 'Turno #' + cita.numero + ' emitido', 'Paciente: ' + (cita.paciente?.nombre || ''));
+      fetchCitas();
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      const msg = err?.response?.data?.message;
+      if (msg && msg.includes('ya tiene un turno')) {
+        toast('warning', 'Cita already has a turno', msg);
+      } else {
+        toast('error', 'Error al registrar llegada', msg || 'Revise los datos');
+      }
+    }
+  };
+
   const columns: Column<Cita>[] = [
     { key: 'fecha', header: 'Fecha y Hora', sortable: true, render: (c) => (
       <div className="flex flex-col">
@@ -129,6 +156,15 @@ const CITA_VALIDACIONES = {
         <button onClick={() => openCancelModal(c)} className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--danger-500)] hover:bg-[var(--danger-50)]">
           <XCircle className="w-3.5 h-3.5" />
         </button>
+        {c.estado?.nombre === 'pendiente' || c.estado?.nombre === 'confirmada' ? (
+          <button
+            onClick={() => registrarLlegada(c)}
+            className="p-1.5 rounded-md text-[var(--primary-600)] hover:text-[var(--primary-700)] hover:bg-[var(--primary-50)]"
+            title="Registrar llegada"
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+          </button>
+        ) : null}
       </div>
     )},
   ];

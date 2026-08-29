@@ -478,7 +478,7 @@ export default function RecetasPage() {
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-tertiary)' }}>Desde</label>
                 <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold outline-none transition-colors border"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] transition-colors border"
                   style={{
                     backgroundColor: dateFrom ? 'var(--primary-100)' : 'var(--bg-secondary)',
                     color: dateFrom ? 'var(--primary-700)' : 'var(--text-secondary)',
@@ -489,7 +489,7 @@ export default function RecetasPage() {
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-tertiary)' }}>Hasta</label>
                 <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold outline-none transition-colors border"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] transition-colors border"
                   style={{
                     backgroundColor: dateTo ? 'var(--primary-100)' : 'var(--bg-secondary)',
                     color: dateTo ? 'var(--primary-700)' : 'var(--text-secondary)',
@@ -501,7 +501,7 @@ export default function RecetasPage() {
                 <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-tertiary)' }}>Paciente</label>
                 <input type="text" value={searchPaciente} onChange={(e) => setSearchPaciente(e.target.value)}
                   placeholder="Buscar por nombre..."
-                  className="w-44 px-3 py-1.5 rounded-lg text-xs font-medium outline-none transition-colors bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border border-transparent focus:border-[var(--primary-300)]" />
+                  className="w-44 px-3 py-1.5 rounded-lg text-xs font-medium focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] transition-colors bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border border-transparent focus:border-[var(--primary-300)]" />
               </div>
             </>
           }
@@ -580,7 +580,7 @@ export default function RecetasPage() {
                         onChange={e => { setSearchTerm(e.target.value); setShowPatientDropdown(true); setSelectedPatientId(null); setPacienteNombre(''); setFormErrors(prev => ({ ...prev, pacienteNombre: '' })); }}
                         onFocus={() => setShowPatientDropdown(true)}
                         placeholder="Buscar paciente por nombre o cédula..."
-                        className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-primary)] border-2 border-[var(--border-primary)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-primary)] border-2 border-[var(--border-primary)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] transition-all"
                       />
                     </div>
                     {showPatientDropdown && searchTerm.length > 0 && (
@@ -651,7 +651,7 @@ export default function RecetasPage() {
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Medicamento *</label>
-                          <select value={med.medicamentoId} onChange={e => updateMedicamento(idx, 'medicamentoId', e.target.value)} className={`w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] appearance-none cursor-pointer transition-all duration-200 outline-none border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] ${formErrors[`medicamentoId_${idx}`] ? 'border-[var(--danger-500)]' : ''}`}>
+                          <select value={med.medicamentoId} onChange={e => updateMedicamento(idx, 'medicamentoId', e.target.value)} className={`w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] appearance-none cursor-pointer transition-all duration-200 focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] ${formErrors[`medicamentoId_${idx}`] ? 'border-[var(--danger-500)]' : ''}`}>
                             <option value="">Seleccionar...</option>
                             {medicamentosDisponibles.map(m => (
                               <option key={m.id} value={m.id}>{m.nombre} - {m.presentacion}</option>
@@ -661,12 +661,12 @@ export default function RecetasPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Dosis *</label>
-                          <input type="text" value={med.dosis} onChange={e => updateMedicamento(idx, 'dosis', e.target.value)} placeholder="500mg" className={`w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] outline-none transition-all duration-200 ${formErrors[`dosis_${idx}`] ? 'border-[var(--danger-500)]' : ''}`} />
+                          <input type="text" value={med.dosis} onChange={e => updateMedicamento(idx, 'dosis', e.target.value)} placeholder="500mg" className={`w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] transition-all duration-200 ${formErrors[`dosis_${idx}`] ? 'border-[var(--danger-500)]' : ''}`} />
                           {formErrors[`dosis_${idx}`] && <p className="text-xs text-[var(--danger-500)] font-medium mt-1">{formErrors[`dosis_${idx}`]}</p>}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Frecuencia *</label>
-                          <select value={med.frecuencia} onChange={e => updateMedicamento(idx, 'frecuencia', e.target.value)} className={`w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] appearance-none cursor-pointer transition-all duration-200 outline-none border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] ${formErrors[`frecuencia_${idx}`] ? 'border-[var(--danger-500)]' : ''}`}>
+                          <select value={med.frecuencia} onChange={e => updateMedicamento(idx, 'frecuencia', e.target.value)} className={`w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] appearance-none cursor-pointer transition-all duration-200 focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] ${formErrors[`frecuencia_${idx}`] ? 'border-[var(--danger-500)]' : ''}`}>
                             <option value="">Seleccionar...</option>
                             <option value="8 horas">Cada 8 horas</option>
                             <option value="12 horas">Cada 12 horas</option>
@@ -678,15 +678,15 @@ export default function RecetasPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Duración</label>
-                          <input type="text" value={med.duracion} onChange={e => updateMedicamento(idx, 'duracion', e.target.value)} placeholder="7 días" className="w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] outline-none transition-all duration-200" />
+                          <input type="text" value={med.duracion} onChange={e => updateMedicamento(idx, 'duracion', e.target.value)} placeholder="7 días" className="w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] transition-all duration-200" />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Cantidad</label>
-                          <input type="number" value={med.cantidad} onChange={e => updateMedicamento(idx, 'cantidad', Number(e.target.value))} min="1" className="w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] outline-none transition-all duration-200" />
+                          <input type="number" value={med.cantidad} onChange={e => updateMedicamento(idx, 'cantidad', Number(e.target.value))} min="1" className="w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] transition-all duration-200" />
                         </div>
                         <div className="md:col-span-5">
                           <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Observaciones</label>
-                          <input type="text" value={med.observaciones} onChange={e => updateMedicamento(idx, 'observaciones', e.target.value)} placeholder="Ej: Tomar después de las comidas" className="w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] outline-none transition-all duration-200" />
+                          <input type="text" value={med.observaciones} onChange={e => updateMedicamento(idx, 'observaciones', e.target.value)} placeholder="Ej: Tomar después de las comidas" className="w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border-2 rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--border-primary)] focus:border-[var(--primary-500)] focus:ring-4 focus:ring-[var(--primary-100)] focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] transition-all duration-200" />
                         </div>
                       </div>
                     </div>

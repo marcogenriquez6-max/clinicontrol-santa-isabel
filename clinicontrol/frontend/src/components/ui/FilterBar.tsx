@@ -108,7 +108,7 @@ export default function FilterBar({
           <select
             value={sel.value}
             onChange={(e) => sel.onChange(e.target.value)}
-            className="appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-semibold cursor-pointer outline-none transition-colors border"
+            className="appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-semibold cursor-pointer focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] transition-colors border"
             style={{
               backgroundColor: sel.value ? 'var(--primary-100)' : 'var(--bg-secondary)',
               color: sel.value ? 'var(--primary-700)' : 'var(--text-secondary)',

@@ -142,6 +142,8 @@ export default function ConsultaCompletaPage() {
   const [interaccionData, setInteraccionData] = useState<{ farmacoA?: string; farmacoB?: string; severidad?: string; descripcion?: string; efecto?: string; recomendacion?: string }[]>([]);
   const [safetyPacienteId, setSafetyPacienteId] = useState(0);
   const [safetyMedIds, setSafetyMedIds] = useState<number[]>([]);
+  const [showEnmiendaModal, setShowEnmiendaModal] = useState(false);
+  const [enmiendaMotivo, setEnmiendaMotivo] = useState('');
 
   const pacienteId = watch('pacienteId');
   const peso = watch('peso');
@@ -296,9 +298,76 @@ export default function ConsultaCompletaPage() {
     }
   };
 
+  const handleEnmienda = async () => {
+    setShowEnmiendaModal(false);
+    setSubmitting(true);
+    try {
+      const payload: ConsultaCompletaDto = {
+        pacienteId: Number(pacienteId),
+        medicoId: Number(watch('medicoId')),
+        citaId: watch('citaId') ? Number(watch('citaId')) : undefined,
+        motivoConsulta: watch('motivoConsulta'),
+        sintomas: watch('sintomas'),
+        enfermedadActual: watch('enfermedadActual'),
+        examenFisico: watch('examenFisico'),
+        peso: watch('peso') ? Number(watch('peso')) : undefined,
+        talla: watch('talla') ? Number(watch('talla')) : undefined,
+        temperatura: watch('temperatura') ? Number(watch('temperatura')) : undefined,
+        frecuenciaCardiaca: watch('frecuenciaCardiaca') ? Number(watch('frecuenciaCardiaca')) : undefined,
+        frecuenciaRespiratoria: watch('frecuenciaRespiratoria') ? Number(watch('frecuenciaRespiratoria')) : undefined,
+        presionArterialSistolica: watch('presionArterialSistolica') ? Number(watch('presionArterialSistolica')) : undefined,
+        presionArterialDiastolica: watch('presionArterialDiastolica') ? Number(watch('presionArterialDiastolica')) : undefined,
+        saturacionOxigeno: watch('saturacionOxigeno') ? Number(watch('saturacionOxigeno')) : undefined,
+        glucosaCapilar: watch('glucosaCapilar') ? Number(watch('glucosaCapilar')) : undefined,
+        evaluacion: watch('evaluacion'),
+        planTratamiento: watch('planTratamiento'),
+        indicaciones: watch('indicaciones'),
+        diagnosticos: diagnosticos.map((d) => ({
+          cie10Id: d.cie10Id,
+          descripcion: d.descripcion,
+          tipo: d.tipo,
+          esCronico: d.esCronico,
+        })),
+        recetas: medicamentos.map((m) => ({
+          medicamentoId: m.medicamentoId!,
+          dosis: m.dosis,
+          frecuencia: m.frecuencia,
+          duracion: m.duracion,
+          cantidad: m.cantidad,
+          observaciones: m.observaciones,
+        })),
+      };
+      await consultaCompletaService.crearEnmienda(Number(turnoId), payload);
+      toast('success', 'Nota de enmienda registrada', 'La consulta fue actualizada con la enmienda');
+      reset();
+      setDiagnosticos([]);
+      setMedicamentos([]);
+      setCitasPaciente[];
+      navigate('/consultas');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      const msg = err?.response?.data?.message;
+      toast('error', 'Error', msg || 'No se pudo registrar la enmienda');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     setSubmitting(true);
     try {
+      // Validación: debe haber al menos un diagnóstico CIE-10
+      if (diagnosticos.length === 0) {
+        toast('error', 'Consulta incompleta', 'Falta registrar el diagnóstico');
+        setSubmitting(false);
+        return;
+      }
+      // Verificar si la consulta tiene más de 24 horas y ofrecer Nota de Enmienda
+      if (turnoId) {
+        setShowEnmiendaModal(true);
+        setSubmitting(false);
+        return;
+      }
       const payload: ConsultaCompletaDto = {
         pacienteId: Number(data.pacienteId),
         medicoId: Number(data.medicoId),
@@ -551,6 +620,29 @@ export default function ConsultaCompletaPage() {
         pacienteId={safetyPacienteId}
         medicamentoIds={safetyMedIds}
       />
+
+      {/* Modal Nota de Enmienda */}
+      <Modal isOpen={showEnmiendaModal} onClose={() => setShowEnmiendaModal(false)} title="Nota de Enmienda" size="md">
+        <p className="text-sm text-[var(--text-secondary)] mb-4">
+          La consulta tiene más de 24 horas. ¿Desea registrar una nota de enmienda en lugar de cerrar la consulta?
+        </p>
+        <div className="space-y-4">
+          <Textarea
+            label="Motivo de la enmienda"
+            placeholder="Explique el motivo de la enmienda"
+            rows={2}
+            required
+            value={enmiendaMotivo}
+            onChange={e => setEnmiendaMotivo(e.target.value)}
+          />
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" onClick={() => setShowEnmiendaModal(false)}>Cancelar</Button>
+            <Button variant="primary" onClick={handleEnmienda} loading={submitting}>
+              <FileText className="w-4 h-5 mr-2" />Registrar Enmienda
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Interacciones Modal */}
       <Modal isOpen={interaccionModalOpen} onClose={() => setInteraccionModalOpen(false)} title="Interacciones Medicamentosas" size="lg">

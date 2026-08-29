@@ -75,7 +75,7 @@ export class TriageRepositoryAdapter implements TriageRepositoryPort {
       relations: ['paciente', 'realizadoPor'],
       skip,
       take: limit,
-      order: { esiNivel: 'ASC', fechaHora: 'DESC' },
+      order: { esiNivel: 'ASC', fechaHora: 'ASC' },
     });
 
     return {
@@ -109,7 +109,7 @@ export class TriageRepositoryAdapter implements TriageRepositoryPort {
         { estado: TriageEstado.EN_ATENCION },
       ],
       relations: ['paciente', 'realizadoPor'],
-      order: { esiNivel: 'ASC', fechaHora: 'DESC' },
+      order: { esiNivel: 'ASC', fechaHora: 'ASC' },
     });
     return orms.map((o) => this.toDomain(o));
   }

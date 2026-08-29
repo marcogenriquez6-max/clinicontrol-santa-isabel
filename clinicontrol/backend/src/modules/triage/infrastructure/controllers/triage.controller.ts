@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -74,6 +75,19 @@ export class TriageController {
     return this.triageService.findByPaciente(id);
   }
 
+  @Get('paciente/:id/ultimo')
+  @ApiOperation({ summary: 'Último triage del paciente' })
+  @ApiResponse({ status: 200, description: 'Último triage encontrado' })
+  @ApiResponse({ status: 404, description: 'Sin triage registrado' })
+  async findUltimoPaciente(@Param('id', ParseIntPipe) id: number) {
+    const triages = await this.triageService.findByPaciente(id);
+    if (!triages || triages.length === 0) {
+      return { data: null, message: 'No hay triage registrado para este paciente' };
+    }
+    // El último es el primero ya que findByPaciente ordena por fechaHora DESC
+    return triages[0];
+  }
+
   @Put(':id')
   @ApiOperation({ summary: 'Actualizar triage' })
   @ApiResponse({ status: 200, description: 'Triage actualizado' })
@@ -82,6 +96,17 @@ export class TriageController {
     @Body(ValidationPipe) dto: UpdateTriageDto,
   ) {
     return this.triageService.update(id, dto);
+  }
+
+  @Patch(':id/estado')
+  @ApiOperation({ summary: 'Cambiar estado del triage' })
+  @ApiResponse({ status: 200, description: 'Estado actualizado' })
+  @ApiResponse({ status: 400, description: 'Transición inválida' })
+  async cambiarEstado(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('estado') estado: string,
+  ) {
+    return this.triageService.cambiarEstado(id, estado);
   }
 
   @Delete(':id')

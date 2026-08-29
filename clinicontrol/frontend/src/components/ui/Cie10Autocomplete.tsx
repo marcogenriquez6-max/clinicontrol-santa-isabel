@@ -86,7 +86,7 @@ export default function Cie10Autocomplete({
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => results.length > 0 && setOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl outline-none transition-colors"
+          className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl focus-visible:outline-2 focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] transition-colors"
           style={{
             backgroundColor: 'var(--bg-secondary)',
             border: `1px solid ${error ? 'var(--danger-500)' : 'var(--border-primary)'}`,

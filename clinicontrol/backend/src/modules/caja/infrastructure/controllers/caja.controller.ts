@@ -4,7 +4,7 @@ import { CajaService } from '../../application/caja.service';
 import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../../common/guards/roles.guard';
 import { Roles } from '../../../../common/decorators/roles.decorator';
-import { AbrirSesionDto, CerrarSesionDto } from '../dto/create-caja-session.dto';
+import { AbrirSesionDto, CerrarSesionDto, CobrarDto } from '../dto/create-caja-session.dto';
 
 @ApiTags('Caja')
 @ApiBearerAuth()
@@ -46,5 +46,12 @@ export class CajaController {
   @ApiOperation({ summary: 'Cerrar sesión de caja' })
   cerrarSesion(@Param('id', ParseIntPipe) id: number, @Body(ValidationPipe) dto: CerrarSesionDto) {
     return this.cajaService.cerrarSesion(id, dto.montoFinal, dto.observaciones);
+  }
+
+  @Post('cobrar')
+  @Roles('admin', 'recepcionista', 'secretaria')
+  @ApiOperation({ summary: 'Registrar cobro de turno' })
+  cobrar(@Body(ValidationPipe) dto: CobrarDto) {
+    return this.cajaService.cobrar(dto.montoRecibido);
   }
 }
